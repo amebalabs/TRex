@@ -23,6 +23,7 @@
 		FA5F876E25DDE3E400B1AF77 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F876D25DDE3E400B1AF77 /* Preferences.swift */; };
 		FA66345C25DEFD500087CCEA /* NSImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */; };
 		FA66345F25DF05950087CCEA /* PagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345E25DF05950087CCEA /* PagerView.swift */; };
+		FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		FA5F876D25DDE3E400B1AF77 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSImage+Extension.swift"; sourceTree = "<group>"; };
 		FA66345E25DF05950087CCEA /* PagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagerView.swift; sourceTree = "<group>"; };
+		FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationName+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,6 +82,7 @@
 			children = (
 				FA48BA2F25DDEBCE00E98F77 /* EnumPicker.swift */,
 				FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */,
+				FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
@@ -255,6 +258,7 @@
 			files = (
 				FA2B836125DEC31400B23F25 /* OnboardingView.swift in Sources */,
 				FA66345F25DF05950087CCEA /* PagerView.swift in Sources */,
+				FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */,
 				FA5F874825DCB3B200B1AF77 /* AppDelegate.swift in Sources */,
 				FA66345C25DEFD500087CCEA /* NSImage+Extension.swift in Sources */,
 				FA5F876E25DDE3E400B1AF77 /* Preferences.swift in Sources */,

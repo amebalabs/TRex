@@ -6,7 +6,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var menuBarItem: MenubarItem?
     var trex = TRex()
     let preferences = Preferences.shared
-    var cancellable: AnyCancellable?
+    var cancellable: Set<AnyCancellable> = []
+    var onboardingWindowController: NSWindowController?
 
     func applicationDidFinishLaunching(_: Notification) {
         let bundleID = Bundle.main.bundleIdentifier!
@@ -16,14 +17,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
         }
 
-        cancellable = preferences.$showMenuBarIcon.sink(receiveValue: { [weak self] show in
+        preferences.$showMenuBarIcon.sink(receiveValue: { [weak self] show in
             guard let self = self else { return }
             if show {
                 self.menuBarItem = MenubarItem(self.trex)
                 return
             }
             self.menuBarItem = nil
-        })
+        }).store(in: &cancellable)
+        
+        NotificationCenter.default.publisher(for: .closeOnboarding, object: nil).sink(receiveValue: { _ in
+            self.onboardingWindowController?.close()
+            self.preferences.needsOnboarding = false
+        }).store(in: &cancellable)
 
         setupShortcuts()
 
@@ -54,11 +60,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func showOnboardingIfNeeded() {
         guard preferences.needsOnboarding else { return }
 
-        var onboardingWindowController = NSWindowController()
+        onboardingWindowController = NSWindowController()
 
         let myWindow = NSWindow(
             contentRect: .init(origin: .zero, size: CGSize(width: 400, height: 500)),
-            styleMask: [.closable, .titled],
+            styleMask: [.titled],
             backing: .buffered,
             defer: false
         )
@@ -66,10 +72,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         myWindow.center()
 
         onboardingWindowController = NSWindowController(window: myWindow)
-        onboardingWindowController.contentViewController = NSHostingController(rootView: OnboardingView())
+        onboardingWindowController?.contentViewController = NSHostingController(rootView: OnboardingView())
 
-        onboardingWindowController.showWindow(self)
-        onboardingWindowController.window?.makeKeyAndOrderFront(nil)
+        onboardingWindowController?.showWindow(self)
+        onboardingWindowController?.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 }

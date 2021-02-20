@@ -23,25 +23,25 @@ struct PagerView<Content: View>: View {
                     .frame(width: geometry.size.width, alignment: .leading)
                     .offset(x: -CGFloat(self.currentIndex) * geometry.size.width)
                     .offset(x: self.translation)
-                    .animation(.interactiveSpring())
-                    .gesture(
-                        DragGesture().updating(self.$translation) { value, state, _ in
-                            state = value.translation.width
-                        }.onEnded { value in
-                            let offset = value.translation.width / geometry.size.width
-                            let newIndex = (CGFloat(self.currentIndex) - offset).rounded()
-                            self.currentIndex = min(max(Int(newIndex), 0), self.pageCount - 1)
-                        }
-                    )
+                    .animation(.easeIn(duration: 0.1))
                     HStack {
+                        Spacer()
                         ForEach(0 ..< self.pageCount, id: \.self) { index in
                             Circle()
                                 .fill(index == self.currentIndex ? Color.white : Color.gray)
                                 .frame(width: 8, height: 8)
+                                .onTapGesture {
+                                    self.currentIndex = index
+                                }
                         }
-                    }.padding([.leading, .bottom], 5)
+                        Spacer()
+                    }.padding([.bottom], 5)
                 }
                 Button(currentIndex == pageCount - 1 ? "Let's Go!" : "Continue", action: {
+                    guard currentIndex != pageCount - 1 else {
+                        NotificationCenter.default.post(name: .closeOnboarding, object: nil)
+                        return
+                    }
                     self.currentIndex = min(max(Int(self.currentIndex + 1), 0), self.pageCount - 1)
                 }).frame(width: 200)
                     .padding(.bottom, 10)
