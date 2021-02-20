@@ -1,6 +1,12 @@
+<p align="center">
+ <img width="155" height="150" alt="TRex Logo" src="Resources/logo.png">
+</p>
+
 # TRex 🦖
 
-TRex makes OCR easy and accessible on a Mac. But what is OCR anyway? Imagine you have a PDF file or a Web page where you can't select the text, image with text on it, or even a YouTube video. Forget retyping it manually; with TRex, you can extract text from anywhere, and it is as easy as taking a screenshot.
+TRex makes OCR easy and accessible on a Mac. 
+
+But what is OCR anyway? Imagine you have a PDF file or a Web page where you can't select the text, image with text on it, or even a YouTube video. Forget retyping it manually; with TRex, you can extract text from anywhere, and it is as easy as taking a screenshot.
 
 ![Demo](Resources/demo.gif)
 
@@ -13,7 +19,7 @@ or Install with Homebrew
 brew tap melonamin/formulae
 brew install trex
 ```
-or if you want to support us buy it from the App Store
+or if you want to support us buy it from the App Store(coming soon)
 
 Runs on macOS Big Sur (11.0) and up.
 
