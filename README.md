@@ -10,6 +10,16 @@ But what is OCR anyway? Imagine you have a PDF file or a Web page where you can'
 
 ![Demo](Resources/demo.gif)
 
+## Use cases
+TRex can help you to copy text from:
+- A PDF with non-selectable text
+- A screenshot
+- YouTube video
+- Zoom call screen sharing
+- ... and more!
+
+If you can see it on your screen - TRex can copy it.
+
 ## How to get TRex
 Download from [GitHub Releases](https://github.com/amebalabs/TRex/releases)
 
