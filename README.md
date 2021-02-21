@@ -29,7 +29,7 @@ or Install with Homebrew
 brew tap melonamin/formulae
 brew install trex
 ```
-or if you want to support us buy it from the App Store(coming soon)
+or if you want to support us buy it from the App Store (coming soon)
 
 Runs on macOS Big Sur (11.0) and up.
 
@@ -42,11 +42,11 @@ Runs on macOS Big Sur (11.0) and up.
 
 Every feature in TRex works offline, no internet is needed.
 
-- Text recognition(OCR)
+- Text recognition (OCR)
 - Read QR Code and barcodes
 - Handy macOS menu bar app, with option to hide it
 - Configurable global shortcuts
-- Configurable recongnition language
+- Configurable recognition language
 - URL scheme support `trex:\\capture`
 
 ## Acknowledgements 
