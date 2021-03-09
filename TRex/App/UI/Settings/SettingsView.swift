@@ -160,7 +160,7 @@ struct AboutSettingsView: View {
             Divider()
             HStack {
                 Spacer()
-                Button("Visit out Website", action: {
+                Button("Visit our Website", action: {
                     NSWorkspace.shared.open(URL(string: "https://ameba.co")!)
                 })
                 Button("Contact Us", action: {
