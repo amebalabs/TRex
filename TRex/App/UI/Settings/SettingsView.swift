@@ -140,11 +140,10 @@ struct AboutSettingsView: View {
     var body: some View {
         VStack {
             HStack {
-                Image("trex")
+                Image("mac_256")
                     .resizable()
-                    .renderingMode(.template)
-                    .accentColor(.white)
-                    .frame(width: 65, height: 65, alignment: .leading)
+                    .renderingMode(.original)
+                    .frame(width: 90, height: 90, alignment: .leading)
 
                 VStack(alignment: .leading) {
                     Text("TRex")
@@ -169,7 +168,7 @@ struct AboutSettingsView: View {
             }.padding(.top, 10)
                 .padding(.bottom, 20)
         }
-        .frame(width: 400, height: 100)
+        .frame(width: 400, height: 120)
     }
 }
 
