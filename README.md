@@ -21,15 +21,18 @@ TRex can help you to copy text from:
 If you can see it on your screen - TRex can copy it.
 
 ## How to get TRex
+### GitHub
 Download from [GitHub Releases](https://github.com/amebalabs/TRex/releases)
 
+### Homebrew
 or Install with Homebrew
 
 ```
 brew tap melonamin/formulae
 brew install trex
 ```
-or if you want to support us buy it from the App Store (coming soon)
+### App Store
+or if you want to support us buy it from the [App Store](https://apps.apple.com/us/app/trex-easy-ocr/id1554515538)
 
 Runs on macOS Big Sur (11.0) and up.
 
