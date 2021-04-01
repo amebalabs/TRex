@@ -28,8 +28,7 @@ Download from [GitHub Releases](https://github.com/amebalabs/TRex/releases)
 or Install with Homebrew
 
 ```
-brew tap melonamin/formulae
-brew install trex
+brew install melonamin/formulae/trex
 ```
 ### App Store
 or if you want to support us buy it from the [App Store](https://apps.apple.com/us/app/trex-easy-ocr/id1554515538)
