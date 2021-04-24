@@ -49,7 +49,7 @@ Every feature in TRex works offline, no internet is needed.
 - Handy macOS menu bar app, with option to hide it
 - Configurable global shortcuts
 - Configurable recognition language
-- URL scheme support `trex:\\capture`
+- URL scheme support `trex://capture`
 
 ## Acknowledgements 
 
