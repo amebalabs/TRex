@@ -10,6 +10,9 @@ class Preferences: ObservableObject {
         case RecongitionLanguage
         case NeedsOnboarding
         case MenuBarIcon
+        case AutoOpenCapturedURL
+        case AutoOpenQRCodeURL
+        case AutoOpenProvidedURL
     }
 
     enum MenuBarIcon: String, CaseIterable {
@@ -83,6 +86,24 @@ class Preferences: ObservableObject {
         }
     }
 
+    @Published var autoOpenCapturedURL: Bool {
+        didSet {
+            Preferences.setValue(value: autoOpenCapturedURL, key: .AutoOpenCapturedURL)
+        }
+    }
+
+    @Published var autoOpenQRCodeURL: Bool {
+        didSet {
+            Preferences.setValue(value: autoOpenQRCodeURL, key: .AutoOpenQRCodeURL)
+        }
+    }
+
+    @Published var autoOpenProvidedURL: String {
+        didSet {
+            Preferences.setValue(value: autoOpenProvidedURL, key: .AutoOpenProvidedURL)
+        }
+    }
+
     @Published var recongitionLanguage: RecongitionLanguage {
         didSet {
             Preferences.setValue(value: recongitionLanguage.rawValue, key: .RecongitionLanguage)
@@ -99,6 +120,9 @@ class Preferences: ObservableObject {
         needsOnboarding = Preferences.getValue(key: .NeedsOnboarding) as? Bool ?? true
         captureSound = Preferences.getValue(key: .CaptureSound) as? Bool ?? true
         showMenuBarIcon = Preferences.getValue(key: .ShowMenuBarIcon) as? Bool ?? true
+        autoOpenCapturedURL = Preferences.getValue(key: .AutoOpenCapturedURL) as? Bool ?? false
+        autoOpenQRCodeURL = Preferences.getValue(key: .AutoOpenQRCodeURL) as? Bool ?? false
+        autoOpenProvidedURL = Preferences.getValue(key: .AutoOpenProvidedURL) as? String ?? ""
         recongitionLanguage = .English
         if let lang = Preferences.getValue(key: .RecongitionLanguage) as? String {
             recongitionLanguage = RecongitionLanguage(rawValue: lang) ?? .English

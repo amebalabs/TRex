@@ -66,7 +66,7 @@ struct GeneralSettingsView: View {
                         }
                     }
                 }.frame(height: 70)
-                    .padding([.leading, .trailing], 10)
+                .padding([.leading, .trailing], 10)
             }
 
             Section(header: Text("Recognition Language")) {
@@ -120,19 +120,36 @@ struct ShortcutsSettingsView: View {
 }
 
 struct AutomationSettingsView: View {
+    @EnvironmentObject var preferences: Preferences
+    let width: CGFloat = 80
     var body: some View {
-        VStack(alignment: .center) {
-            Image(systemName: "hammer")
-                .font(.title)
-            Text("Under construction")
-                .font(.title)
+        Form {
+            ToggleView(label: "Open URLs", secondLabel: "Detected in Text", state: $preferences.autoOpenCapturedURL, width: width)
+            ToggleView(label: "", secondLabel: "From QR Code", state: $preferences.autoOpenCapturedURL, width: width)
+
+            Divider()
+
+            HStack {
+                HStack {
+                    Spacer()
+                    Text("Trigger URL Scheme:")
+                }.frame(width: width)
+                TextField("URL to Open", text: $preferences.autoOpenProvidedURL)
+            }
+
+            HStack {
+                HStack {
+                    Spacer()
+                    Text("")
+                }.frame(width: width)
+                Text("{text} variable contains captured text")
+                    .font(.footnote)
+            }
+
             Spacer()
-            Button("Send an idea", action: {
-                NSWorkspace.shared.open(URL(string: "mailto:info@ameba.co")!)
-            })
         }
         .padding(20)
-        .frame(width: 350, height: 100)
+        .frame(width: 350, height: 200)
     }
 }
 
@@ -166,7 +183,7 @@ struct AboutSettingsView: View {
                     NSWorkspace.shared.open(URL(string: "mailto:info@ameba.co")!)
                 })
             }.padding(.top, 10)
-                .padding(.bottom, 20)
+            .padding(.bottom, 20)
         }
         .frame(width: 400, height: 120)
     }
@@ -177,13 +194,17 @@ struct ToggleView: View {
     let secondLabel: String
     @Binding var state: Bool
     let width: CGFloat
+
+    var mainLabel: String {
+        guard !label.isEmpty else {return ""}
+        return "\(label):"
+    }
     var body: some View {
         HStack {
             HStack {
                 Spacer()
-                Text("\(label):")
+                Text(mainLabel)
             }.frame(width: width)
-            //            Text("\(label):")
             Toggle("", isOn: $state)
             Text(secondLabel)
         }
