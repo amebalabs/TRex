@@ -25,7 +25,7 @@ class TRex: NSObject {
     func capture() {
         _capture(completionHandler: { [weak self] text in
             guard let text = text else { return }
-            self?.setPasteboard(text)
+            self?.precessDetectedText(text)
         })
     }
 
@@ -55,6 +55,9 @@ class TRex: NSObject {
         let text = parseQR(image: image)
         guard text.isEmpty else {
             completionHandler(text)
+            if preferences.autoOpenQRCodeURL {
+                detectAndOpenURL(text: text)
+            }
             return
         }
         detectText(in: image)
@@ -64,10 +67,34 @@ class TRex: NSObject {
         NSApp.orderFrontStandardAboutPanel(nil)
     }
 
-    func setPasteboard(_ text: String) {
+    func precessDetectedText(_ text: String) {
+        var text = text
         let pasteBoard = NSPasteboard.general
         pasteBoard.clearContents()
         pasteBoard.setString(text, forType: .string)
+
+        if preferences.autoOpenProvidedURLAddNewLine {
+            text.append("\n")
+        }
+        if !preferences.autoOpenProvidedURL.isEmpty,
+           let url = URL(string: preferences.autoOpenProvidedURL
+                            .replacingOccurrences(of: "{text}", with: text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")) {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    private func detectAndOpenURL(text: String) {
+        let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+        let matches = detector?.matches(in: text, options: [], range: NSRange(location: 0, length: text.utf8.count))
+
+        matches?.forEach{ match in
+            guard let range = Range(match.range, in: text),
+                  case let urlStr = String(text[range]),
+                  let url = URL(string: urlStr)
+            else {return}
+
+            NSWorkspace.shared.open(url)
+        }
     }
 
     func parseQR(image: CGImage) -> String {
@@ -90,9 +117,10 @@ class TRex: NSObject {
                 print("Error detecting text: \(error)")
             } else {
                 if let result = self.handleDetectionResults(results: request.results) {
-                    let pasteBoard = NSPasteboard.general
-                    pasteBoard.clearContents()
-                    pasteBoard.setString(result, forType: .string)
+                    if self.preferences.autoOpenCapturedURL {
+                        self.detectAndOpenURL(text: result)
+                    }
+                    self.precessDetectedText(result)
                 }
             }
         }

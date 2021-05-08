@@ -125,7 +125,7 @@ struct AutomationSettingsView: View {
     var body: some View {
         Form {
             ToggleView(label: "Open URLs", secondLabel: "Detected in Text", state: $preferences.autoOpenCapturedURL, width: width)
-            ToggleView(label: "", secondLabel: "From QR Code", state: $preferences.autoOpenCapturedURL, width: width)
+            ToggleView(label: "", secondLabel: "From QR Code", state: $preferences.autoOpenQRCodeURL, width: width)
 
             Divider()
 
@@ -136,7 +136,6 @@ struct AutomationSettingsView: View {
                 }.frame(width: width)
                 TextField("URL to Open", text: $preferences.autoOpenProvidedURL)
             }
-
             HStack {
                 HStack {
                     Spacer()
@@ -145,7 +144,7 @@ struct AutomationSettingsView: View {
                 Text("{text} variable contains captured text")
                     .font(.footnote)
             }
-
+            ToggleView(label: "", secondLabel: "Append New Line", state: $preferences.autoOpenProvidedURLAddNewLine, width: width)
             Spacer()
         }
         .padding(20)
