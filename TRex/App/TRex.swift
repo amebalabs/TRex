@@ -81,6 +81,7 @@ class TRex: NSObject {
                             .replacingOccurrences(of: "{text}", with: text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")) {
             NSWorkspace.shared.open(url)
         }
+        try? FileManager.default.removeItem(atPath: screenShotFilePath)
     }
 
     private func detectAndOpenURL(text: String) {
