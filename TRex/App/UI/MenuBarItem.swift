@@ -8,7 +8,7 @@ class MenubarItem: NSObject {
     let preferences = Preferences.shared
     var statusBarItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let statusBarmenu = NSMenu()
-    let captureTextItem = NSMenuItem(title: "Capture text", action: #selector(captureText), keyEquivalent: "")
+    let captureTextItem = NSMenuItem(title: "Capture Text", action: #selector(captureText), keyEquivalent: "")
     let scanQRItem = NSMenuItem(title: "Scan QR Code", action: #selector(scanQRCode), keyEquivalent: "")
     let preferencesItem = NSMenuItem(title: "Preferences...", action: #selector(showPreferences), keyEquivalent: "")
     let quitItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
