@@ -62,3 +62,9 @@ Every feature in TRex works offline, no internet is needed.
 Portions of this software utilize the following copyrighted material, the use of which is hereby acknowledged:
  - LaunchAtLogin - Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
  - KeyboardShortcuts  - Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+## More Apps
+
+If you enjoy TRex you may like these as well:
+* [SwiftBar](https://github.com/swiftbar/SwiftBar) - Powerful macOS menu bar customization tool
+* [Esse](https://github.com/amebalabs/Esse) - Swiss army knife of text transformation for iOS and macOS
