@@ -56,4 +56,3 @@ Every feature in TRex works offline, no internet is needed.
 Portions of this software utilize the following copyrighted material, the use of which is hereby acknowledged:
  - LaunchAtLogin - Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
  - KeyboardShortcuts  - Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
- - Menu bar icon by Darius Dan https://www.flaticon.com/authors/darius-dan 

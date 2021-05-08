@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3957B9C52646DAEF00A62506 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 3957B9C42646DAEF00A62506 /* README.md */; };
 		FA2B835B25DEBF8200B23F25 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = FA2B835A25DEBF8200B23F25 /* Credits.rtf */; };
 		FA2B836125DEC31400B23F25 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2B836025DEC31400B23F25 /* OnboardingView.swift */; };
 		FA48BA3025DDEBCE00E98F77 /* EnumPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA48BA2F25DDEBCE00E98F77 /* EnumPicker.swift */; };
@@ -27,6 +28,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		3957B9C42646DAEF00A62506 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		FA2B835A25DEBF8200B23F25 /* Credits.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = Credits.rtf; sourceTree = "<group>"; };
 		FA2B836025DEC31400B23F25 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		FA48BA2F25DDEBCE00E98F77 /* EnumPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnumPicker.swift; sourceTree = "<group>"; };
@@ -90,6 +92,7 @@
 		FA5F872525DC243200B1AF77 = {
 			isa = PBXGroup;
 			children = (
+				3957B9C42646DAEF00A62506 /* README.md */,
 				FA5F873025DC243200B1AF77 /* TRex */,
 				FA5F872F25DC243200B1AF77 /* Products */,
 			);
@@ -225,6 +228,7 @@
 			files = (
 				FA2B835B25DEBF8200B23F25 /* Credits.rtf in Resources */,
 				FA5F873925DC243400B1AF77 /* Preview Assets.xcassets in Resources */,
+				3957B9C52646DAEF00A62506 /* README.md in Resources */,
 				FA5F873625DC243400B1AF77 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
