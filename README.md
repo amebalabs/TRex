@@ -49,7 +49,13 @@ Every feature in TRex works offline, no internet is needed.
 - Handy macOS menu bar app, with option to hide it
 - Configurable global shortcuts
 - Configurable recognition language
-- URL scheme support `trex://capture`
+- Automation actions
+  - Open URLs found in QR codes
+  - Detect and open URLs found in captured text
+  - Trigger a user defined URL scheme(for integration with other apps)
+- URL scheme support 
+  - `trex://capture` trigger capture
+  - `trex://showPreferences` open app preferences
 
 ## Acknowledgements 
 
