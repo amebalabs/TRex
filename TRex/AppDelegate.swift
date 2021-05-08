@@ -13,7 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let bundleID = Bundle.main.bundleIdentifier!
 
         if NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).count > 1 {
-            NSWorkspace.shared.open(URL(string: "trex://swhowPreferences")!)
+            NSWorkspace.shared.open(URL(string: "trex://showPreferences")!)
             NSApp.terminate(nil)
         }
 
@@ -41,7 +41,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             switch url.host?.lowercased() {
             case "capture":
                 trex.capture()
-            case "swhowpreferences":
+            case "showpreferences":
                 if let menu = NSApp.mainMenu?.items.first?.submenu {
                     menu.performActionForItem(at: 0)
                 }
