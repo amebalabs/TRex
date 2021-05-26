@@ -156,7 +156,7 @@ class TRex: NSObject {
             if let observation = result as? VNRecognizedTextObservation {
                 for text in observation.topCandidates(1) {
                     if !output.isEmpty {
-                        output.append("\n")
+                        output.append(preferences.ignoreLineBreaks ? " ":"\n")
                     }
                     output.append(text.string)
                 }

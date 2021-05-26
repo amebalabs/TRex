@@ -7,6 +7,7 @@ class Preferences: ObservableObject {
     enum PreferencesKeys: String {
         case CaptureSound
         case ShowMenuBarIcon
+        case IgnoreLineBreaks
         case RecongitionLanguage
         case NeedsOnboarding
         case MenuBarIcon
@@ -86,6 +87,12 @@ class Preferences: ObservableObject {
             Preferences.setValue(value: showMenuBarIcon, key: .ShowMenuBarIcon)
         }
     }
+    
+    @Published var ignoreLineBreaks: Bool {
+        didSet {
+            Preferences.setValue(value: ignoreLineBreaks, key: .IgnoreLineBreaks)
+        }
+    }
 
     @Published var autoOpenCapturedURL: Bool {
         didSet {
@@ -128,6 +135,7 @@ class Preferences: ObservableObject {
         needsOnboarding = Preferences.getValue(key: .NeedsOnboarding) as? Bool ?? true
         captureSound = Preferences.getValue(key: .CaptureSound) as? Bool ?? true
         showMenuBarIcon = Preferences.getValue(key: .ShowMenuBarIcon) as? Bool ?? true
+        ignoreLineBreaks = Preferences.getValue(key: .IgnoreLineBreaks) as? Bool ?? false
         autoOpenCapturedURL = Preferences.getValue(key: .AutoOpenCapturedURL) as? Bool ?? false
         autoOpenQRCodeURL = Preferences.getValue(key: .AutoOpenQRCodeURL) as? Bool ?? false
         autoOpenProvidedURL = Preferences.getValue(key: .AutoOpenProvidedURL) as? String ?? ""

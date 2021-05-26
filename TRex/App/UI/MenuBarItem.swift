@@ -8,8 +8,8 @@ class MenubarItem: NSObject {
     let preferences = Preferences.shared
     var statusBarItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let statusBarmenu = NSMenu()
-    let captureTextItem = NSMenuItem(title: "Capture Text", action: #selector(captureText), keyEquivalent: "")
-    let scanQRItem = NSMenuItem(title: "Scan QR Code", action: #selector(scanQRCode), keyEquivalent: "")
+    let captureTextItem = NSMenuItem(title: "Capture text", action: #selector(captureText), keyEquivalent: "")
+    let ignoreLineBreaksItem = NSMenuItem(title: "Ignore Line Breaks", action: #selector(ignoreLineBreaks), keyEquivalent: "")
     let preferencesItem = NSMenuItem(title: "Preferences...", action: #selector(showPreferences), keyEquivalent: "")
     let quitItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
     let aboutItem = NSMenuItem(title: "About TRex...", action: #selector(showAbout), keyEquivalent: "")
@@ -41,8 +41,9 @@ class MenubarItem: NSObject {
     }
 
     private func buildMenu() {
-        [captureTextItem, scanQRItem, preferencesItem, aboutItem, quitItem].forEach { $0.target = self }
+        [captureTextItem, ignoreLineBreaksItem, preferencesItem, aboutItem, quitItem].forEach { $0.target = self }
         statusBarmenu.addItem(captureTextItem)
+        statusBarmenu.addItem(ignoreLineBreaksItem)
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(aboutItem)
         if let menu = NSApp.mainMenu?.items.first, let item = menu.submenu?.items.first {
@@ -59,8 +60,8 @@ class MenubarItem: NSObject {
         trex.capture()
     }
 
-    @objc func scanQRCode() {
-        trex.capture()
+    @objc func ignoreLineBreaks() {
+        preferences.ignoreLineBreaks.toggle()
     }
 
     @objc func quit() {
@@ -86,6 +87,7 @@ class MenubarItem: NSObject {
 extension MenubarItem: NSMenuDelegate {
     func menuWillOpen(_: NSMenu) {
         captureTextItem.setShortcut(for: .captureText)
+        ignoreLineBreaksItem.state = preferences.ignoreLineBreaks ? .on:.off
     }
 }
 
