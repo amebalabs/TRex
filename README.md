@@ -58,7 +58,7 @@ Every feature in TRex works offline, no internet is needed.
 - Automation actions
   - Open URLs found in QR codes
   - Detect and open URLs found in captured text
-  - Trigger a user defined URL scheme(for integration with other apps)
+  - Trigger a user defined URL scheme (for integration with other apps)
 - URL scheme support 
   - `trex://capture` trigger capture
   - `trex://showPreferences` open app preferences
