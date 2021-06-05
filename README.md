@@ -12,9 +12,17 @@ TRex lives in the menu bar and available right where you need it the most:
 
 ![TRex](Resources/screenshot.png)
 
+To use TRex:
+1. Invoke "Capture Text" either through the menu bar or with a global configurable shortcut
+1. Select an area of the screen you want to extract text from, just like taking a screenshot
+1. There is no third step - **extracted text is in your clipboard**
+
 Demo:
 
 ![Demo](Resources/demo.gif)
+
+Please note, text editing application on the right is not part of TRex, this is [Tot](https://tot.rocks). 
+TRex is designed to be invisible and doesn't have any UI beyond the menu bar app and preferences. 
 
 ## Use cases
 TRex can help you to copy text from:
