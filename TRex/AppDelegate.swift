@@ -55,6 +55,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         KeyboardShortcuts.onKeyUp(for: .captureText) { [self] in
             trex.capture()
         }
+        
+        KeyboardShortcuts.onKeyUp(for: .captureTextAndTriggerAutomation) { [self] in
+            trex.capture(triggerAutomation: true)
+        }
     }
 
     func showOnboardingIfNeeded() {

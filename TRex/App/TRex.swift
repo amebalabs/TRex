@@ -22,10 +22,10 @@ class TRex: NSObject {
         return out
     }
     
-    func capture() {
+    func capture(triggerAutomation: Bool = false) {
         _capture(completionHandler: { [weak self] text in
             guard let text = text else { return }
-            self?.precessDetectedText(text)
+            self?.precessDetectedText(text, triggerAutomation: triggerAutomation)
         })
     }
 
@@ -67,7 +67,7 @@ class TRex: NSObject {
         NSApp.orderFrontStandardAboutPanel(nil)
     }
 
-    func precessDetectedText(_ text: String) {
+    func precessDetectedText(_ text: String, triggerAutomation: Bool = false) {
         var text = text
         let pasteBoard = NSPasteboard.general
         pasteBoard.clearContents()
@@ -76,7 +76,7 @@ class TRex: NSObject {
         if preferences.autoOpenProvidedURLAddNewLine {
             text.append("\n")
         }
-        if !preferences.autoOpenProvidedURL.isEmpty,
+        if triggerAutomation && !preferences.autoOpenProvidedURL.isEmpty,
            let url = URL(string: preferences.autoOpenProvidedURL
                             .replacingOccurrences(of: "{text}", with: text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")) {
             NSWorkspace.shared.open(url)

@@ -9,6 +9,7 @@ class MenubarItem: NSObject {
     var statusBarItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let statusBarmenu = NSMenu()
     let captureTextItem = NSMenuItem(title: "Capture Text", action: #selector(captureText), keyEquivalent: "")
+    let captureTextAndTriggerAutomationItem = NSMenuItem(title: "Trigger Automation", action: #selector(captureTextAndTriggerAutomation), keyEquivalent: "")
     let ignoreLineBreaksItem = NSMenuItem(title: "Ignore Line Breaks", action: #selector(ignoreLineBreaks), keyEquivalent: "")
     let preferencesItem = NSMenuItem(title: "Preferences...", action: #selector(showPreferences), keyEquivalent: "")
     let quitItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
@@ -41,8 +42,9 @@ class MenubarItem: NSObject {
     }
 
     private func buildMenu() {
-        [captureTextItem, ignoreLineBreaksItem, preferencesItem, aboutItem, quitItem].forEach { $0.target = self }
+        [captureTextItem, captureTextAndTriggerAutomationItem, ignoreLineBreaksItem, preferencesItem, aboutItem, quitItem].forEach { $0.target = self }
         statusBarmenu.addItem(captureTextItem)
+        statusBarmenu.addItem(captureTextAndTriggerAutomationItem)
         statusBarmenu.addItem(ignoreLineBreaksItem)
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(aboutItem)
@@ -58,6 +60,10 @@ class MenubarItem: NSObject {
 
     @objc func captureText() {
         trex.capture()
+    }
+
+    @objc func captureTextAndTriggerAutomation() {
+        trex.capture(triggerAutomation: true)
     }
 
     @objc func ignoreLineBreaks() {
@@ -87,6 +93,7 @@ class MenubarItem: NSObject {
 extension MenubarItem: NSMenuDelegate {
     func menuWillOpen(_: NSMenu) {
         captureTextItem.setShortcut(for: .captureText)
+        captureTextAndTriggerAutomationItem.setShortcut(for: .captureTextAndTriggerAutomation)
         ignoreLineBreaksItem.state = preferences.ignoreLineBreaks ? .on:.off
     }
 }

@@ -108,8 +108,14 @@ struct ShortcutsSettingsView: View {
         Form {
             Section(header: Text("Shortcuts")) {
                 HStack {
-                    Text("Capture text:")
+                    Text("Capture Text:")
+                    Spacer()
                     KeyboardShortcuts.Recorder(for: .captureText)
+                }
+                HStack {
+                    Text("Trigger Automation:")
+                    Spacer()
+                    KeyboardShortcuts.Recorder(for: .captureTextAndTriggerAutomation)
                 }
             }
             Spacer()
