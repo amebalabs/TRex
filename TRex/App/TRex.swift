@@ -23,13 +23,13 @@ class TRex: NSObject {
     }
     
     func capture(triggerAutomation: Bool = false) {
-        _capture(completionHandler: { [weak self] text in
+        _capture(triggerAutomation: triggerAutomation, completionHandler: { [weak self] text in
             guard let text = text else { return }
             self?.precessDetectedText(text, triggerAutomation: triggerAutomation)
         })
     }
 
-    private func _capture(completionHandler: (String?) -> Void) {
+    private func _capture(triggerAutomation: Bool = false, completionHandler: (String?) -> Void) {
         guard task == nil else { return }
         task = Process()
         task?.executableURL = sceenCaptureURL
@@ -60,7 +60,7 @@ class TRex: NSObject {
             }
             return
         }
-        detectText(in: image)
+        detectText(in: image, triggerAutomation: triggerAutomation)
     }
 
     func showAbout() {
@@ -77,8 +77,8 @@ class TRex: NSObject {
             text.append("\n")
         }
         if triggerAutomation && !preferences.autoOpenProvidedURL.isEmpty,
-           let url = URL(string: preferences.autoOpenProvidedURL
-                            .replacingOccurrences(of: "{text}", with: text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")) {
+           case let urlStr =  preferences.autoOpenProvidedURL.replacingOccurrences(of: "{text}", with: text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""),
+           let url = URL(string: urlStr) {
             NSWorkspace.shared.open(url)
         }
         try? FileManager.default.removeItem(atPath: screenShotFilePath)
@@ -112,7 +112,7 @@ class TRex: NSObject {
         }.joined(separator: " ")
     }
 
-    func detectText(in image: CGImage) {
+    func detectText(in image: CGImage, triggerAutomation: Bool = false) {
         let request = VNRecognizeTextRequest { request, error in
             if let error = error {
                 print("Error detecting text: \(error)")
@@ -121,7 +121,7 @@ class TRex: NSObject {
                     if self.preferences.autoOpenCapturedURL {
                         self.detectAndOpenURL(text: result)
                     }
-                    self.precessDetectedText(result)
+                    self.precessDetectedText(result, triggerAutomation: triggerAutomation)
                 }
             }
         }
