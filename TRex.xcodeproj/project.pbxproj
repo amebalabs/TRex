@@ -25,6 +25,10 @@
 		FA66345C25DEFD500087CCEA /* NSImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */; };
 		FA66345F25DF05950087CCEA /* PagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345E25DF05950087CCEA /* PagerView.swift */; };
 		FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */; };
+		FAFAC6F5272C4CAE00011ED6 /* AboutSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */; };
+		FAFAC6F7272C4CC700011ED6 /* AutomationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F6272C4CC700011ED6 /* AutomationSettingsView.swift */; };
+		FAFAC6F9272C4CEA00011ED6 /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F8272C4CEA00011ED6 /* GeneralSettingsView.swift */; };
+		FAFAC6FB272C4D3E00011ED6 /* ShortcutsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6FA272C4D3E00011ED6 /* ShortcutsSettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +51,10 @@
 		FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSImage+Extension.swift"; sourceTree = "<group>"; };
 		FA66345E25DF05950087CCEA /* PagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagerView.swift; sourceTree = "<group>"; };
 		FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationName+Extension.swift"; sourceTree = "<group>"; };
+		FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutSettingsView.swift; sourceTree = "<group>"; };
+		FAFAC6F6272C4CC700011ED6 /* AutomationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomationSettingsView.swift; sourceTree = "<group>"; };
+		FAFAC6F8272C4CEA00011ED6 /* GeneralSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsView.swift; sourceTree = "<group>"; };
+		FAFAC6FA272C4D3E00011ED6 /* ShortcutsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsSettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +83,10 @@
 			isa = PBXGroup;
 			children = (
 				FA5F874A25DCB50A00B1AF77 /* SettingsView.swift */,
+				FAFAC6F8272C4CEA00011ED6 /* GeneralSettingsView.swift */,
+				FAFAC6FA272C4D3E00011ED6 /* ShortcutsSettingsView.swift */,
+				FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */,
+				FAFAC6F6272C4CC700011ED6 /* AutomationSettingsView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -280,7 +292,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				FA2B836125DEC31400B23F25 /* OnboardingView.swift in Sources */,
+				FAFAC6FB272C4D3E00011ED6 /* ShortcutsSettingsView.swift in Sources */,
 				FA66345F25DF05950087CCEA /* PagerView.swift in Sources */,
+				FAFAC6F5272C4CAE00011ED6 /* AboutSettingsView.swift in Sources */,
 				FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */,
 				FA5F874825DCB3B200B1AF77 /* AppDelegate.swift in Sources */,
 				FA66345C25DEFD500087CCEA /* NSImage+Extension.swift in Sources */,
@@ -289,7 +303,9 @@
 				FA5F876225DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift in Sources */,
 				FA5F874B25DCB50A00B1AF77 /* SettingsView.swift in Sources */,
 				FA5F873425DC243200B1AF77 /* TRex.swift in Sources */,
+				FAFAC6F9272C4CEA00011ED6 /* GeneralSettingsView.swift in Sources */,
 				FA48BA3025DDEBCE00E98F77 /* EnumPicker.swift in Sources */,
+				FAFAC6F7272C4CC700011ED6 /* AutomationSettingsView.swift in Sources */,
 				FA5F873225DC243200B1AF77 /* TRexApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
