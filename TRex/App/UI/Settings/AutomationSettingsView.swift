@@ -24,6 +24,6 @@ struct AutomationSettingsView: View {
                        width: 129)
             Spacer()
         }.padding(20)
-            .frame(width: 450, height: 120)
+            .frame(width: 410, height: 120)
     }
 }
