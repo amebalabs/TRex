@@ -12,6 +12,7 @@ struct AboutSettingsView: View {
                 VStack(alignment: .leading) {
                     Text("TRex")
                         .font(.title3)
+                        .bold()
                     Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""))")
                         .font(.subheadline)
                     Text("Copyright ©2021 Ameba Labs. All rights reserved.")

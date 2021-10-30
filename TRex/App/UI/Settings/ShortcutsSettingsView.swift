@@ -4,7 +4,7 @@ import KeyboardShortcuts
 struct ShortcutsSettingsView: View {
     var body: some View {
         Form {
-            Section(header: Text("Shortcuts")) {
+            Section(header: Text("Shortcuts").bold()) {
                 HStack {
                     Text("Capture Text:")
                     Spacer()
