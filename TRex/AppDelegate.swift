@@ -40,7 +40,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         for url in urls {
             switch url.host?.lowercased() {
             case "capture":
-                trex.capture()
+                trex.capture(.captureScreen)
             case "showpreferences":
                 if let menu = NSApp.mainMenu?.items.first?.submenu {
                     menu.performActionForItem(at: 0)
@@ -52,12 +52,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func setupShortcuts() {
-        KeyboardShortcuts.onKeyUp(for: .captureText) { [self] in
-            trex.capture()
+        KeyboardShortcuts.onKeyUp(for: .captureScreen) { [self] in
+            trex.capture(.captureScreen)
         }
         
-        KeyboardShortcuts.onKeyUp(for: .captureTextAndTriggerAutomation) { [self] in
-            trex.capture(triggerAutomation: true)
+        KeyboardShortcuts.onKeyUp(for: .captureScreenAndTriggerAutomation) { [self] in
+            trex.capture(.captureScreenAndTriggerAutomation)
+        }
+        KeyboardShortcuts.onKeyUp(for: .captureClipboard) { [self] in
+            trex.capture(.captureClipboard)
         }
     }
 

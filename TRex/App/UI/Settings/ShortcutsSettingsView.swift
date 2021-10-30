@@ -8,12 +8,12 @@ struct ShortcutsSettingsView: View {
                 HStack {
                     Text("Capture Text:")
                     Spacer()
-                    KeyboardShortcuts.Recorder(for: .captureText)
+                    KeyboardShortcuts.Recorder(for: .captureScreen)
                 }
                 HStack {
                     Text("Trigger Automation:")
                     Spacer()
-                    KeyboardShortcuts.Recorder(for: .captureTextAndTriggerAutomation)
+                    KeyboardShortcuts.Recorder(for: .captureScreenAndTriggerAutomation)
                 }
                 HStack {
                     Text("Recognize from Clipboard:")

@@ -56,7 +56,7 @@ struct ShortcutView: View {
                 .font(.title)
             HStack {
                 Text("Capture text:")
-                KeyboardShortcuts.Recorder(for: .captureText)
+                KeyboardShortcuts.Recorder(for: .captureScreen)
             }
             Spacer()
         }.padding()

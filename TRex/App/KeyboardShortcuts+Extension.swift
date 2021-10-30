@@ -1,7 +1,13 @@
 import KeyboardShortcuts
 
 extension KeyboardShortcuts.Name {
-    static let captureText = Self("captureScreen")
-    static let captureTextAndTriggerAutomation = Self("captureTextAndTriggerAutomation")
+    static let captureScreen = Self("captureScreen")
+    static let captureScreenAndTriggerAutomation = Self("captureScreenAndTriggerAutomation")
     static let captureClipboard = Self("captureClipboard")
+}
+
+enum InvocationMode {
+    case captureScreen
+    case captureScreenAndTriggerAutomation
+    case captureClipboard
 }
