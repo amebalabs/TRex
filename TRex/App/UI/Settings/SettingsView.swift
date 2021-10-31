@@ -28,7 +28,6 @@ struct SettingsView: View {
                     Label("About", systemImage: "info")
                 }
                 .tag(Tabs.about)
-        }
-        .padding(20)
+        }.padding(20)
     }
 }

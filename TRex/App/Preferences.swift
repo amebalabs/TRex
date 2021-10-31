@@ -31,19 +31,20 @@ class Preferences: ObservableObject {
 
         func nsImage() -> NSImage {
             var image: NSImage?
+            let imageConfig = NSImage.SymbolConfiguration(pointSize: 50, weight: .heavy, scale: .large)
             switch self {
             case .Option1:
                 image = NSImage(named: "trex")
             case .Option2:
-                image = NSImage(systemSymbolName: "perspective", accessibilityDescription: nil)
+                image = NSImage(systemSymbolName: "perspective", accessibilityDescription: nil)?.withSymbolConfiguration(imageConfig)
             case .Option3:
-                image = NSImage(systemSymbolName: "crop", accessibilityDescription: nil)
+                image = NSImage(systemSymbolName: "crop", accessibilityDescription: nil)?.withSymbolConfiguration(imageConfig)
             case .Option4:
-                image = NSImage(systemSymbolName: "textbox", accessibilityDescription: nil)
+                image = NSImage(systemSymbolName: "textbox", accessibilityDescription: nil)?.withSymbolConfiguration(imageConfig)
             case .Option5:
-                image = NSImage(systemSymbolName: "doc.text.fill.viewfinder", accessibilityDescription: nil)
+                image = NSImage(systemSymbolName: "doc.text.fill.viewfinder", accessibilityDescription: nil)?.withSymbolConfiguration(imageConfig)
             case .Option6:
-                image = NSImage(systemSymbolName: "text.cursor", accessibilityDescription: nil)
+                image = NSImage(systemSymbolName: "text.cursor", accessibilityDescription: nil)?.withSymbolConfiguration(imageConfig)
             }
             image?.isTemplate = true
             return image!

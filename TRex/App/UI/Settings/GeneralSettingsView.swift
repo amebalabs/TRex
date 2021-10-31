@@ -43,7 +43,7 @@ struct GeneralSettingsView: View {
             }
         }
         .padding(20)
-        .frame(width: 350, height: preferences.showMenuBarIcon ? 200 : 110)
+        .frame(width: 410, height: preferences.showMenuBarIcon ? 200 : 110)
     }
 }
 
