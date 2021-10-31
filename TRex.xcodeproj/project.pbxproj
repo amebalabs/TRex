@@ -152,9 +152,9 @@
 		FA5F876825DDE18B00B1AF77 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				FA5F875A25DD59D000B1AF77 /* MenuBarItem.swift */,
 				FA2B835F25DEC2FD00B23F25 /* Settings */,
 				FA2B835E25DEC2EE00B23F25 /* Onboarding */,
-				FA5F875A25DD59D000B1AF77 /* MenuBarItem.swift */,
 				FA48BA3225DDEBD500E98F77 /* Helpers */,
 			);
 			path = UI;

@@ -52,12 +52,14 @@ class TRex: NSObject {
             return NSImage(contentsOfFile: screenShotFilePath)
         case .captureClipboard:
             if let url = NSPasteboard.general.readObjects(forClasses: [NSURL.self], options: nil)?.first as? NSURL,
-               let path = url.path {
+               url.isFileURL, let path = url.path {
                 return NSImage(contentsOfFile: path)
             }
+            
             if let image = NSPasteboard.general.readObjects(forClasses: [NSImage.self], options: nil)?.first as? NSImage {
                 return image
             }
+           
             return nil
         }
     }
