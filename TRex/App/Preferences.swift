@@ -6,6 +6,7 @@ class Preferences: ObservableObject {
     static let shared = Preferences()
     enum PreferencesKeys: String {
         case CaptureSound
+        case ResultNotification
         case ShowMenuBarIcon
         case IgnoreLineBreaks
         case RecongitionLanguage
@@ -82,6 +83,12 @@ class Preferences: ObservableObject {
             Preferences.setValue(value: captureSound, key: .CaptureSound)
         }
     }
+    
+    @Published var resultNotification: Bool {
+        didSet {
+            Preferences.setValue(value: resultNotification, key: .ResultNotification)
+        }
+    }
 
     @Published var showMenuBarIcon: Bool {
         didSet {
@@ -135,6 +142,7 @@ class Preferences: ObservableObject {
     init() {
         needsOnboarding = Preferences.getValue(key: .NeedsOnboarding) as? Bool ?? true
         captureSound = Preferences.getValue(key: .CaptureSound) as? Bool ?? true
+        resultNotification = Preferences.getValue(key: .ResultNotification) as? Bool ?? false
         showMenuBarIcon = Preferences.getValue(key: .ShowMenuBarIcon) as? Bool ?? true
         ignoreLineBreaks = Preferences.getValue(key: .IgnoreLineBreaks) as? Bool ?? false
         autoOpenCapturedURL = Preferences.getValue(key: .AutoOpenCapturedURL) as? Bool ?? false

@@ -5,7 +5,7 @@ struct GeneralSettingsView: View {
     @EnvironmentObject var preferences: Preferences
     @ObservedObject private var launchAtLogin = LaunchAtLogin.observable
 
-    let width: CGFloat = 70
+    let width: CGFloat = 90
     var body: some View {
         Form {
             ToggleView(label: "Startup", secondLabel: "Start at login",
@@ -15,6 +15,10 @@ struct GeneralSettingsView: View {
             ToggleView(label: "Sounds",
                        secondLabel: "Play sounds",
                        state: $preferences.captureSound,
+                       width: width)
+            ToggleView(label: "Notifications",
+                       secondLabel: "Show recognized text",
+                       state: $preferences.resultNotification,
                        width: width)
 
             ToggleView(label: "Menu bar", secondLabel: "Show icon",
@@ -43,7 +47,7 @@ struct GeneralSettingsView: View {
             }
         }
         .padding(20)
-        .frame(width: 410, height: preferences.showMenuBarIcon ? 200 : 110)
+        .frame(width: 410, height: preferences.showMenuBarIcon ? 220 : 140)
     }
 }
 

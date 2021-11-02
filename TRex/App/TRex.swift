@@ -1,5 +1,6 @@
 import SwiftUI
 import Vision
+import UserNotifications
 
 class TRex: NSObject {
     public static let shared = TRex()
@@ -88,6 +89,9 @@ class TRex: NSObject {
     }
     
     func precessDetectedText(_ text: String) {
+        defer {
+            try? FileManager.default.removeItem(atPath: screenShotFilePath)
+        }
         var text = text
         let pasteBoard = NSPasteboard.general
         pasteBoard.clearContents()
@@ -100,8 +104,9 @@ class TRex: NSObject {
            case let urlStr =  preferences.autoOpenProvidedURL.replacingOccurrences(of: "{text}", with: text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""),
            let url = URL(string: urlStr) {
             NSWorkspace.shared.open(url)
+            return
         }
-        try? FileManager.default.removeItem(atPath: screenShotFilePath)
+        showNotification(text: text)
     }
     
     private func detectAndOpenURL(text: String) {
@@ -183,5 +188,24 @@ class TRex: NSObject {
             }
         }
         return output
+    }
+}
+
+// MARK: Notifications
+extension TRex {
+    func showNotification(text: String) {
+        guard preferences.resultNotification else {return}
+        let content = UNMutableNotificationContent()
+        content.title = "TRex"
+        content.subtitle = "Captured text"
+        content.body = text
+
+        let uuidString = UUID().uuidString
+        let request = UNNotificationRequest(identifier: uuidString,
+                                            content: content, trigger: nil)
+
+        let notificationCenter = UNUserNotificationCenter.current()
+        notificationCenter.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        notificationCenter.add(request)
     }
 }
