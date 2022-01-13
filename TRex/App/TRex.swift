@@ -111,7 +111,7 @@ class TRex: NSObject {
     
     private func detectAndOpenURL(text: String) {
         let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
-        let matches = detector?.matches(in: text, options: [], range: NSRange(location: 0, length: text.utf8.count))
+        let matches = detector?.matches(in: text, options: [], range: NSRange(location: 0, length: text.count))
         
         matches?.forEach{ match in
             guard let range = Range(match.range, in: text),
