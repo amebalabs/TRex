@@ -57,6 +57,9 @@ class Preferences: ObservableObject {
         case French = "🇫🇷 French"
         case Italian = "🇮🇹 Italian"
         case German = "🇩🇪 German"
+        case Spanish = "🇪🇸 Spanish"
+        case Portuguese = "🇵🇹 Portuguese"
+        case Chinese = "🇨🇳 Chinese"
 
         func languageCode() -> String {
             switch self {
@@ -68,6 +71,12 @@ class Preferences: ObservableObject {
                 return "it"
             case .German:
                 return "de"
+            case .Spanish:
+                return "es"
+            case .Portuguese:
+                return "pt"
+            case .Chinese:
+                return "zh"
             }
         }
     }
