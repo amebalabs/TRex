@@ -66,17 +66,17 @@ class Preferences: ObservableObject {
             case .English:
                 return "en_US"
             case .French:
-                return "fr"
+                return "fr-FR"
             case .Italian:
-                return "it"
+                return "it-IT"
             case .German:
-                return "de"
+                return "de-DE"
             case .Spanish:
-                return "es"
+                return "es-ES"
             case .Portuguese:
-                return "pt"
+                return "pt-BR"
             case .Chinese:
-                return "zh"
+                return "zh-Hans"
             }
         }
     }
