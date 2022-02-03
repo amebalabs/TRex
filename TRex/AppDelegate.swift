@@ -41,6 +41,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             switch url.host?.lowercased() {
             case "capture":
                 trex.capture(.captureScreen)
+            case "captureclipboard":
+                trex.capture(.captureClipboard)
+            case "captureautomation":
+                trex.capture(.captureScreenAndTriggerAutomation)
+            case "captureclipboardautomation":  
+                trex.capture(.captureClipboardAndTriggerAutomation)
             case "showpreferences":
                 if let menu = NSApp.mainMenu?.items.first?.submenu {
                     menu.performActionForItem(at: 0)
