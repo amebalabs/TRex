@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AutomationSettingsView: View {
     @EnvironmentObject var preferences: Preferences
+    @EnvironmentObject var shortcutsManager: ShortcutsManager
     let width: CGFloat = 80
     var body: some View {
         VStack {
@@ -23,7 +24,37 @@ struct AutomationSettingsView: View {
                        state: $preferences.autoOpenProvidedURLAddNewLine,
                        width: 129)
             Spacer()
+            Divider()
+            HStack {
+                Picker("Run shortcut:", selection: $preferences.autoRunShortcut, content: {
+                    ForEach(shortcutsManager.shortcuts, id: \.self) { shortcut in
+                            Text(shortcut)
+                        }
+                })
+            
+                HStack(spacing: 0) {
+                    if !preferences.autoRunShortcut.isEmpty {
+                        Button(action: {
+                            shortcutsManager.runShortcut(inputText: "Hello from TRex!")
+                        }, label: {
+                            Image(systemName: "play.fill")
+                        })
+                        Button(action: {
+                            shortcutsManager.viewCurrentShortcut()
+                        }, label: {
+                            Image(systemName: "slider.horizontal.3")
+                        })
+                    }
+                    
+                    Button(action: {
+                        shortcutsManager.createShortcut()
+                    }, label: {
+                        Image(systemName: "plus")
+                    })
+                }
+            }
+            
         }.padding(20)
-            .frame(width: 410, height: 120)
+            .frame(width: 410, height: 160)
     }
 }
