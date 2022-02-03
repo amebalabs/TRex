@@ -16,6 +16,8 @@ class Preferences: ObservableObject {
         case AutoOpenQRCodeURL
         case AutoOpenProvidedURL
         case AutoOpenProvidedURLAddNewLine
+        case AutoRunShortcut
+        case DisableCopyToClipboard
     }
 
     enum MenuBarIcon: String, CaseIterable {
@@ -134,7 +136,19 @@ class Preferences: ObservableObject {
             Preferences.setValue(value: autoOpenProvidedURLAddNewLine, key: .AutoOpenProvidedURLAddNewLine)
         }
     }
+    
+    @Published var autoRunShortcut: String {
+        didSet {
+            Preferences.setValue(value: autoRunShortcut, key: .AutoRunShortcut)
+        }
+    }
 
+    @Published var disableCopyToClipboard: Bool {
+        didSet {
+            Preferences.setValue(value: disableCopyToClipboard, key: .DisableCopyToClipboard)
+        }
+    }
+    
 
     @Published var recongitionLanguage: RecongitionLanguage {
         didSet {
@@ -158,7 +172,9 @@ class Preferences: ObservableObject {
         autoOpenQRCodeURL = Preferences.getValue(key: .AutoOpenQRCodeURL) as? Bool ?? false
         autoOpenProvidedURL = Preferences.getValue(key: .AutoOpenProvidedURL) as? String ?? ""
         autoOpenProvidedURLAddNewLine = Preferences.getValue(key: .AutoOpenProvidedURLAddNewLine) as? Bool ?? true
+        autoRunShortcut = Preferences.getValue(key: .AutoRunShortcut) as? String ?? ""
         recongitionLanguage = .English
+        disableCopyToClipboard = Preferences.getValue(key: .DisableCopyToClipboard) as? Bool ?? false
         if let lang = Preferences.getValue(key: .RecongitionLanguage) as? String {
             recongitionLanguage = RecongitionLanguage(rawValue: lang) ?? .English
         }

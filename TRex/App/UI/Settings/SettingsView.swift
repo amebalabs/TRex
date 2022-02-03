@@ -23,6 +23,7 @@ struct SettingsView: View {
                     Label("Automation", systemImage: "bolt.badge.a")
                 }
                 .tag(Tabs.automation)
+                .environmentObject(ShortcutsManager())
             AboutSettingsView()
                 .tabItem {
                     Label("About", systemImage: "info")

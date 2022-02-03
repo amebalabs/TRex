@@ -5,6 +5,7 @@ import UserNotifications
 class TRex: NSObject {
     public static let shared = TRex()
     let preferences = Preferences.shared
+    let shortcutsManager = ShortcutsManager.shared
     private var currentInvocationMode: InvocationMode = .captureScreen
     
     var task: Process?
@@ -24,11 +25,20 @@ class TRex: NSObject {
         return out
     }
     
+    var hasAutomationsConfigured: Bool {
+        !preferences.autoOpenProvidedURL.isEmpty || !preferences.autoRunShortcut.isEmpty
+    }
+    
+    var invocationRequiresAutomation: Bool {
+        currentInvocationMode == .captureClipboardAndTriggerAutomation ||
+        currentInvocationMode == .captureScreenAndTriggerAutomation
+    }
+    
     func capture(_ mode: InvocationMode) {
         currentInvocationMode = mode
         _capture() { [weak self] text in
             guard let text = text else { return }
-            self?.precessDetectedText(text  )
+            self?.precessDetectedText(text)
         }
     }
     
@@ -51,7 +61,7 @@ class TRex: NSObject {
             task?.waitUntilExit()
             task = nil
             return NSImage(contentsOfFile: screenShotFilePath)
-        case .captureClipboard:
+        case .captureClipboard, .captureClipboardAndTriggerAutomation:
             if let url = NSPasteboard.general.readObjects(forClasses: [NSURL.self], options: nil)?.first as? NSURL,
                url.isFileURL, let path = url.path {
                 return NSImage(contentsOfFile: path)
@@ -60,12 +70,12 @@ class TRex: NSObject {
             if let image = NSPasteboard.general.readObjects(forClasses: [NSImage.self], options: nil)?.first as? NSImage {
                 return image
             }
-           
+            
             return nil
         }
     }
     
-    private func _capture(completionHandler: (String?) -> Void) {
+    private func _capture(completionHandler: @escaping (String?) -> Void) {
         guard task == nil else { return }
         
         guard let image = getImage()?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
@@ -81,33 +91,40 @@ class TRex: NSObject {
             }
             return
         }
-        detectText(in: image)
-    }
-    
-    func showAbout() {
-        NSApp.orderFrontStandardAboutPanel(nil)
+        detectText(in: image, completionHandler: completionHandler)
     }
     
     func precessDetectedText(_ text: String) {
+        showNotification(text: text)
+
         defer {
             try? FileManager.default.removeItem(atPath: screenShotFilePath)
         }
+        
+        //Choose between automation and clipboard
+        guard invocationRequiresAutomation, hasAutomationsConfigured else {
+            let pasteBoard = NSPasteboard.general
+            pasteBoard.clearContents()
+            pasteBoard.setString(text, forType: .string)
+            return
+        }
+        
+        //run shortcuts
+        shortcutsManager.runShortcut(inputText: text)
+        
         var text = text
-        let pasteBoard = NSPasteboard.general
-        pasteBoard.clearContents()
-        pasteBoard.setString(text, forType: .string)
         
         if preferences.autoOpenProvidedURLAddNewLine {
             text.append("\n")
         }
-        if currentInvocationMode == .captureScreenAndTriggerAutomation && !preferences.autoOpenProvidedURL.isEmpty,
-           case let urlStr =  preferences.autoOpenProvidedURL.replacingOccurrences(of: "{text}", with: text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""),
+        if case let urlStr = preferences.autoOpenProvidedURL.replacingOccurrences(of: "{text}", with: text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""),
            let url = URL(string: urlStr) {
             NSWorkspace.shared.open(url)
-            return
         }
-        showNotification(text: text)
+        
+        return
     }
+    
     
     private func detectAndOpenURL(text: String) {
         let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
@@ -137,7 +154,7 @@ class TRex: NSObject {
         }.joined(separator: " ")
     }
     
-    func detectText(in image: CGImage) {
+    func detectText(in image: CGImage, completionHandler: @escaping (String?) -> Void) {
         let request = VNRecognizeTextRequest { request, error in
             if let error = error {
                 print("Error detecting text: \(error)")
@@ -146,7 +163,7 @@ class TRex: NSObject {
                     if self.preferences.autoOpenCapturedURL {
                         self.detectAndOpenURL(text: result)
                     }
-                    self.precessDetectedText(result)
+                    completionHandler(result)
                 }
             }
         }
@@ -199,11 +216,11 @@ extension TRex {
         content.title = "TRex"
         content.subtitle = "Captured text"
         content.body = text
-
+        
         let uuidString = UUID().uuidString
         let request = UNNotificationRequest(identifier: uuidString,
                                             content: content, trigger: nil)
-
+        
         let notificationCenter = UNUserNotificationCenter.current()
         notificationCenter.requestAuthorization(options: [.alert, .sound]) { _, _ in }
         notificationCenter.add(request)

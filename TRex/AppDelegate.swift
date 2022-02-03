@@ -55,12 +55,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         KeyboardShortcuts.onKeyUp(for: .captureScreen) { [self] in
             trex.capture(.captureScreen)
         }
-        
         KeyboardShortcuts.onKeyUp(for: .captureScreenAndTriggerAutomation) { [self] in
             trex.capture(.captureScreenAndTriggerAutomation)
         }
         KeyboardShortcuts.onKeyUp(for: .captureClipboard) { [self] in
             trex.capture(.captureClipboard)
+        }
+        KeyboardShortcuts.onKeyUp(for: .captureClipboardAndTriggerAutomation) { [self] in
+            trex.capture(.captureClipboardAndTriggerAutomation)
         }
     }
     

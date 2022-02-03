@@ -4,26 +4,34 @@ import KeyboardShortcuts
 struct ShortcutsSettingsView: View {
     var body: some View {
         Form {
-            Section(header: Text("Shortcuts").bold()) {
+            Section(header: Text("Capture ➜ Clipboard").bold()) {
                 HStack {
-                    Text("Capture Text:")
+                    Text("From Screen:")
                     Spacer()
                     KeyboardShortcuts.Recorder(for: .captureScreen)
                 }
                 HStack {
-                    Text("Trigger Automation:")
+                    Text("From Clipboard:")
+                    Spacer()
+                    KeyboardShortcuts.Recorder(for: .captureClipboard)
+                }
+            }
+            Divider()
+            Section(header: Text("Capture ➜ Automation").bold()) {
+                HStack {
+                    Text("From Screen:")
                     Spacer()
                     KeyboardShortcuts.Recorder(for: .captureScreenAndTriggerAutomation)
                 }
                 HStack {
-                    Text("Recognize from Clipboard:")
+                    Text("From Clipboard:")
                     Spacer()
-                    KeyboardShortcuts.Recorder(for: .captureClipboard)
+                    KeyboardShortcuts.Recorder(for: .captureClipboardAndTriggerAutomation)
                 }
             }
             Spacer()
         }
         .padding(20)
-        .frame(width: 410, height: 120)
+        .frame(width: 410, height: 160)
     }
 }
