@@ -8,20 +8,20 @@ struct GeneralSettingsView: View {
     let width: CGFloat = 90
     var body: some View {
         Form {
-            ToggleView(label: "Startup", secondLabel: "Start at login",
+            ToggleView(label: "Startup", secondLabel: "Start at Login",
                        state: $launchAtLogin.isEnabled,
                        width: width)
 
             ToggleView(label: "Sounds",
-                       secondLabel: "Play sounds",
+                       secondLabel: "Play Sounds",
                        state: $preferences.captureSound,
                        width: width)
             ToggleView(label: "Notifications",
-                       secondLabel: "Show recognized text",
+                       secondLabel: "Show Recognized Text",
                        state: $preferences.resultNotification,
                        width: width)
 
-            ToggleView(label: "Menu bar", secondLabel: "Show icon",
+            ToggleView(label: "Menu Bar", secondLabel: "Show Icon",
                        state: $preferences.showMenuBarIcon,
                        width: width)
 

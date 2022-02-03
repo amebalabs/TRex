@@ -26,7 +26,7 @@ struct AutomationSettingsView: View {
             Spacer()
             Divider()
             HStack {
-                Picker("Run shortcut:", selection: $preferences.autoRunShortcut, content: {
+                Picker("Run Shortcut:", selection: $preferences.autoRunShortcut, content: {
                     ForEach(shortcutsManager.shortcuts, id: \.self) { shortcut in
                             Text(shortcut)
                         }
