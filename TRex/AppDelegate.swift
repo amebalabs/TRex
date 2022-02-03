@@ -48,9 +48,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             case "captureclipboardautomation":  
                 trex.capture(.captureClipboardAndTriggerAutomation)
             case "showpreferences":
-                if let menu = NSApp.mainMenu?.items.first?.submenu {
-                    menu.performActionForItem(at: 0)
-                }
+                menuBarItem?.showPreferences()
             default:
                 return
             }

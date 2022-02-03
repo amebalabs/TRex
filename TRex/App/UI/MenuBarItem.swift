@@ -8,8 +8,8 @@ class MenubarItem: NSObject {
     let preferences = Preferences.shared
     var statusBarItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let statusBarmenu = NSMenu()
-    let captureTextItem = NSMenuItem(title: "Capture Text", action: #selector(captureScreen), keyEquivalent: "")
-    let captureTextAndTriggerAutomationItem = NSMenuItem(title: "Trigger Automation", action: #selector(captureScreenAndTriggerAutomation), keyEquivalent: "")
+    let captureTextItem = NSMenuItem(title: "Capture", action: #selector(captureScreen), keyEquivalent: "")
+    let captureTextAndTriggerAutomationItem = NSMenuItem(title: "Capture & Run Automation", action: #selector(captureScreenAndTriggerAutomation), keyEquivalent: "")
     let ignoreLineBreaksItem = NSMenuItem(title: "Ignore Line Breaks", action: #selector(ignoreLineBreaks), keyEquivalent: "")
     let preferencesItem = NSMenuItem(title: "Preferences...", action: #selector(showPreferences), keyEquivalent: "")
     let quitItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
@@ -79,14 +79,8 @@ class MenubarItem: NSObject {
     }
 
     @objc func showPreferences() {
-        var windowRef: NSWindow
-        windowRef = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 100, height: 100),
-            styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
-            backing: .buffered, defer: false
-        )
-        windowRef.contentView = NSHostingView(rootView: SettingsView().environmentObject(Preferences.shared))
-        windowRef.makeKeyAndOrderFront(nil)
+        NSApp.sendAction(Selector(("showPreferencesWindow:")), to: self, from: self)
+        NSApp.activate(ignoringOtherApps: true)
     }
 }
 
