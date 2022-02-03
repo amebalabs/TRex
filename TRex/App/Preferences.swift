@@ -17,6 +17,7 @@ class Preferences: ObservableObject {
         case AutoOpenProvidedURL
         case AutoOpenProvidedURLAddNewLine
         case AutoRunShortcut
+        case CustomWords
     }
 
     enum MenuBarIcon: String, CaseIterable {
@@ -154,6 +155,16 @@ class Preferences: ObservableObject {
             Preferences.setValue(value: menuBarIcon.rawValue, key: .MenuBarIcon)
         }
     }
+    
+    @Published var customWords: String {
+        didSet {
+            Preferences.setValue(value: customWords.components(separatedBy: ","), key: .CustomWords)
+        }
+    }
+    
+    var customWordsList: [String] {
+        return customWords.components(separatedBy: ",")
+    }
 
     init() {
         needsOnboarding = Preferences.getValue(key: .NeedsOnboarding) as? Bool ?? true
@@ -166,6 +177,7 @@ class Preferences: ObservableObject {
         autoOpenProvidedURL = Preferences.getValue(key: .AutoOpenProvidedURL) as? String ?? ""
         autoOpenProvidedURLAddNewLine = Preferences.getValue(key: .AutoOpenProvidedURLAddNewLine) as? Bool ?? true
         autoRunShortcut = Preferences.getValue(key: .AutoRunShortcut) as? String ?? ""
+        customWords = Preferences.getValue(key: .CustomWords) as? String ?? ""
         recongitionLanguage = .English
         if let lang = Preferences.getValue(key: .RecongitionLanguage) as? String {
             recongitionLanguage = RecongitionLanguage(rawValue: lang) ?? .English

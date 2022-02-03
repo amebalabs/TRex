@@ -170,6 +170,7 @@ class TRex: NSObject {
         
         request.recognitionLanguages = [preferences.recongitionLanguage.languageCode()]
         request.recognitionLevel = .accurate
+        request.customWords = preferences.customWordsList
         
         performDetection(request: request, image: image)
     }

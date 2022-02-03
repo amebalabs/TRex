@@ -12,6 +12,7 @@
 		FA2B836125DEC31400B23F25 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2B836025DEC31400B23F25 /* OnboardingView.swift */; };
 		FA48BA3025DDEBCE00E98F77 /* EnumPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA48BA2F25DDEBCE00E98F77 /* EnumPicker.swift */; };
 		FA58E39327AA3DE60034837F /* ShortcutsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39227AA3DE60034837F /* ShortcutsManager.swift */; };
+		FA58E39527AB74530034837F /* CustomWordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39427AB74530034837F /* CustomWordsView.swift */; };
 		FA5F873225DC243200B1AF77 /* TRexApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F873125DC243200B1AF77 /* TRexApp.swift */; };
 		FA5F873425DC243200B1AF77 /* TRex.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F873325DC243200B1AF77 /* TRex.swift */; };
 		FA5F873625DC243400B1AF77 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FA5F873525DC243400B1AF77 /* Assets.xcassets */; };
@@ -39,6 +40,7 @@
 		FA2B836025DEC31400B23F25 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		FA48BA2F25DDEBCE00E98F77 /* EnumPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnumPicker.swift; sourceTree = "<group>"; };
 		FA58E39227AA3DE60034837F /* ShortcutsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsManager.swift; sourceTree = "<group>"; };
+		FA58E39427AB74530034837F /* CustomWordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomWordsView.swift; sourceTree = "<group>"; };
 		FA5F872E25DC243200B1AF77 /* TRex.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TRex.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA5F873125DC243200B1AF77 /* TRexApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TRexApp.swift; sourceTree = "<group>"; };
 		FA5F873325DC243200B1AF77 /* TRex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TRex.swift; sourceTree = "<group>"; };
@@ -91,6 +93,7 @@
 				FAFAC6FA272C4D3E00011ED6 /* ShortcutsSettingsView.swift */,
 				FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */,
 				FAFAC6F6272C4CC700011ED6 /* AutomationSettingsView.swift */,
+				FA58E39427AB74530034837F /* CustomWordsView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -322,6 +325,7 @@
 				FA48BA3025DDEBCE00E98F77 /* EnumPicker.swift in Sources */,
 				FAFAC6F7272C4CC700011ED6 /* AutomationSettingsView.swift in Sources */,
 				FA5F873225DC243200B1AF77 /* TRexApp.swift in Sources */,
+				FA58E39527AB74530034837F /* CustomWordsView.swift in Sources */,
 				FA58E39327AA3DE60034837F /* ShortcutsManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -463,7 +467,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.4.3;
+				MARKETING_VERSION = 1.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -489,7 +493,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.4.3;
+				MARKETING_VERSION = 1.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

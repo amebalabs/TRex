@@ -3,7 +3,7 @@ import SwiftUI
 
 struct SettingsView: View {
     private enum Tabs: Hashable {
-        case general, shortcuts, about, automation
+        case general, shortcuts, about, automation, customWords
     }
 
     var body: some View {
@@ -24,6 +24,11 @@ struct SettingsView: View {
                 }
                 .tag(Tabs.automation)
                 .environmentObject(ShortcutsManager())
+            CustomWordsView()
+                .tabItem {
+                    Label("Custom Words", systemImage: "text.redaction")
+                }
+                .tag(Tabs.customWords)
             AboutSettingsView()
                 .tabItem {
                     Label("About", systemImage: "info")
