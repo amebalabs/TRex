@@ -80,7 +80,6 @@ class MenubarItem: NSObject {
 
     @objc func showPreferences() {
         NSApp.sendAction(Selector(("showPreferencesWindow:")), to: self, from: self)
-        NSApp.activate(ignoringOtherApps: true)
     }
 }
 
@@ -89,6 +88,9 @@ extension MenubarItem: NSMenuDelegate {
         captureTextItem.setShortcut(for: .captureScreen)
         captureTextAndTriggerAutomationItem.setShortcut(for: .captureScreenAndTriggerAutomation)
         ignoreLineBreaksItem.state = preferences.ignoreLineBreaks ? .on:.off
+    }
+    func menuDidClose(_ menu: NSMenu) {
+        NSApp.activate(ignoringOtherApps: true)
     }
 }
 
