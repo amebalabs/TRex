@@ -94,7 +94,7 @@ class Preferences: ObservableObject {
             Preferences.setValue(value: captureSound, key: .CaptureSound)
         }
     }
-    
+
     @Published var resultNotification: Bool {
         didSet {
             Preferences.setValue(value: resultNotification, key: .ResultNotification)
@@ -106,7 +106,7 @@ class Preferences: ObservableObject {
             Preferences.setValue(value: showMenuBarIcon, key: .ShowMenuBarIcon)
         }
     }
-    
+
     @Published var ignoreLineBreaks: Bool {
         didSet {
             Preferences.setValue(value: ignoreLineBreaks, key: .IgnoreLineBreaks)
@@ -136,13 +136,12 @@ class Preferences: ObservableObject {
             Preferences.setValue(value: autoOpenProvidedURLAddNewLine, key: .AutoOpenProvidedURLAddNewLine)
         }
     }
-    
+
     @Published var autoRunShortcut: String {
         didSet {
             Preferences.setValue(value: autoRunShortcut, key: .AutoRunShortcut)
         }
     }
-    
 
     @Published var recongitionLanguage: RecongitionLanguage {
         didSet {
@@ -155,15 +154,15 @@ class Preferences: ObservableObject {
             Preferences.setValue(value: menuBarIcon.rawValue, key: .MenuBarIcon)
         }
     }
-    
+
     @Published var customWords: String {
         didSet {
             Preferences.setValue(value: customWords.components(separatedBy: ","), key: .CustomWords)
         }
     }
-    
+
     var customWordsList: [String] {
-        return customWords.components(separatedBy: ",")
+        customWords.components(separatedBy: ",")
     }
 
     init() {

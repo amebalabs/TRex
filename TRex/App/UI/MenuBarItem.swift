@@ -87,9 +87,10 @@ extension MenubarItem: NSMenuDelegate {
     func menuWillOpen(_: NSMenu) {
         captureTextItem.setShortcut(for: .captureScreen)
         captureTextAndTriggerAutomationItem.setShortcut(for: .captureScreenAndTriggerAutomation)
-        ignoreLineBreaksItem.state = preferences.ignoreLineBreaks ? .on:.off
+        ignoreLineBreaksItem.state = preferences.ignoreLineBreaks ? .on : .off
     }
-    func menuDidClose(_ menu: NSMenu) {
+
+    func menuDidClose(_: NSMenu) {
         NSApp.activate(ignoringOtherApps: true)
     }
 }

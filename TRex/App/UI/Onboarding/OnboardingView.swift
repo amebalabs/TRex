@@ -36,27 +36,26 @@ struct ShortcutView: View {
     @EnvironmentObject var preferences: Preferences
     @ObservedObject private var launchAtLogin = LaunchAtLogin.observable
     let width: CGFloat = 100
-    
+
     var body: some View {
         Form {
-            
             Text("Preferences")
                 .font(.title)
-            
+
             ToggleView(label: "Startup", secondLabel: "Start at Login",
                        state: $launchAtLogin.isEnabled,
                        width: width)
-            
+
             ToggleView(label: "Sounds",
                        secondLabel: "Play Sounds",
                        state: $preferences.captureSound,
                        width: width)
-            
+
             ToggleView(label: "Notifications",
                        secondLabel: "Show Recognized Text",
                        state: $preferences.resultNotification,
                        width: width)
-            
+
             ToggleView(label: "Menu Bar", secondLabel: "Show Icon",
                        state: $preferences.showMenuBarIcon,
                        width: width)
@@ -75,7 +74,6 @@ struct ShortcutView: View {
         }.padding(40)
     }
 }
-
 
 struct FinishView: View {
     var body: some View {

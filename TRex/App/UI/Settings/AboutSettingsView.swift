@@ -31,7 +31,7 @@ struct AboutSettingsView: View {
                     NSWorkspace.shared.open(URL(string: "mailto:info@ameba.co")!)
                 })
             }.padding(.top, 10)
-            .padding(.bottom, 20)
+                .padding(.bottom, 20)
         }
         .frame(width: 410, height: 120)
     }

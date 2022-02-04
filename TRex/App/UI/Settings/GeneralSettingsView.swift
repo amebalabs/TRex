@@ -1,5 +1,5 @@
-import SwiftUI
 import LaunchAtLogin
+import SwiftUI
 
 struct GeneralSettingsView: View {
     @EnvironmentObject var preferences: Preferences
@@ -37,7 +37,7 @@ struct GeneralSettingsView: View {
                         }
                     }
                 }.frame(height: 70)
-                .padding([.leading, .trailing], 10)
+                    .padding([.leading, .trailing], 10)
             }
 
             Section(header: Text("Recognition Language")) {
@@ -74,7 +74,6 @@ struct MenuBarIconView: View {
     }
 }
 
-
 struct ToggleView: View {
     let label: String
     let secondLabel: String
@@ -82,9 +81,10 @@ struct ToggleView: View {
     let width: CGFloat
 
     var mainLabel: String {
-        guard !label.isEmpty else {return ""}
+        guard !label.isEmpty else { return "" }
         return "\(label):"
     }
+
     var body: some View {
         HStack {
             HStack {

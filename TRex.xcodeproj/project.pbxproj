@@ -203,6 +203,7 @@
 				FA5F872C25DC243200B1AF77 /* Resources */,
 				FA2B835825DE188F00B23F25 /* Launch at Start */,
 				39CBA9AC25E160E800FDE12E /* Version */,
+				FA58E39827ACD1D00034837F /* Swift Format */,
 			);
 			buildRules = (
 			);
@@ -303,6 +304,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${BUILT_PRODUCTS_DIR}/LaunchAtLogin_LaunchAtLogin.bundle/Contents/Resources/copy-helper-swiftpm.sh\"\n";
+		};
+		FA58E39827ACD1D00034837F /* Swift Format */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Swift Format";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nswiftformat --swiftversion \"5.5.2\" \"$SRCROOT\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
