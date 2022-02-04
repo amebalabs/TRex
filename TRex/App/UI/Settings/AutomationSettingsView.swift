@@ -52,8 +52,7 @@ struct AutomationSettingsView: View {
                         Image(systemName: "plus")
                     })
                 }
-            }
-            
+            }.onAppear{shortcutsManager.getShortcuts()}
         }.padding(20)
             .frame(width: 410, height: 160)
     }

@@ -1,5 +1,17 @@
 import Foundation
 import AppKit
+import ScriptingBridge
+
+@objc protocol ShortcutsEvents {
+    @objc optional var shortcuts: SBElementArray { get }
+}
+@objc protocol Shortcut {
+    @objc optional var name: String { get }
+    @objc optional func run (withInput: Any?) -> Any?
+}
+
+extension SBApplication: ShortcutsEvents { }
+extension SBObject: Shortcut {}
 
 class ShortcutsManager: ObservableObject {
     static let shared = ShortcutsManager()
@@ -8,7 +20,6 @@ class ShortcutsManager: ObservableObject {
     var shellURL = URL(fileURLWithPath: "/bin/zsh")
     
     @Published var shortcuts: [String] = []
-    
     var currentShortcut: String {
         Preferences.shared.autoRunShortcut
     }
@@ -40,16 +51,15 @@ class ShortcutsManager: ObservableObject {
     
     func runShortcut(inputText: String) {
         guard !currentShortcut.isEmpty else {return}
-        var components = URLComponents()
-        components.scheme = "shortcuts"
-        components.host = "run-shortcut"
-        components.queryItems = [
-            URLQueryItem(name: "name", value: currentShortcut),
-            URLQueryItem(name: "input", value: "text"),
-            URLQueryItem(name: "text", value: inputText),
-        ]
-        
-        NSWorkspace.shared.open(components.url!)
+        guard let app: ShortcutsEvents? = SBApplication (bundleIdentifier: "com.apple.shortcuts.events") else {
+            print("Can't access Shortcuts app")
+            return
+        }
+        guard let shortcut = app?.shortcuts?.object(withName: currentShortcut) as? Shortcut else {
+            print("Shortcut doesn't exist")
+            return
+        }
+        _ = shortcut.run?(withInput: inputText)
     }
     
     func viewCurrentShortcut() {
@@ -58,7 +68,7 @@ class ShortcutsManager: ObservableObject {
         task = Process()
         task?.executableURL = shellURL
         task?.arguments = ["-c", "-l", "shortcuts view '\(currentShortcut)'"]
-    
+        
         task?.launch()
         task?.waitUntilExit()
     }

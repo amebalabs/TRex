@@ -8,5 +8,16 @@
 	<string>com.apple.screencapture.interactive</string>
 	<key>com.apple.security.files.user-selected.read-only</key>
 	<true/>
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
+	<key>com.apple.security.temporary-exception.apple-events</key>
+	<string>com.apple.shortcuts.events</string>
+	<key>com.apple.security.scirpting-targets</key>
+	<dict>
+		<key>com.apple.shortcuts.events</key>
+		<array>
+			<string>com.apple.shortcuts.run</string>
+		</array>
+	</dict>
 </dict>
 </plist>
