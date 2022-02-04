@@ -13,6 +13,7 @@
 		FA48BA3025DDEBCE00E98F77 /* EnumPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA48BA2F25DDEBCE00E98F77 /* EnumPicker.swift */; };
 		FA58E39327AA3DE60034837F /* ShortcutsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39227AA3DE60034837F /* ShortcutsManager.swift */; };
 		FA58E39527AB74530034837F /* CustomWordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39427AB74530034837F /* CustomWordsView.swift */; };
+		FA58E39727AC7F630034837F /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39627AC7F630034837F /* Utils.swift */; };
 		FA5F873225DC243200B1AF77 /* TRexApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F873125DC243200B1AF77 /* TRexApp.swift */; };
 		FA5F873425DC243200B1AF77 /* TRex.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F873325DC243200B1AF77 /* TRex.swift */; };
 		FA5F873625DC243400B1AF77 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FA5F873525DC243400B1AF77 /* Assets.xcassets */; };
@@ -41,6 +42,7 @@
 		FA48BA2F25DDEBCE00E98F77 /* EnumPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnumPicker.swift; sourceTree = "<group>"; };
 		FA58E39227AA3DE60034837F /* ShortcutsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsManager.swift; sourceTree = "<group>"; };
 		FA58E39427AB74530034837F /* CustomWordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomWordsView.swift; sourceTree = "<group>"; };
+		FA58E39627AC7F630034837F /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		FA5F872E25DC243200B1AF77 /* TRex.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TRex.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA5F873125DC243200B1AF77 /* TRexApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TRexApp.swift; sourceTree = "<group>"; };
 		FA5F873325DC243200B1AF77 /* TRex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TRex.swift; sourceTree = "<group>"; };
@@ -175,6 +177,7 @@
 				FA5F876D25DDE3E400B1AF77 /* Preferences.swift */,
 				FA58E39227AA3DE60034837F /* ShortcutsManager.swift */,
 				FA5F876125DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift */,
+				FA58E39627AC7F630034837F /* Utils.swift */,
 				FA5F876825DDE18B00B1AF77 /* UI */,
 			);
 			path = App;
@@ -323,6 +326,7 @@
 				FA5F873425DC243200B1AF77 /* TRex.swift in Sources */,
 				FAFAC6F9272C4CEA00011ED6 /* GeneralSettingsView.swift in Sources */,
 				FA48BA3025DDEBCE00E98F77 /* EnumPicker.swift in Sources */,
+				FA58E39727AC7F630034837F /* Utils.swift in Sources */,
 				FAFAC6F7272C4CC700011ED6 /* AutomationSettingsView.swift in Sources */,
 				FA5F873225DC243200B1AF77 /* TRexApp.swift in Sources */,
 				FA58E39527AB74530034837F /* CustomWordsView.swift in Sources */,

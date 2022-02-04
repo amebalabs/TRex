@@ -16,13 +16,18 @@ struct OnboardingView: View {
 struct WelcomeView: View {
     var body: some View {
         VStack {
-            Text("🦖\nWelcome to \nTRex")
+            Image("mac_256")
+                .resizable()
+                .renderingMode(.original)
+                .frame(width: 160, height: 160, alignment: .leading)
+            Text("Welcome to \nTRex")
                 .multilineTextAlignment(.center)
                 .font(.system(size: 50))
-            Text("Easy to use text recognition.")
+            Spacer()
+            Text("Easy to use text recognition")
                 .font(.title3)
             Spacer()
-                .frame(height: 100)
+                .frame(height: 20)
         }
     }
 }
@@ -30,7 +35,7 @@ struct WelcomeView: View {
 struct ShortcutView: View {
     @EnvironmentObject var preferences: Preferences
     @ObservedObject private var launchAtLogin = LaunchAtLogin.observable
-    let width: CGFloat = 70
+    let width: CGFloat = 100
     
     var body: some View {
         Form {
@@ -38,28 +43,36 @@ struct ShortcutView: View {
             Text("Preferences")
                 .font(.title)
             
-            ToggleView(label: "Startup", secondLabel: "Start at login",
+            ToggleView(label: "Startup", secondLabel: "Start at Login",
                        state: $launchAtLogin.isEnabled,
                        width: width)
             
             ToggleView(label: "Sounds",
-                       secondLabel: "Play sounds",
+                       secondLabel: "Play Sounds",
                        state: $preferences.captureSound,
                        width: width)
             
-            ToggleView(label: "Menu bar", secondLabel: "Show icon",
-                       state: $preferences.showMenuBarIcon,
+            ToggleView(label: "Notifications",
+                       secondLabel: "Show Recognized Text",
+                       state: $preferences.resultNotification,
                        width: width)
             
+            ToggleView(label: "Menu Bar", secondLabel: "Show Icon",
+                       state: $preferences.showMenuBarIcon,
+                       width: width)
+            Divider()
             Spacer()
-            Text("Shortcut")
+            Text("Shortcuts")
                 .font(.title)
             HStack {
-                Text("Capture text:")
+                Text("Capture from Screen:     ")
                 KeyboardShortcuts.Recorder(for: .captureScreen)
             }
-            Spacer()
-        }.padding()
+            HStack {
+                Text("Capture from Clipboard:")
+                KeyboardShortcuts.Recorder(for: .captureClipboard)
+            }
+        }.padding(40)
     }
 }
 
@@ -69,11 +82,11 @@ struct FinishView: View {
         VStack {
             Text("All Set!")
                 .font(.system(size: 50))
-            Text("Enjoy using the easiest text extraction tool.")
+            Text("Enjoy using the easiest text extraction tool")
                 .font(.title3)
                 .padding()
             Text("🦖🦖🦖")
-                .font(.title)
+                .font(.system(size: 50))
             Spacer()
                 .frame(height: 100)
         }

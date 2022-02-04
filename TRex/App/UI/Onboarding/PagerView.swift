@@ -23,28 +23,27 @@ struct PagerView<Content: View>: View {
                     .frame(width: geometry.size.width, alignment: .leading)
                     .offset(x: -CGFloat(self.currentIndex) * geometry.size.width)
                     .offset(x: self.translation)
-                    .animation(.easeIn(duration: 0.1))
-                    HStack {
-                        Spacer()
-                        ForEach(0 ..< self.pageCount, id: \.self) { index in
-                            Circle()
-                                .fill(index == self.currentIndex ? Color.white : Color.gray)
-                                .frame(width: 8, height: 8)
-                                .onTapGesture {
-                                    self.currentIndex = index
-                                }
-                        }
-                        Spacer()
-                    }.padding([.bottom], 5)
+                    .animation(.easeIn(duration: currentIndex == 0 ?  0:0.1))
                 }
-                Button(currentIndex == pageCount - 1 ? "Let's Go!" : "Continue", action: {
-                    guard currentIndex != pageCount - 1 else {
-                        NotificationCenter.default.post(name: .closeOnboarding, object: nil)
-                        return
-                    }
-                    self.currentIndex = min(max(Int(self.currentIndex + 1), 0), self.pageCount - 1)
-                }).frame(width: 200)
-                    .padding(.bottom, 10)
+                HStack {
+                    HStack {
+                    ForEach(0 ..< self.pageCount, id: \.self) { index in
+                        Circle()
+                            .fill(index == self.currentIndex ? Color.orange : Color.gray)
+                            .frame(width: 8, height: 8)
+                            .onTapGesture {
+                                self.currentIndex = index
+                            }
+                    }}.padding()
+                    Spacer()
+                    Button(currentIndex == pageCount - 1 ? "Let's Go!" : "Continue", action: {
+                        guard currentIndex != pageCount - 1 else {
+                            NotificationCenter.default.post(name: .closeOnboarding, object: nil)
+                            return
+                        }
+                        self.currentIndex = min(max(Int(self.currentIndex + 1), 0), self.pageCount - 1)
+                    }).padding()
+                }
             }
         }
     }
