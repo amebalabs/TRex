@@ -2,7 +2,7 @@ import SwiftUI
 import UserNotifications
 import Vision
 
-class TRex: NSObject {
+public class TRex: NSObject {
     public static let shared = TRex()
     let preferences = Preferences.shared
     let shortcutsManager = ShortcutsManager.shared
@@ -34,7 +34,7 @@ class TRex: NSObject {
             currentInvocationMode == .captureScreenAndTriggerAutomation
     }
 
-    func capture(_ mode: InvocationMode) {
+    public func capture(_ mode: InvocationMode) {
         currentInvocationMode = mode
         _capture { [weak self] text in
             guard let text = text else { return }

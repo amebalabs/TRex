@@ -1,4 +1,5 @@
 import SwiftUI
+import TRexCore
 
 struct AutomationSettingsView: View {
     @EnvironmentObject var preferences: Preferences

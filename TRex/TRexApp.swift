@@ -1,4 +1,5 @@
 import SwiftUI
+import TRexCore
 
 @main
 struct TRexApp: App {

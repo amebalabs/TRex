@@ -1,5 +1,6 @@
 import KeyboardShortcuts
 import SwiftUI
+import TRexCore
 
 struct SettingsView: View {
     private enum Tabs: Hashable {

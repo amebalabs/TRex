@@ -1,5 +1,6 @@
 import LaunchAtLogin
 import SwiftUI
+import TRexCore
 
 struct GeneralSettingsView: View {
     @EnvironmentObject var preferences: Preferences

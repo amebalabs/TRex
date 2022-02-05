@@ -1,4 +1,5 @@
 import SwiftUI
+import TRexCore
 
 struct CustomWordsView: View {
     @EnvironmentObject var preferences: Preferences
