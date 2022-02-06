@@ -76,7 +76,9 @@ Every feature in TRex works offline, no internet is needed.
 
 ## Integrations
 
-Official Alfred workflow
+### Alfred
+
+[Download official workflow](https://github.com/amebalabs/TRex/raw/main/Resources/TRex.alfredworkflow)
 
 ![TRex](Resources/alfred.png)
 
