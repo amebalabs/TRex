@@ -4,6 +4,8 @@ import SwiftUI
 
 public class Preferences: ObservableObject {
     public static let shared = Preferences()
+    static let userDefaults = UserDefaults(suiteName: "X93LWC49WV.TRex.preferences")!
+
     enum PreferencesKeys: String {
         case CaptureSound
         case ResultNotification
@@ -189,16 +191,16 @@ public class Preferences: ObservableObject {
 
     static func removeAll() {
         let domain = Bundle.main.bundleIdentifier!
-        UserDefaults.standard.removePersistentDomain(forName: domain)
-        UserDefaults.standard.synchronize()
+        userDefaults.removePersistentDomain(forName: domain)
+        userDefaults.synchronize()
     }
 
     private static func setValue(value: Any?, key: PreferencesKeys) {
-        UserDefaults.standard.setValue(value, forKey: key.rawValue)
-        UserDefaults.standard.synchronize()
+        userDefaults.setValue(value, forKey: key.rawValue)
+        userDefaults.synchronize()
     }
 
     private static func getValue(key: PreferencesKeys) -> Any? {
-        UserDefaults.standard.value(forKey: key.rawValue)
+        userDefaults.value(forKey: key.rawValue)
     }
 }
