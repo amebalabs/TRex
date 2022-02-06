@@ -13,9 +13,9 @@ TRex lives in the menu bar and available right where you need it the most:
 ![TRex](Resources/screenshot.png)
 
 To use TRex:
-1. Invoke "Capture Text" either through the menu bar or with a global configurable shortcut
-1. Select an area of the screen you want to extract text from, just like taking a screenshot
-1. There is no third step - **extracted text is in your clipboard**
+1. Invoke "Capture" either through the menu bar or with a global configurable shortcut
+2. Select an area of the screen you want to extract text from, just like taking a screenshot
+3. There is no third step - **extracted text is in your clipboard**
 
 Demo:
 
@@ -35,41 +35,50 @@ TRex can help you to copy text from:
 If you can see it on your screen - TRex can copy it.
 
 ## How to get TRex
+### App Store
+Buy TRex from the [App Store](https://apps.apple.com/us/app/trex-easy-ocr/id1554515538)
+
 ### GitHub
-Download from [GitHub Releases](https://github.com/amebalabs/TRex/releases)
+Download from [GitHub Releases](https://github.com/amebalabs/TRex/releases/latest)
 
 ### Homebrew
-or Install with Homebrew
+Install from Homebrew
 
 ```
 brew install melonamin/formulae/trex
 ```
-### App Store
-or if you want to support us buy it from the [App Store](https://apps.apple.com/us/app/trex-easy-ocr/id1554515538)
 
 Runs on macOS Big Sur (11.0) and up.
-
-## ...or build it from source
-- Clone or download a copy of this repository
-- Open `TRex/TRex.xcodeproj`
-- Press play
 
 ## Features
 
 Every feature in TRex works offline, no internet is needed.
 
 - Text recognition (OCR)
-- Read QR Code and barcodes
+- Read QR Codes and barcodes
 - Handy macOS menu bar app, with option to hide it
 - Configurable global shortcuts
 - Configurable recognition language
+- Custom words list
+- CLI tool `/Applications/TRex.app/Contents/MacOS/cli/trex`
 - Automation actions
+  - Run a Shortcut from Shortcuts.app
   - Open URLs found in QR codes
   - Detect and open URLs found in captured text
   - Trigger a user defined URL scheme (for integration with other apps)
 - URL scheme support 
-  - `trex://capture` trigger capture
+  - `trex://capture` trigger capture from screen
+  - `trex://captureclipboard` trigger capture from clipboard
+  - `trex://captureautomation` trigger screen capture and run automation
+  - `trex://captureclipboardautomation` trigger capture from clipboard and run automation
+  - `trex://shortcut?name=` set Shortcut assigned to "Run Shortcut" automation action
   - `trex://showPreferences` open app preferences
+
+## Integrations
+
+Official Alfred workflow
+
+![TRex](Resources/alfred.png)
 
 ## Acknowledgements 
 
