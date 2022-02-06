@@ -1,22 +1,24 @@
 import ArgumentParser
 import Foundation
 
-let trex = TRex()
+let _trex = TRex()
 
-struct TRexCMD: ParsableCommand {
-    @Flag(name: .shortAndLong, help: "Run Automation")
+struct trex: ParsableCommand {
+    static let configuration = CommandConfiguration(abstract: "Magic OCR for macOS")
+
+    @Flag(name: .shortAndLong, help: "Run automation with extracted text as input. Automations are configured in TRex app")
     var automation = false
 
-    @Flag(name: .shortAndLong, help: "Capture from Clipboard")
+    @Flag(name: .shortAndLong, help: "Capture from image in clipboard")
     var clipboard = false
 
     mutating func run() throws {
         if clipboard {
-            trex.capture(automation ? .captureClipboardAndTriggerAutomation : .captureClipboard)
+            _trex.capture(automation ? .captureClipboardAndTriggerAutomation : .captureClipboard)
             return
         }
-        trex.capture(automation ? .captureScreenAndTriggerAutomation : .captureScreen)
+        _trex.capture(automation ? .captureScreenAndTriggerAutomation : .captureScreen)
     }
 }
 
-TRexCMD.main()
+trex.main()
