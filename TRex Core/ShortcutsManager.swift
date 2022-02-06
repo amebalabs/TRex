@@ -14,13 +14,13 @@ import ScriptingBridge
 extension SBApplication: ShortcutsEvents {}
 extension SBObject: Shortcut {}
 
-class ShortcutsManager: ObservableObject {
+public class ShortcutsManager: ObservableObject {
     static let shared = ShortcutsManager()
     var task: Process?
     var shortcutsURL = URL(fileURLWithPath: "/usr/bin/shortcuts")
     var shellURL = URL(fileURLWithPath: "/bin/zsh")
 
-    @Published var shortcuts: [String] = []
+    @Published public var shortcuts: [String] = []
     var currentShortcut: String {
         Preferences.shared.autoRunShortcut
     }
@@ -30,11 +30,11 @@ class ShortcutsManager: ObservableObject {
         return NSURL.fileURL(withPathComponents: [directory, "shortcutInput"])!
     }()
 
-    init() {
+    public init() {
         getShortcuts()
     }
 
-    func getShortcuts() {
+    public func getShortcuts() {
         task = Process()
         task?.executableURL = shortcutsURL
         task?.arguments = ["list"]
@@ -49,7 +49,7 @@ class ShortcutsManager: ObservableObject {
         shortcuts = output.components(separatedBy: .newlines).sorted()
     }
 
-    func runShortcut(inputText: String) {
+    public func runShortcut(inputText: String) {
         guard !currentShortcut.isEmpty else { return }
         guard let app: ShortcutsEvents? = SBApplication(bundleIdentifier: "com.apple.shortcuts.events") else {
             print("Can't access Shortcuts app")
@@ -62,7 +62,7 @@ class ShortcutsManager: ObservableObject {
         _ = shortcut.run?(withInput: inputText)
     }
 
-    func viewCurrentShortcut() {
+    public func viewCurrentShortcut() {
         guard !currentShortcut.isEmpty else { return }
 
         task = Process()
@@ -73,7 +73,7 @@ class ShortcutsManager: ObservableObject {
         task?.waitUntilExit()
     }
 
-    func createShortcut() {
+    public func createShortcut() {
         NSWorkspace.shared.open(URL(string: "shortcuts://create-shortcut")!)
     }
 }

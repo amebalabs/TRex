@@ -1,10 +1,11 @@
 import Combine
 import KeyboardShortcuts
 import SwiftUI
+import TRexCore
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var menuBarItem: MenubarItem?
-    var trex = TRex()
+    var trex = TRex.shared
     let preferences = Preferences.shared
     var cancellable: Set<AnyCancellable> = []
     var onboardingWindowController: NSWindowController?

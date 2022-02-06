@@ -6,10 +6,3 @@ extension KeyboardShortcuts.Name {
     static let captureClipboard = Self("captureClipboard")
     static let captureClipboardAndTriggerAutomation = Self("captureClipboardAndTriggerAutomation")
 }
-
-enum InvocationMode: String {
-    case captureScreen
-    case captureScreenAndTriggerAutomation
-    case captureClipboard
-    case captureClipboardAndTriggerAutomation
-}

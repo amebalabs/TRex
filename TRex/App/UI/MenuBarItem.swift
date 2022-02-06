@@ -2,6 +2,7 @@ import Cocoa
 import Combine
 import KeyboardShortcuts
 import SwiftUI
+import TRexCore
 
 class MenubarItem: NSObject {
     let trex: TRex

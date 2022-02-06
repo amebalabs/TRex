@@ -1,6 +1,7 @@
 import KeyboardShortcuts
 import LaunchAtLogin
 import SwiftUI
+import TRexCore
 
 struct OnboardingView: View {
     @State private var currentPage = 0

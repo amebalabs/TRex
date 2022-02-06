@@ -2,8 +2,10 @@ import Cocoa
 import Combine
 import SwiftUI
 
-class Preferences: ObservableObject {
-    static let shared = Preferences()
+public class Preferences: ObservableObject {
+    public static let shared = Preferences()
+    static let userDefaults = UserDefaults(suiteName: "X93LWC49WV.TRex.preferences")!
+
     enum PreferencesKeys: String {
         case CaptureSound
         case ResultNotification
@@ -20,7 +22,7 @@ class Preferences: ObservableObject {
         case CustomWords
     }
 
-    enum MenuBarIcon: String, CaseIterable {
+    public enum MenuBarIcon: String, CaseIterable {
         case Option1
         case Option2
         case Option3
@@ -28,11 +30,11 @@ class Preferences: ObservableObject {
         case Option5
         case Option6
 
-        func image() -> Image {
+        public func image() -> Image {
             Image(nsImage: nsImage())
         }
 
-        func nsImage() -> NSImage {
+        public func nsImage() -> NSImage {
             var image: NSImage?
             let imageConfig = NSImage.SymbolConfiguration(pointSize: 50, weight: .heavy, scale: .large)
             switch self {
@@ -54,7 +56,7 @@ class Preferences: ObservableObject {
         }
     }
 
-    enum RecongitionLanguage: String, CaseIterable {
+    public enum RecongitionLanguage: String, CaseIterable {
         case English = "🇺🇸 English"
         case French = "🇫🇷 French"
         case Italian = "🇮🇹 Italian"
@@ -83,85 +85,85 @@ class Preferences: ObservableObject {
         }
     }
 
-    @Published var needsOnboarding: Bool {
+    @Published public var needsOnboarding: Bool {
         didSet {
             Preferences.setValue(value: needsOnboarding, key: .NeedsOnboarding)
         }
     }
 
-    @Published var captureSound: Bool {
+    @Published public var captureSound: Bool {
         didSet {
             Preferences.setValue(value: captureSound, key: .CaptureSound)
         }
     }
 
-    @Published var resultNotification: Bool {
+    @Published public var resultNotification: Bool {
         didSet {
             Preferences.setValue(value: resultNotification, key: .ResultNotification)
         }
     }
 
-    @Published var showMenuBarIcon: Bool {
+    @Published public var showMenuBarIcon: Bool {
         didSet {
             Preferences.setValue(value: showMenuBarIcon, key: .ShowMenuBarIcon)
         }
     }
 
-    @Published var ignoreLineBreaks: Bool {
+    @Published public var ignoreLineBreaks: Bool {
         didSet {
             Preferences.setValue(value: ignoreLineBreaks, key: .IgnoreLineBreaks)
         }
     }
 
-    @Published var autoOpenCapturedURL: Bool {
+    @Published public var autoOpenCapturedURL: Bool {
         didSet {
             Preferences.setValue(value: autoOpenCapturedURL, key: .AutoOpenCapturedURL)
         }
     }
 
-    @Published var autoOpenQRCodeURL: Bool {
+    @Published public var autoOpenQRCodeURL: Bool {
         didSet {
             Preferences.setValue(value: autoOpenQRCodeURL, key: .AutoOpenQRCodeURL)
         }
     }
 
-    @Published var autoOpenProvidedURL: String {
+    @Published public var autoOpenProvidedURL: String {
         didSet {
             Preferences.setValue(value: autoOpenProvidedURL, key: .AutoOpenProvidedURL)
         }
     }
 
-    @Published var autoOpenProvidedURLAddNewLine: Bool {
+    @Published public var autoOpenProvidedURLAddNewLine: Bool {
         didSet {
             Preferences.setValue(value: autoOpenProvidedURLAddNewLine, key: .AutoOpenProvidedURLAddNewLine)
         }
     }
 
-    @Published var autoRunShortcut: String {
+    @Published public var autoRunShortcut: String {
         didSet {
             Preferences.setValue(value: autoRunShortcut, key: .AutoRunShortcut)
         }
     }
 
-    @Published var recongitionLanguage: RecongitionLanguage {
+    @Published public var recongitionLanguage: RecongitionLanguage {
         didSet {
             Preferences.setValue(value: recongitionLanguage.rawValue, key: .RecongitionLanguage)
         }
     }
 
-    @Published var menuBarIcon: MenuBarIcon {
+    @Published public var menuBarIcon: MenuBarIcon {
         didSet {
             Preferences.setValue(value: menuBarIcon.rawValue, key: .MenuBarIcon)
         }
     }
 
-    @Published var customWords: String {
+    @Published public var customWords: String {
         didSet {
             Preferences.setValue(value: customWords.components(separatedBy: ","), key: .CustomWords)
         }
     }
 
-    var customWordsList: [String] {
+    public var customWordsList: [String] {
         customWords.components(separatedBy: ",")
     }
 
@@ -189,16 +191,16 @@ class Preferences: ObservableObject {
 
     static func removeAll() {
         let domain = Bundle.main.bundleIdentifier!
-        UserDefaults.standard.removePersistentDomain(forName: domain)
-        UserDefaults.standard.synchronize()
+        userDefaults.removePersistentDomain(forName: domain)
+        userDefaults.synchronize()
     }
 
     private static func setValue(value: Any?, key: PreferencesKeys) {
-        UserDefaults.standard.setValue(value, forKey: key.rawValue)
-        UserDefaults.standard.synchronize()
+        userDefaults.setValue(value, forKey: key.rawValue)
+        userDefaults.synchronize()
     }
 
     private static func getValue(key: PreferencesKeys) -> Any? {
-        UserDefaults.standard.value(forKey: key.rawValue)
+        userDefaults.value(forKey: key.rawValue)
     }
 }

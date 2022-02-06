@@ -2,7 +2,7 @@ import SwiftUI
 import UserNotifications
 import Vision
 
-class TRex: NSObject {
+public class TRex: NSObject {
     public static let shared = TRex()
     let preferences = Preferences.shared
     let shortcutsManager = ShortcutsManager.shared
@@ -34,7 +34,7 @@ class TRex: NSObject {
             currentInvocationMode == .captureScreenAndTriggerAutomation
     }
 
-    func capture(_ mode: InvocationMode) {
+    public func capture(_ mode: InvocationMode) {
         currentInvocationMode = mode
         _capture { [weak self] text in
             guard let text = text else { return }
@@ -107,6 +107,10 @@ class TRex: NSObject {
             let pasteBoard = NSPasteboard.general
             pasteBoard.clearContents()
             pasteBoard.setString(text, forType: .string)
+            // output to STDOUT for cli
+            if Bundle.main.bundleIdentifier == "com.ameba.TRex.cli" {
+                print(text)
+            }
             return
         }
 
@@ -181,12 +185,10 @@ class TRex: NSObject {
 
         let handler = VNImageRequestHandler(cgImage: image, orientation: .up, options: [:])
 
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                try handler.perform(requests)
-            } catch {
-                print("Error: \(error)")
-            }
+        do {
+            try handler.perform(requests)
+        } catch {
+            print("Error: \(error)")
         }
     }
 
