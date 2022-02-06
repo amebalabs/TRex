@@ -107,6 +107,10 @@ public class TRex: NSObject {
             let pasteBoard = NSPasteboard.general
             pasteBoard.clearContents()
             pasteBoard.setString(text, forType: .string)
+            // output to STDOUT for cli
+            if Bundle.main.bundleIdentifier == "com.ameba.TRex.cli" {
+                print(text)
+            }
             return
         }
 
@@ -181,12 +185,10 @@ public class TRex: NSObject {
 
         let handler = VNImageRequestHandler(cgImage: image, orientation: .up, options: [:])
 
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                try handler.perform(requests)
-            } catch {
-                print("Error: \(error)")
-            }
+        do {
+            try handler.perform(requests)
+        } catch {
+            print("Error: \(error)")
         }
     }
 
