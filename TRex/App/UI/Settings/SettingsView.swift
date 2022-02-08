@@ -19,12 +19,20 @@ struct SettingsView: View {
                     Label("Shortcuts", systemImage: "command")
                 }
                 .tag(Tabs.general)
-            AutomationSettingsView()
-                .tabItem {
-                    Label("Automation", systemImage: "bolt.badge.a")
-                }
-                .tag(Tabs.automation)
-                .environmentObject(ShortcutsManager())
+            if #available(macOS 12.0, *) {
+                AutomationSettingsView()
+                    .tabItem {
+                        Label("Automation", systemImage: "bolt.badge.a")
+                    }
+                    .tag(Tabs.automation)
+                    .environmentObject(ShortcutsManager())
+            } else {
+                AutomationSettingsView()
+                    .tabItem {
+                        Label("Automation", systemImage: "bolt.badge.a")
+                    }
+                    .tag(Tabs.automation)
+            }
             CustomWordsView()
                 .tabItem {
                     Label("Custom Words", systemImage: "text.redaction")

@@ -14,6 +14,7 @@ import ScriptingBridge
 extension SBApplication: ShortcutsEvents {}
 extension SBObject: Shortcut {}
 
+@available(macOS 12.0, *)
 public class ShortcutsManager: ObservableObject {
     static let shared = ShortcutsManager()
     var task: Process?

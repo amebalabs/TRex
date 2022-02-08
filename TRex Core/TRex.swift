@@ -5,7 +5,6 @@ import Vision
 public class TRex: NSObject {
     public static let shared = TRex()
     let preferences = Preferences.shared
-    let shortcutsManager = ShortcutsManager.shared
     private var currentInvocationMode: InvocationMode = .captureScreen
 
     var task: Process?
@@ -114,9 +113,10 @@ public class TRex: NSObject {
             return
         }
 
-        // run shortcuts
-        shortcutsManager.runShortcut(inputText: text)
-
+        if #available(macOS 12, *) {
+            // run shortcuts
+            ShortcutsManager.shared.runShortcut(inputText: text)
+        }
         var text = text
 
         if preferences.autoOpenProvidedURLAddNewLine {
