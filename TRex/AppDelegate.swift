@@ -49,7 +49,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             case "captureclipboardautomation":
                 trex.capture(.captureClipboardAndTriggerAutomation)
             case "showpreferences":
-                menuBarItem?.showPreferences()
+                NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
             case "shortcut":
                 if let name = url.queryParameters?["name"] {
                     preferences.autoRunShortcut = name
