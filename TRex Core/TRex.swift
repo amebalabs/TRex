@@ -140,7 +140,13 @@ public class TRex: NSObject {
                   case let urlStr = String(text[range]),
                   let url = URL(string: urlStr)
             else { return }
-
+            if url.scheme == nil,
+               case let urlStr = "https://\(url.absoluteString)",
+               let newUrl = URL(string: urlStr)
+            {
+                NSWorkspace.shared.open(newUrl)
+                return
+            }
             NSWorkspace.shared.open(url)
         }
     }
