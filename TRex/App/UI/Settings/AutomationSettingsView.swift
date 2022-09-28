@@ -3,7 +3,6 @@ import TRexCore
 
 struct AutomationSettingsView: View {
     @EnvironmentObject var preferences: Preferences
-    @available(macOS 12.0, *)
     @EnvironmentObject var shortcutsManager: ShortcutsManager
     let width: CGFloat = 80
     var body: some View {
