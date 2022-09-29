@@ -30,18 +30,20 @@ public class TRex: NSObject {
 
     var invocationRequiresAutomation: Bool {
         currentInvocationMode == .captureClipboardAndTriggerAutomation ||
-            currentInvocationMode == .captureScreenAndTriggerAutomation
+            currentInvocationMode == .captureScreenAndTriggerAutomation ||
+            currentInvocationMode == .captureFromFileAndTriggerAutomation
     }
 
-    public func capture(_ mode: InvocationMode) {
+    public func capture(_ mode: InvocationMode, imagePath: String? = nil) {
         currentInvocationMode = mode
-        _capture { [weak self] text in
+        Task {
+            let text = await getText(imagePath)
             guard let text = text else { return }
-            self?.precessDetectedText(text)
+            precessDetectedText(text)
         }
     }
 
-    private func getImage() -> NSImage? {
+    private func getImage(_ imagePath: String? = nil) -> NSImage? {
         switch currentInvocationMode {
         case .captureScreen, .captureScreenAndTriggerAutomation:
             task = Process()
@@ -72,26 +74,33 @@ public class TRex: NSObject {
             }
 
             return nil
+        case .captureFromFile, .captureFromFileAndTriggerAutomation:
+            guard let imagePath = imagePath, FileManager.default.fileExists(atPath: imagePath) else {
+                return nil
+            }
+            return NSImage(contentsOfFile: imagePath)
         }
     }
 
-    private func _capture(completionHandler: @escaping (String?) -> Void) {
-        guard task == nil else { return }
+    private func getText(_ imagePath: String? = nil) async -> String? {
+        guard task == nil else { return nil }
 
-        guard let image = getImage()?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            completionHandler(nil)
-            return
+        guard let image = getImage(imagePath)?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            return nil
         }
 
         let text = parseQR(image: image)
         guard text.isEmpty else {
-            completionHandler(text)
             if preferences.autoOpenQRCodeURL {
                 detectAndOpenURL(text: text)
             }
-            return
+            return text
         }
-        detectText(in: image, completionHandler: completionHandler)
+        return await withCheckedContinuation { continuation in
+            detectText(in: image) { result in
+                continuation.resume(returning: result)
+            }
+        }
     }
 
     func precessDetectedText(_ text: String) {

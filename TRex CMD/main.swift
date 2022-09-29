@@ -12,12 +12,15 @@ struct trex: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Capture from image in clipboard")
     var clipboard = false
 
+    @Option(name: .shortAndLong, help: "Input image path")
+    var imagePath: String
+
     mutating func run() throws {
         if clipboard {
-            _trex.capture(automation ? .captureClipboardAndTriggerAutomation : .captureClipboard)
+            _trex.capture(automation ? .captureClipboardAndTriggerAutomation : .captureClipboard, imagePath: imagePath)
             return
         }
-        _trex.capture(automation ? .captureScreenAndTriggerAutomation : .captureScreen)
+        _trex.capture(automation ? .captureScreenAndTriggerAutomation : .captureScreen, imagePath: imagePath)
     }
 }
 

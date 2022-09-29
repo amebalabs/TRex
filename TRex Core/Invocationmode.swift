@@ -5,4 +5,6 @@ public enum InvocationMode: String {
     case captureScreenAndTriggerAutomation
     case captureClipboard
     case captureClipboardAndTriggerAutomation
+    case captureFromFile
+    case captureFromFileAndTriggerAutomation
 }
