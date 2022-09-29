@@ -102,37 +102,17 @@ extension MenubarItem: NSWindowDelegate, NSDraggingDestination {
     }
 
     func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        var files: [String] = []
-        let supportedClasses = [
-            NSFilePromiseReceiver.self,
-            NSURL.self,
-        ]
+        var filesURL: [URL] = []
 
-        let searchOptions: [NSPasteboard.ReadingOptionKey: Any] = [
-            .urlReadingFileURLsOnly: true,
-            .urlReadingContentsConformToTypes: ["public.image"],
-        ]
-
-        let destinationURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("Drops")
-        try? FileManager.default.createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
-
-        sender.enumerateDraggingItems(options: [], for: nil, classes: supportedClasses, searchOptions: searchOptions) { draggingItem, _, _ in
-            switch draggingItem.item {
-            case let filePromiseReceiver as NSFilePromiseReceiver:
-                filePromiseReceiver.receivePromisedFiles(atDestination: destinationURL, options: [:], operationQueue: self.workQueue) { fileURL, error in
-                    if error == nil {
-                        files.append(fileURL.path)
-                    }
-                }
-            case let fileURL as URL:
-                files.append(fileURL.path)
-            default: break
-            }
+        let pasteBoard = sender.draggingPasteboard
+        if let urls = pasteBoard.readObjects(forClasses: [NSURL.self]) as? [URL] {
+            filesURL = urls
         }
 
-//        env["DROPPED_FILES"] = files.joined(separator: ",")
-//        guard let scriptPath = plugin?.file else { return false }
-//        AppShared.runInTerminal(script: scriptPath, env: env, runInBash: plugin?.metadata?.shouldRunInBash ?? true)
+        if !filesURL.isEmpty, let imagePath = filesURL.first?.path {
+            trex.capture(.captureFromFile, imagePath: imagePath)
+        }
+
         return true
     }
 }
