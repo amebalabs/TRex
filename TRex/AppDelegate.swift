@@ -12,6 +12,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_: Notification) {
         let bundleID = Bundle.main.bundleIdentifier!
+        NSApp.servicesProvider = self
 
         if NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).count > 1 {
             NSWorkspace.shared.open(URL(string: "trex://showPreferences")!)
@@ -95,5 +96,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         onboardingWindowController?.showWindow(self)
         onboardingWindowController?.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
+extension AppDelegate {
+    @objc func fileServiceHandler(_ pboard: NSPasteboard, userData _: String, error _: NSErrorPointer) {
+        if let path = pboard.string(forType: .fileURL) {
+            let url = URL(string: path) ?? URL(fileURLWithPath: path)
+            let coord = NSFileCoordinator()
+            coord.coordinate(readingItemAt: url, options: .forUploading, error: nil, byAccessor: { url in
+                trex.capture(.captureFromFile, imagePath: url.path)
+            })
+        }
     }
 }
