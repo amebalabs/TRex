@@ -13,14 +13,20 @@ struct trex: ParsableCommand {
     var clipboard = false
 
     @Option(name: .shortAndLong, help: "Input image path")
-    var imagePath: String
+    var imagePath: String?
 
-    mutating func run() throws {
+    func run() throws {
         if clipboard {
-            _trex.capture(automation ? .captureClipboardAndTriggerAutomation : .captureClipboard, imagePath: imagePath)
+            _trex.capture(automation ? .captureClipboardAndTriggerAutomation : .captureClipboard)
             return
         }
-        _trex.capture(automation ? .captureScreenAndTriggerAutomation : .captureScreen, imagePath: imagePath)
+
+        if !(imagePath?.isEmpty ?? true) {
+            _trex.capture(automation ? .captureFromFileAndTriggerAutomation : .captureFromFile, imagePath: imagePath)
+            return
+        }
+
+        _trex.capture(automation ? .captureScreenAndTriggerAutomation : .captureScreen)
     }
 }
 

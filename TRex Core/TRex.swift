@@ -36,11 +36,9 @@ public class TRex: NSObject {
 
     public func capture(_ mode: InvocationMode, imagePath: String? = nil) {
         currentInvocationMode = mode
-        Task {
-            let text = await getText(imagePath)
-            guard let text = text else { return }
-            precessDetectedText(text)
-        }
+        let text = getText(imagePath)
+        guard let text = text else { return }
+        precessDetectedText(text)
     }
 
     private func getImage(_ imagePath: String? = nil) -> NSImage? {
@@ -82,7 +80,7 @@ public class TRex: NSObject {
         }
     }
 
-    private func getText(_ imagePath: String? = nil) async -> String? {
+    private func getText(_ imagePath: String? = nil) -> String? {
         guard task == nil else { return nil }
 
         guard let image = getImage(imagePath)?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
@@ -96,11 +94,16 @@ public class TRex: NSObject {
             }
             return text
         }
-        return await withCheckedContinuation { continuation in
-            detectText(in: image) { result in
-                continuation.resume(returning: result)
-            }
+
+        var out: String?
+        let group = DispatchGroup()
+        group.enter()
+        detectText(in: image) { result in
+            out = result
+            group.leave()
         }
+        _ = group.wait(timeout: .now() + 2)
+        return out
     }
 
     func precessDetectedText(_ text: String) {
@@ -232,6 +235,7 @@ public class TRex: NSObject {
 extension TRex {
     func showNotification(text: String) {
         guard preferences.resultNotification else { return }
+        guard Bundle.main.bundleIdentifier != "com.ameba.TRex.cli" else { return }
         let content = UNMutableNotificationContent()
         content.title = "TRex"
         content.subtitle = "Captured text"
