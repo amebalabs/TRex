@@ -21,7 +21,6 @@ struct GeneralSettingsView: View {
                        secondLabel: "Show Recognized Text",
                        state: $preferences.resultNotification,
                        width: width)
-
             ToggleView(label: "Menu Bar", secondLabel: "Show Icon",
                        state: $preferences.showMenuBarIcon,
                        width: width)
@@ -42,13 +41,19 @@ struct GeneralSettingsView: View {
             }
 
             Section(header: Text("Recognition Language")) {
+                if #available(OSX 13.0, *) {
+                    ToggleView(label: "Detection", secondLabel: "Automatic",
+                               state: $preferences.automaticLanguageDetection,
+                               width: width)
+                }
                 HStack {
                     EnumPicker(selected: $preferences.recongitionLanguage, title: "")
+                        .disabled(preferences.automaticLanguageDetection)
                 }
             }
         }
         .padding(20)
-        .frame(width: 410, height: preferences.showMenuBarIcon ? 220 : 140)
+        .frame(width: 410, height: preferences.showMenuBarIcon ? 260 : 180)
     }
 }
 

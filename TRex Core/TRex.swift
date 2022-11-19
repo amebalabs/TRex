@@ -190,8 +190,12 @@ public class TRex: NSObject {
                 }
             }
         }
-
-        request.recognitionLanguages = [preferences.recongitionLanguage.languageCode()]
+        if preferences.automaticLanguageDetection, #available(macOS 13.0, *) {
+            request.automaticallyDetectsLanguage = true
+        } else {
+            request.recognitionLanguages = [preferences.recongitionLanguage.languageCode()]
+        }
+        request.usesLanguageCorrection = true
         request.recognitionLevel = .accurate
         request.customWords = preferences.customWordsList
 
@@ -235,7 +239,7 @@ public class TRex: NSObject {
 extension TRex {
     func showNotification(text: String) {
         guard preferences.resultNotification else { return }
-        guard Bundle.main.bundleIdentifier != "com.ameba.TRex.cli" else {return}
+        guard Bundle.main.bundleIdentifier != "com.ameba.TRex.cli" else { return }
         let content = UNMutableNotificationContent()
         content.title = "TRex"
         content.subtitle = "Captured text"
@@ -244,7 +248,7 @@ extension TRex {
         let uuidString = UUID().uuidString
         let request = UNNotificationRequest(identifier: uuidString,
                                             content: content, trigger: nil)
-        
+
         let notificationCenter = UNUserNotificationCenter.current()
         notificationCenter.requestAuthorization(options: [.alert, .sound]) { _, _ in }
         notificationCenter.add(request)

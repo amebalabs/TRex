@@ -49,9 +49,16 @@ class MenubarItem: NSObject {
         statusBarmenu.addItem(ignoreLineBreaksItem)
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(aboutItem)
-        if let menu = NSApp.mainMenu?.items.first, let item = menu.submenu?.items.first {
-            menu.submenu?.removeItem(item)
-            statusBarmenu.addItem(item)
+        if #available(macOS 13.0, *) {
+            if let menu = NSApp.mainMenu?.items.first, let item = menu.submenu?.items.first {
+                menu.submenu?.removeItem(item)
+                statusBarmenu.addItem(item)
+            }
+        } else {
+            if let menu = NSApp.mainMenu?.items.first, let item = menu.submenu?.items[2] {
+                menu.submenu?.removeItem(item)
+                statusBarmenu.addItem(item)
+            }
         }
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(quitItem)

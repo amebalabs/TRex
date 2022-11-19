@@ -20,6 +20,7 @@ public class Preferences: ObservableObject {
         case AutoOpenProvidedURLAddNewLine
         case AutoRunShortcut
         case CustomWords
+        case AutomaticLanguageDetection
     }
 
     public enum MenuBarIcon: String, CaseIterable {
@@ -57,13 +58,30 @@ public class Preferences: ObservableObject {
     }
 
     public enum RecongitionLanguage: String, CaseIterable {
+        public static var allCases: [Preferences.RecongitionLanguage] = {
+            var languages: [RecongitionLanguage] = [.English, .French, .Italian, .German, .Spanish, .Portuguese, .Chinese, .ChineseTraditional]
+            if #available(OSX 13.0, *) {
+                languages.append(contentsOf: [.Korean, .Japanese, .Ukranian, .Russian])
+            }
+            return languages
+        }()
+
         case English = "🇺🇸 English"
         case French = "🇫🇷 French"
         case Italian = "🇮🇹 Italian"
         case German = "🇩🇪 German"
         case Spanish = "🇪🇸 Spanish"
         case Portuguese = "🇵🇹 Portuguese"
-        case Chinese = "🇨🇳 Chinese"
+        case Chinese = "🇨🇳 Chinese (Simplified)"
+        case ChineseTraditional = "🇨🇳 Chinese (Traditional)"
+        @available(macOS 13.0, *)
+        case Korean = "🇰🇷 Korean"
+        @available(macOS 13.0, *)
+        case Japanese = "🇯🇵 Japanese"
+        @available(macOS 13.0, *)
+        case Ukranian = "🇺🇦 Ukranian"
+        @available(macOS 13.0, *)
+        case Russian = "🇷🇺 Russian"
 
         func languageCode() -> String {
             switch self {
@@ -81,6 +99,16 @@ public class Preferences: ObservableObject {
                 return "pt-BR"
             case .Chinese:
                 return "zh-Hans"
+            case .ChineseTraditional:
+                return "zh-Hant"
+            case .Korean:
+                return "ko-KR"
+            case .Japanese:
+                return "ja-JP"
+            case .Ukranian:
+                return "uk-UA"
+            case .Russian:
+                return "ru-RU"
             }
         }
     }
@@ -167,6 +195,12 @@ public class Preferences: ObservableObject {
         customWords.components(separatedBy: ",")
     }
 
+    @Published public var automaticLanguageDetection: Bool {
+        didSet {
+            Preferences.setValue(value: automaticLanguageDetection, key: .AutomaticLanguageDetection)
+        }
+    }
+
     init() {
         needsOnboarding = Preferences.getValue(key: .NeedsOnboarding) as? Bool ?? true
         captureSound = Preferences.getValue(key: .CaptureSound) as? Bool ?? true
@@ -180,6 +214,7 @@ public class Preferences: ObservableObject {
         autoRunShortcut = Preferences.getValue(key: .AutoRunShortcut) as? String ?? ""
         customWords = Preferences.getValue(key: .CustomWords) as? String ?? ""
         recongitionLanguage = .English
+        automaticLanguageDetection = Preferences.getValue(key: .AutomaticLanguageDetection) as? Bool ?? false
         if let lang = Preferences.getValue(key: .RecongitionLanguage) as? String {
             recongitionLanguage = RecongitionLanguage(rawValue: lang) ?? .English
         }
