@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 52;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -32,12 +32,12 @@
 		FA5F873925DC243400B1AF77 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FA5F873825DC243400B1AF77 /* Preview Assets.xcassets */; };
 		FA5F874825DCB3B200B1AF77 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F874725DCB3B200B1AF77 /* AppDelegate.swift */; };
 		FA5F874B25DCB50A00B1AF77 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F874A25DCB50A00B1AF77 /* SettingsView.swift */; };
-		FA5F875825DCB97B00B1AF77 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = FA5F875725DCB97B00B1AF77 /* LaunchAtLogin */; };
 		FA5F875B25DD59D000B1AF77 /* MenuBarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F875A25DD59D000B1AF77 /* MenuBarItem.swift */; };
 		FA5F875F25DD637300B1AF77 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = FA5F875E25DD637300B1AF77 /* KeyboardShortcuts */; };
 		FA5F876225DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F876125DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift */; };
 		FA66345C25DEFD500087CCEA /* NSImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */; };
 		FA66345F25DF05950087CCEA /* PagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345E25DF05950087CCEA /* PagerView.swift */; };
+		FA87AF11292A5C7600E50225 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = FA87AF10292A5C7600E50225 /* LaunchAtLogin */; };
 		FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */; };
 		FAFAC6F5272C4CAE00011ED6 /* AboutSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */; };
 		FAFAC6F7272C4CC700011ED6 /* AutomationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F6272C4CC700011ED6 /* AutomationSettingsView.swift */; };
@@ -139,7 +139,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FA5F875825DCB97B00B1AF77 /* LaunchAtLogin in Frameworks */,
+				FA87AF11292A5C7600E50225 /* LaunchAtLogin in Frameworks */,
 				FA5F875F25DD637300B1AF77 /* KeyboardShortcuts in Frameworks */,
 				FA58E3B827AE1DD00034837F /* TRexCore.framework in Frameworks */,
 			);
@@ -350,14 +350,14 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = FA5F873E25DC243400B1AF77 /* Build configuration list for PBXNativeTarget "TRex" */;
 			buildPhases = (
+				FA58E39827ACD1D00034837F /* Swift Format */,
 				FA5F872A25DC243200B1AF77 /* Sources */,
 				FA5F872B25DC243200B1AF77 /* Frameworks */,
 				FA5F872C25DC243200B1AF77 /* Resources */,
 				FA2B835825DE188F00B23F25 /* Launch at Start */,
-				39CBA9AC25E160E800FDE12E /* Version */,
-				FA58E39827ACD1D00034837F /* Swift Format */,
 				FA58E3BD27AE1DD00034837F /* Embed Frameworks */,
 				FA58E3CF27AE24E40034837F /* Embed TRex CLI */,
+				39CBA9AC25E160E800FDE12E /* Version */,
 			);
 			buildRules = (
 			);
@@ -366,8 +366,8 @@
 			);
 			name = TRex;
 			packageProductDependencies = (
-				FA5F875725DCB97B00B1AF77 /* LaunchAtLogin */,
 				FA5F875E25DD637300B1AF77 /* KeyboardShortcuts */,
+				FA87AF10292A5C7600E50225 /* LaunchAtLogin */,
 			);
 			productName = TRex;
 			productReference = FA5F872E25DC243200B1AF77 /* TRex.app */;
@@ -403,9 +403,9 @@
 			);
 			mainGroup = FA5F872525DC243200B1AF77;
 			packageReferences = (
-				FA5F875625DCB97B00B1AF77 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */,
 				FA5F875D25DD637300B1AF77 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 				FA58E3DF27AE31DF0034837F /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
+				FA87AF0F292A5C7600E50225 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */,
 			);
 			productRefGroup = FA5F872F25DC243200B1AF77 /* Products */;
 			projectDirPath = "";
@@ -453,6 +453,7 @@
 		};
 		FA2B835825DE188F00B23F25 /* Launch at Start */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -610,7 +611,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
-				CURRENT_PROJECT_VERSION = 88;
+				CURRENT_PROJECT_VERSION = 100;
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/TRex CMD/Info.plist";
@@ -632,7 +633,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
-				CURRENT_PROJECT_VERSION = 88;
+				CURRENT_PROJECT_VERSION = 100;
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/TRex CMD/Info.plist";
@@ -842,7 +843,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 88;
+				CURRENT_PROJECT_VERSION = 100;
 				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -871,7 +872,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 88;
+				CURRENT_PROJECT_VERSION = 100;
 				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -939,20 +940,20 @@
 				minimumVersion = 1.0.0;
 			};
 		};
-		FA5F875625DCB97B00B1AF77 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sindresorhus/LaunchAtLogin";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 4.0.0;
-			};
-		};
 		FA5F875D25DD637300B1AF77 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 0.7.0;
+			};
+		};
+		FA87AF0F292A5C7600E50225 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/LaunchAtLogin";
+			requirement = {
+				branch = main;
+				kind = branch;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -963,15 +964,15 @@
 			package = FA58E3DF27AE31DF0034837F /* XCRemoteSwiftPackageReference "swift-argument-parser" */;
 			productName = ArgumentParser;
 		};
-		FA5F875725DCB97B00B1AF77 /* LaunchAtLogin */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = FA5F875625DCB97B00B1AF77 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */;
-			productName = LaunchAtLogin;
-		};
 		FA5F875E25DD637300B1AF77 /* KeyboardShortcuts */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FA5F875D25DD637300B1AF77 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
 			productName = KeyboardShortcuts;
+		};
+		FA87AF10292A5C7600E50225 /* LaunchAtLogin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA87AF0F292A5C7600E50225 /* XCRemoteSwiftPackageReference "LaunchAtLogin" */;
+			productName = LaunchAtLogin;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
