@@ -30,7 +30,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>72</string>
+	<string>98</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
@@ -41,5 +41,35 @@
 	<string>Please give TRex access to Shortcuts via Apple Script</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright ©2022 Ameba Labs. All rights reserved.</string>
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Extract Text with TRex </string>
+			</dict>
+			<key>NSMessage</key>
+			<string>fileServiceHandler</string>
+			<key>NSPortName</key>
+			<string>TRex</string>
+			<key>NSRequiredContext</key>
+			<dict/>
+			<key>NSReturnTypes</key>
+			<array/>
+			<key>NSSendFileTypes</key>
+			<array>
+				<string>com.apple.alias-file</string>
+				<string>public.file-url</string>
+			</array>
+			<key>NSSendTypes</key>
+			<array>
+				<string>com.apple.alias-file</string>
+				<string>public.file-url</string>
+			</array>
+			<key>NSTimeout</key>
+			<string>120000</string>
+		</dict>
+	</array>
 </dict>
 </plist>

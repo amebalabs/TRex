@@ -10,6 +10,7 @@
 		3957B9C52646DAEF00A62506 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 3957B9C42646DAEF00A62506 /* README.md */; };
 		FA2B835B25DEBF8200B23F25 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = FA2B835A25DEBF8200B23F25 /* Credits.rtf */; };
 		FA2B836125DEC31400B23F25 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2B836025DEC31400B23F25 /* OnboardingView.swift */; };
+		FA2E082A28E6334300B2FFB1 /* trex in Embed TRex CLI */ = {isa = PBXBuildFile; fileRef = FA58E39F27AE1CFA0034837F /* trex */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		FA48BA3025DDEBCE00E98F77 /* EnumPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA48BA2F25DDEBCE00E98F77 /* EnumPicker.swift */; };
 		FA58E39527AB74530034837F /* CustomWordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39427AB74530034837F /* CustomWordsView.swift */; };
 		FA58E39727AC7F630034837F /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39627AC7F630034837F /* Utils.swift */; };
@@ -21,7 +22,6 @@
 		FA58E3BF27AE1DEB0034837F /* TRex.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F873325DC243200B1AF77 /* TRex.swift */; };
 		FA58E3C227AE1E060034837F /* Invocationmode.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E3C127AE1E060034837F /* Invocationmode.swift */; };
 		FA58E3C827AE1E7B0034837F /* ShortcutsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39227AA3DE60034837F /* ShortcutsManager.swift */; };
-		FA58E3D727AE2D440034837F /* trex in Embed TRex CLI */ = {isa = PBXBuildFile; fileRef = FA58E39F27AE1CFA0034837F /* trex */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		FA58E3DB27AE2ED20034837F /* TRex.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F873325DC243200B1AF77 /* TRex.swift */; };
 		FA58E3DC27AE2ED20034837F /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F876D25DDE3E400B1AF77 /* Preferences.swift */; };
 		FA58E3DD27AE2ED30034837F /* Invocationmode.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E3C127AE1E060034837F /* Invocationmode.swift */; };
@@ -74,7 +74,7 @@
 			dstPath = cli;
 			dstSubfolderSpec = 6;
 			files = (
-				FA58E3D727AE2D440034837F /* trex in Embed TRex CLI */,
+				FA2E082A28E6334300B2FFB1 /* trex in Embed TRex CLI */,
 			);
 			name = "Embed TRex CLI";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -610,11 +610,12 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
+				CURRENT_PROJECT_VERSION = 88;
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/TRex CMD/Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.5.0;
+				MARKETING_VERSION = 1.6.0;
 				OTHER_CODE_SIGN_FLAGS = "$(inherited) -i $(PRODUCT_BUNDLE_IDENTIFIER)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex.cli;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -631,11 +632,12 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
+				CURRENT_PROJECT_VERSION = 88;
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/TRex CMD/Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.5.0;
+				MARKETING_VERSION = 1.6.0;
 				OTHER_CODE_SIGN_FLAGS = "$(inherited) -i $(PRODUCT_BUNDLE_IDENTIFIER)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex.cli;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -651,7 +653,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 83;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -668,7 +670,7 @@
 				);
 				MACH_O_TYPE = mh_dylib;
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.5.0;
+				MARKETING_VERSION = 1.5.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRexCore;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -686,7 +688,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 83;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -703,7 +705,7 @@
 				);
 				MACH_O_TYPE = mh_dylib;
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.5.0;
+				MARKETING_VERSION = 1.5.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRexCore;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -840,7 +842,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 66;
+				CURRENT_PROJECT_VERSION = 88;
 				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -851,7 +853,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.5.0;
+				MARKETING_VERSION = 1.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -869,7 +871,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 66;
+				CURRENT_PROJECT_VERSION = 88;
 				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -880,7 +882,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.5.0;
+				MARKETING_VERSION = 1.6.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

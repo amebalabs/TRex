@@ -12,8 +12,8 @@ struct trex: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Capture from image in clipboard")
     var clipboard = false
 
-    @Option(name: .shortAndLong, help: "Input image path")
-    var imagePath: String?
+    @Flag(name: .shortAndLong, help: "Read file from standard input")
+    var input = false
 
     func run() throws {
         if clipboard {
@@ -21,8 +21,9 @@ struct trex: ParsableCommand {
             return
         }
 
-        if !(imagePath?.isEmpty ?? true) {
-            _trex.capture(automation ? .captureFromFileAndTriggerAutomation : .captureFromFile, imagePath: imagePath)
+        if input, let data = try? FileHandle.standardInput.readToEnd() {
+            try? data.write(to: URL(fileURLWithPath: _trex.screenShotFilePath))
+            _trex.capture(automation ? .captureFromFileAndTriggerAutomation : .captureFromFile, imagePath: _trex.screenShotFilePath)
             return
         }
 
