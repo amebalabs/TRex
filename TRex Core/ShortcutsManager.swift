@@ -53,15 +53,22 @@ public class ShortcutsManager: ObservableObject {
 
     public func runShortcut(inputText: String) {
         guard !currentShortcut.isEmpty else { return }
-        guard let app: ShortcutsEvents? = SBApplication(bundleIdentifier: "com.apple.shortcuts.events") else {
-            print("Can't access Shortcuts app")
-            return
-        }
-        guard let shortcut = app?.shortcuts?.object(withName: currentShortcut) as? Shortcut else {
-            print("Shortcut doesn't exist")
-            return
-        }
-        _ = shortcut.run?(withInput: inputText)
+        try? inputText.write(toFile: shortcutInputPath.path, atomically: true, encoding: .utf8)
+        task = Process()
+        task?.executableURL = shortcutsURL
+        task?.arguments = ["run", "\(currentShortcut)", "-i", "\(shortcutInputPath.path)"]
+
+        task?.launch()
+        task?.waitUntilExit()
+//        guard let app: ShortcutsEvents? = SBApplication(bundleIdentifier: "com.apple.shortcuts.events") else {
+//            print("Can't access Shortcuts app")
+//            return
+//        }
+//        guard let shortcut = app?.shortcuts?.object(withName: currentShortcut) as? Shortcut else {
+//            print("Shortcut doesn't exist")
+//            return
+//        }
+//        _ = shortcut.run?(withInput: inputText)
     }
 
     public func viewCurrentShortcut() {

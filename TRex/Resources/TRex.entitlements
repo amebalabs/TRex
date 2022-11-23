@@ -12,8 +12,6 @@
 	<true/>
 	<key>com.apple.security.files.user-selected.read-only</key>
 	<true/>
-	<key>com.apple.security.temporary-exception.apple-events</key>
-	<string>com.apple.shortcuts.events</string>
 	<key>com.apple.security.temporary-exception.mach-register.global-name</key>
 	<string>com.apple.screencapture.interactive</string>
 </dict>
