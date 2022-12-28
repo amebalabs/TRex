@@ -1,3 +1,8 @@
+[![GitHub license](https://img.shields.io/github/license/amebalabs/TRex.svg)](https://github.com/amebalabs/TRex/blob/master/LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/amebalabs/TRex)](https://github.com/amebalabs/TRex/releases/latest)
+[![Github all releases](https://img.shields.io/github/downloads/amebalabs/TRex/total.svg)](https://github.com/amebalabs/TRex/releases/)
+
+
 <p align="center">
  <img width="155" height="150" alt="TRex Logo" src="Resources/logo.png">
 </p>
