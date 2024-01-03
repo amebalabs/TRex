@@ -38,6 +38,7 @@
 		FA66345C25DEFD500087CCEA /* NSImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */; };
 		FA66345F25DF05950087CCEA /* PagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345E25DF05950087CCEA /* PagerView.swift */; };
 		FA87AF11292A5C7600E50225 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = FA87AF10292A5C7600E50225 /* LaunchAtLogin */; };
+		FACA7A152B46119B004C5000 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACA7A142B46119B004C5000 /* Helpers.swift */; };
 		FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */; };
 		FAFAC6F5272C4CAE00011ED6 /* AboutSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */; };
 		FAFAC6F7272C4CC700011ED6 /* AutomationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F6272C4CC700011ED6 /* AutomationSettingsView.swift */; };
@@ -111,6 +112,7 @@
 		FA5F876D25DDE3E400B1AF77 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSImage+Extension.swift"; sourceTree = "<group>"; };
 		FA66345E25DF05950087CCEA /* PagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagerView.swift; sourceTree = "<group>"; };
+		FACA7A142B46119B004C5000 /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
 		FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationName+Extension.swift"; sourceTree = "<group>"; };
 		FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutSettingsView.swift; sourceTree = "<group>"; };
 		FAFAC6F6272C4CC700011ED6 /* AutomationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomationSettingsView.swift; sourceTree = "<group>"; };
@@ -206,6 +208,7 @@
 				FA58E3C127AE1E060034837F /* Invocationmode.swift */,
 				FA58E39227AA3DE60034837F /* ShortcutsManager.swift */,
 				FA58E3D127AE25850034837F /* Info.plist */,
+				FACA7A142B46119B004C5000 /* Helpers.swift */,
 			);
 			path = "TRex Core";
 			sourceTree = "<group>";
@@ -311,9 +314,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = FA58E3A527AE1CFA0034837F /* Build configuration list for PBXNativeTarget "trex" */;
 			buildPhases = (
+				FA58E3CB27AE24930034837F /* Swift Format */,
 				FA58E39B27AE1CFA0034837F /* Sources */,
 				FA58E39C27AE1CFA0034837F /* Frameworks */,
-				FA58E3CB27AE24930034837F /* Swift Format */,
 			);
 			buildRules = (
 			);
@@ -332,10 +335,10 @@
 			buildConfigurationList = FA58E3BA27AE1DD00034837F /* Build configuration list for PBXNativeTarget "TRexCore" */;
 			buildPhases = (
 				FA58E3AD27AE1DD00034837F /* Headers */,
+				FA58E3CE27AE24CB0034837F /* Swift Format */,
 				FA58E3AE27AE1DD00034837F /* Sources */,
 				FA58E3AF27AE1DD00034837F /* Frameworks */,
 				FA58E3CD27AE24BB0034837F /* Version */,
-				FA58E3CE27AE24CB0034837F /* Swift Format */,
 			);
 			buildRules = (
 			);
@@ -380,7 +383,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 1320;
-				LastUpgradeCheck = 1320;
+				LastUpgradeCheck = 1410;
 				TargetAttributes = {
 					FA58E39E27AE1CFA0034837F = {
 						CreatedOnToolsVersion = 13.2;
@@ -435,6 +438,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		39CBA9AC25E160E800FDE12E /* Version */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -472,6 +476,7 @@
 		};
 		FA58E39827ACD1D00034837F /* Swift Format */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -490,6 +495,7 @@
 		};
 		FA58E3CB27AE24930034837F /* Swift Format */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -508,6 +514,7 @@
 		};
 		FA58E3CD27AE24BB0034837F /* Version */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -526,6 +533,7 @@
 		};
 		FA58E3CE27AE24CB0034837F /* Swift Format */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -585,6 +593,7 @@
 				FA5F874B25DCB50A00B1AF77 /* SettingsView.swift in Sources */,
 				FAFAC6F9272C4CEA00011ED6 /* GeneralSettingsView.swift in Sources */,
 				FA48BA3025DDEBCE00E98F77 /* EnumPicker.swift in Sources */,
+				FACA7A152B46119B004C5000 /* Helpers.swift in Sources */,
 				FA58E39727AC7F630034837F /* Utils.swift in Sources */,
 				FAFAC6F7272C4CC700011ED6 /* AutomationSettingsView.swift in Sources */,
 				FA5F873225DC243200B1AF77 /* TRexApp.swift in Sources */,
@@ -608,10 +617,12 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CODE_SIGN_ENTITLEMENTS = "TRex CMD/TRex CMD.entitlements";
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
-				CURRENT_PROJECT_VERSION = 100;
+				CURRENT_PROJECT_VERSION = 103;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/TRex CMD/Info.plist";
@@ -630,10 +641,12 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CODE_SIGN_ENTITLEMENTS = "TRex CMD/TRex CMD.entitlements";
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
-				CURRENT_PROJECT_VERSION = 100;
+				CURRENT_PROJECT_VERSION = 103;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/TRex CMD/Info.plist";
@@ -651,10 +664,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 83;
+				DEAD_CODE_STRIPPING = YES;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -686,10 +700,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 83;
+				DEAD_CODE_STRIPPING = YES;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -751,6 +766,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -812,6 +828,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -843,7 +860,8 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 100;
+				CURRENT_PROJECT_VERSION = 103;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -854,7 +872,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.6.0;
+				MARKETING_VERSION = 1.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -872,7 +890,8 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 100;
+				CURRENT_PROJECT_VERSION = 103;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -883,7 +902,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.6.0;
+				MARKETING_VERSION = 1.7.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

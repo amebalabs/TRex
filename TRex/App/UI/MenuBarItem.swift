@@ -11,6 +11,7 @@ class MenubarItem: NSObject {
     let statusBarmenu = NSMenu()
     let captureTextItem = NSMenuItem(title: "Capture", action: #selector(captureScreen), keyEquivalent: "")
     let captureTextAndTriggerAutomationItem = NSMenuItem(title: "Capture & Run Automation", action: #selector(captureScreenAndTriggerAutomation), keyEquivalent: "")
+    let captureFromClipboard = NSMenuItem(title: "Capture from Clipboard", action: #selector(captureClipboard), keyEquivalent: "")
     let ignoreLineBreaksItem = NSMenuItem(title: "Ignore Line Breaks", action: #selector(ignoreLineBreaks), keyEquivalent: "")
     let preferencesItem = NSMenuItem(title: "Preferences...", action: #selector(showPreferences), keyEquivalent: "")
     let quitItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
@@ -43,9 +44,10 @@ class MenubarItem: NSObject {
     }
 
     private func buildMenu() {
-        [captureTextItem, captureTextAndTriggerAutomationItem, ignoreLineBreaksItem, preferencesItem, aboutItem, quitItem].forEach { $0.target = self }
+        [captureTextItem, captureTextAndTriggerAutomationItem, captureFromClipboard, ignoreLineBreaksItem, preferencesItem, aboutItem, quitItem].forEach { $0.target = self }
         statusBarmenu.addItem(captureTextItem)
         statusBarmenu.addItem(captureTextAndTriggerAutomationItem)
+        statusBarmenu.addItem(captureFromClipboard)
         statusBarmenu.addItem(ignoreLineBreaksItem)
         statusBarmenu.addItem(NSMenuItem.separator())
         if #available(macOS 13.0, *) {
@@ -74,6 +76,10 @@ class MenubarItem: NSObject {
         trex.capture(.captureScreenAndTriggerAutomation)
     }
 
+    @objc func captureClipboard() {
+        trex.capture(.captureClipboard)
+    }
+
     @objc func ignoreLineBreaks() {
         preferences.ignoreLineBreaks.toggle()
     }
@@ -95,6 +101,9 @@ extension MenubarItem: NSMenuDelegate {
     func menuWillOpen(_: NSMenu) {
         captureTextItem.setShortcut(for: .captureScreen)
         captureTextAndTriggerAutomationItem.setShortcut(for: .captureScreenAndTriggerAutomation)
+        captureFromClipboard.setShortcut(for: .captureClipboard)
+
+        captureFromClipboard.isEnabled = clipboardHasSupportedContente() ? true : false
         ignoreLineBreaksItem.state = preferences.ignoreLineBreaks ? .on : .off
     }
 
