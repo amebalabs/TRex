@@ -38,6 +38,7 @@
 		FA66345C25DEFD500087CCEA /* NSImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */; };
 		FA66345F25DF05950087CCEA /* PagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345E25DF05950087CCEA /* PagerView.swift */; };
 		FA87AF11292A5C7600E50225 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = FA87AF10292A5C7600E50225 /* LaunchAtLogin */; };
+		FA8A957C2B67CA41008C0B7B /* UniversalShowSettingsHack.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA8A957B2B67CA41008C0B7B /* UniversalShowSettingsHack.swift */; };
 		FACA7A152B46119B004C5000 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACA7A142B46119B004C5000 /* Helpers.swift */; };
 		FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */; };
 		FAFAC6F5272C4CAE00011ED6 /* AboutSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */; };
@@ -112,6 +113,7 @@
 		FA5F876D25DDE3E400B1AF77 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSImage+Extension.swift"; sourceTree = "<group>"; };
 		FA66345E25DF05950087CCEA /* PagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagerView.swift; sourceTree = "<group>"; };
+		FA8A957B2B67CA41008C0B7B /* UniversalShowSettingsHack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UniversalShowSettingsHack.swift; sourceTree = "<group>"; };
 		FACA7A142B46119B004C5000 /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
 		FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationName+Extension.swift"; sourceTree = "<group>"; };
 		FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutSettingsView.swift; sourceTree = "<group>"; };
@@ -282,6 +284,7 @@
 			isa = PBXGroup;
 			children = (
 				FA5F876125DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift */,
+				FA8A957B2B67CA41008C0B7B /* UniversalShowSettingsHack.swift */,
 				FA58E39627AC7F630034837F /* Utils.swift */,
 				FA5F876825DDE18B00B1AF77 /* UI */,
 			);
@@ -590,6 +593,7 @@
 				FA66345C25DEFD500087CCEA /* NSImage+Extension.swift in Sources */,
 				FA5F875B25DD59D000B1AF77 /* MenuBarItem.swift in Sources */,
 				FA5F876225DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift in Sources */,
+				FA8A957C2B67CA41008C0B7B /* UniversalShowSettingsHack.swift in Sources */,
 				FA5F874B25DCB50A00B1AF77 /* SettingsView.swift in Sources */,
 				FAFAC6F9272C4CEA00011ED6 /* GeneralSettingsView.swift in Sources */,
 				FA48BA3025DDEBCE00E98F77 /* EnumPicker.swift in Sources */,
@@ -860,7 +864,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 103;
+				CURRENT_PROJECT_VERSION = 108;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
 				DEVELOPMENT_TEAM = X93LWC49WV;
@@ -890,7 +894,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 103;
+				CURRENT_PROJECT_VERSION = 108;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
 				DEVELOPMENT_TEAM = X93LWC49WV;

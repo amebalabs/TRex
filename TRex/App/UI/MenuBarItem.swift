@@ -13,7 +13,7 @@ class MenubarItem: NSObject {
     let captureTextAndTriggerAutomationItem = NSMenuItem(title: "Capture & Run Automation", action: #selector(captureScreenAndTriggerAutomation), keyEquivalent: "")
     let captureFromClipboard = NSMenuItem(title: "Capture from Clipboard", action: #selector(captureClipboard), keyEquivalent: "")
     let ignoreLineBreaksItem = NSMenuItem(title: "Ignore Line Breaks", action: #selector(ignoreLineBreaks), keyEquivalent: "")
-    let preferencesItem = NSMenuItem(title: "Preferences...", action: #selector(showPreferences), keyEquivalent: "")
+    let preferencesItem = NSMenuItem(title: "Settings...", action: #selector(showPreferences), keyEquivalent: ",")
     let quitItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
     let aboutItem = NSMenuItem(title: "About TRex", action: #selector(showAbout), keyEquivalent: "")
 
@@ -50,17 +50,7 @@ class MenubarItem: NSObject {
         statusBarmenu.addItem(captureFromClipboard)
         statusBarmenu.addItem(ignoreLineBreaksItem)
         statusBarmenu.addItem(NSMenuItem.separator())
-        if #available(macOS 13.0, *) {
-            if let menu = NSApp.mainMenu?.items.first, let item = menu.submenu?.items[2] {
-                menu.submenu?.removeItem(item)
-                statusBarmenu.addItem(item)
-            }
-        } else {
-            if let menu = NSApp.mainMenu?.items.first, let item = menu.submenu?.items.first {
-                menu.submenu?.removeItem(item)
-                statusBarmenu.addItem(item)
-            }
-        }
+        statusBarmenu.addItem(preferencesItem)
         statusBarmenu.addItem(aboutItem)
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(quitItem)
@@ -93,7 +83,17 @@ class MenubarItem: NSObject {
     }
 
     @objc func showPreferences() {
-        NSApp.sendAction(Selector(("showPreferencesWindow:")), to: self, from: self)
+        NSApp.openSettings()
+        return
+//        if #available(macOS 14.0, *) {
+//            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+//            return
+//        }
+//        if #available(macOS 13.0, *) {
+//            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+//            return
+//        }
+//        NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
     }
 }
 
