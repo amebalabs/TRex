@@ -50,7 +50,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             case "captureclipboardautomation":
                 trex.capture(.captureClipboardAndTriggerAutomation)
             case "showpreferences":
-                NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+                NSApp.openSettings()
             case "shortcut":
                 if let name = url.queryParameters?["name"] {
                     preferences.autoRunShortcut = name

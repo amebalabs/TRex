@@ -85,15 +85,6 @@ class MenubarItem: NSObject {
     @objc func showPreferences() {
         NSApp.openSettings()
         return
-//        if #available(macOS 14.0, *) {
-//            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-//            return
-//        }
-//        if #available(macOS 13.0, *) {
-//            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-//            return
-//        }
-//        NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
     }
 }
 
