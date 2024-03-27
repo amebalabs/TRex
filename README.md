@@ -85,7 +85,13 @@ Every feature in TRex works offline, no internet is needed.
 
 [Download official workflow](https://github.com/amebalabs/TRex/raw/main/Resources/TRex.alfredworkflow)
 
-![TRex](Resources/alfred.png)
+![Alfred](Resources/alfred.png)
+
+### Raycast
+
+[Download official Raycast Commands](https://github.com/amebalabs/TRex/tree/main/Resources/Raycast/TRex%20Commands)
+
+![Raycast](Resources/raycast.png)
 
 ## Acknowledgements 
 
