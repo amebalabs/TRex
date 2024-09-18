@@ -1,4 +1,3 @@
-import LaunchAtLogin
 import SwiftUI
 import TRexCore
 

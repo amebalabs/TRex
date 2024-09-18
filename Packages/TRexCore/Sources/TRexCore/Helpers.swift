@@ -1,6 +1,6 @@
 import SwiftUI
 
-func clipboardHasSupportedContente() -> Bool {
+public func clipboardHasSupportedContente() -> Bool {
     if let url = NSPasteboard.general.readObjects(forClasses: [NSURL.self], options: nil)?.first as? NSURL, url.isFileURL {
         return true
     }

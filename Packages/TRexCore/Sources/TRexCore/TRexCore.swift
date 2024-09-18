@@ -10,7 +10,7 @@ public class TRex: NSObject {
     var task: Process?
     let sceenCaptureURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
 
-    lazy var screenShotFilePath: String = {
+    public lazy var screenShotFilePath: String = {
         let directory = NSTemporaryDirectory()
         return NSURL.fileURL(withPathComponents: [directory, "capture.png"])!.path
     }()

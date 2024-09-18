@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import TRexCore
 
 let _trex = TRex()
 

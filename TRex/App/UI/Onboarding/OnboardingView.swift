@@ -1,5 +1,4 @@
 import KeyboardShortcuts
-import LaunchAtLogin
 import SwiftUI
 import TRexCore
 
