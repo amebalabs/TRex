@@ -51,6 +51,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         showOnboardingIfNeeded()
     }
 
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        NSApp.openSettings()
+        return true
+    }
+    
     func application(_: NSApplication, open urls: [URL]) {
         for url in urls {
             switch url.host?.lowercased() {
