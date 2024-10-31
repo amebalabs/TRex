@@ -89,7 +89,28 @@ class MenubarItem: NSObject {
 }
 
 extension MenubarItem: NSMenuDelegate {
-    func menuWillOpen(_: NSMenu) {
+    func menuWillOpen(_ menu : NSMenu) {
+        
+        if NSApp.currentEvent?.modifierFlags.contains(.option) == true {
+            menu.cancelTracking()
+            if preferences.optionQuickAction == .captureFromFile || preferences.optionQuickAction == .captureFromFileAndTriggerAutomation {
+                let dialog = NSOpenPanel()
+                dialog.title = "Choose an image"
+                dialog.showsResizeIndicator = true
+                dialog.showsHiddenFiles = false
+                dialog.allowsMultipleSelection = false
+                dialog.canChooseDirectories = false
+                dialog.allowedContentTypes = [.jpeg, .png, .tiff, .gif]
+                
+                if dialog.runModal() == .OK {
+                    trex.capture(preferences.optionQuickAction, imagePath: dialog.url?.path(percentEncoded: false))
+                }
+                return
+            }
+            trex.capture(preferences.optionQuickAction)
+            return
+        }
+        
         captureTextItem.setShortcut(for: .captureScreen)
         captureTextAndTriggerAutomationItem.setShortcut(for: .captureScreenAndTriggerAutomation)
         captureFromClipboard.setShortcut(for: .captureClipboard)

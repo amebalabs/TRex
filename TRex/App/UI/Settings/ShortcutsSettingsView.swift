@@ -1,7 +1,9 @@
 import KeyboardShortcuts
 import SwiftUI
+import TRexCore
 
 struct ShortcutsSettingsView: View {
+    @EnvironmentObject var preferences: Preferences
     var body: some View {
         Form {
             Section(header: Text("Capture ➜ Clipboard").bold()) {
@@ -29,9 +31,14 @@ struct ShortcutsSettingsView: View {
                     KeyboardShortcuts.Recorder(for: .captureClipboardAndTriggerAutomation)
                 }
             }
+            Divider()
+            Section(header: Text("Quick Action").bold(), footer: Text("Trigger with 􀆕+click on menu bar icon")) {
+                EnumPicker(selected: $preferences.optionQuickAction, title: "")
+            }
             Spacer()
+            
         }
         .padding(20)
-        .frame(width: 410, height: 160)
+        .frame(width: 410, height: 260)
     }
 }

@@ -21,6 +21,7 @@ public class Preferences: ObservableObject {
         case AutoRunShortcut
         case CustomWords
         case AutomaticLanguageDetection
+        case OptionQuickAction
     }
 
     public enum MenuBarIcon: String, CaseIterable {
@@ -200,6 +201,12 @@ public class Preferences: ObservableObject {
             Preferences.setValue(value: automaticLanguageDetection, key: .AutomaticLanguageDetection)
         }
     }
+    
+    @Published public var optionQuickAction: InvocationMode {
+        didSet {
+            Preferences.setValue(value: optionQuickAction.rawValue, key: .OptionQuickAction)
+        }
+    }
 
     init() {
         needsOnboarding = Preferences.getValue(key: .NeedsOnboarding) as? Bool ?? true
@@ -222,6 +229,10 @@ public class Preferences: ObservableObject {
         if let mbitem = Preferences.getValue(key: .MenuBarIcon) as? String {
             menuBarIcon = MenuBarIcon(rawValue: mbitem) ?? .Option1
         }
+        optionQuickAction = .captureScreen
+        if let optionQA = Preferences.getValue(key: .OptionQuickAction) as? String {
+            optionQuickAction = InvocationMode(rawValue: optionQA) ?? .captureScreen
+        }
     }
 
     static func removeAll() {
@@ -237,5 +248,9 @@ public class Preferences: ObservableObject {
 
     private static func getValue(key: PreferencesKeys) -> Any? {
         userDefaults.value(forKey: key.rawValue)
+    }
+    
+    private static func removeValue(key: PreferencesKeys) {
+        userDefaults.removeObject(forKey: key.rawValue)
     }
 }

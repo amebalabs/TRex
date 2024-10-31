@@ -18,7 +18,7 @@ struct SettingsView: View {
                 .tabItem {
                     Label("Shortcuts", systemImage: "command")
                 }
-                .tag(Tabs.general)
+                .tag(Tabs.shortcuts)
             if #available(macOS 12.0, *) {
                 AutomationSettingsView()
                     .tabItem {
