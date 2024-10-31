@@ -14,6 +14,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let bundleID = Bundle.main.bundleIdentifier!
         NSApp.servicesProvider = self
 
+        // this is a dumb workaround for but that causes Settings to open on app launch
+        // this happens since macOS 15, for SwiftUI apps without windows macOS will open settings
+        // a better workaround would be migrating to MenuBar extra, but this touches to many things and I don't want to invest time at the moment
+        // another alternative could look like this
+        // WindowGroup {
+        //   EmptyView()
+        //      .hidden()
+        // }.defaultSize(width: 0, height: 0)
+
+        if let window = NSApplication.shared.windows.first {
+            window.close()
+        }
+        
         if NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).count > 1 {
             NSWorkspace.shared.open(URL(string: "trex://showPreferences")!)
             NSApp.terminate(nil)
