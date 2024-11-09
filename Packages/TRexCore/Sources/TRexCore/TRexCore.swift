@@ -237,20 +237,54 @@ public class TRex: NSObject {
 // MARK: Notifications
 
 extension TRex {
+    class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+        static let shared = NotificationDelegate()
+        
+        override init() {
+            super.init()
+            UNUserNotificationCenter.current().delegate = self
+        }
+        
+        func userNotificationCenter(
+            _ center: UNUserNotificationCenter,
+            willPresent notification: UNNotification,
+            withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+        ) {
+            completionHandler([.banner, .sound])
+        }
+    }
+    
     func showNotification(text: String) {
         guard preferences.resultNotification else { return }
         guard Bundle.main.bundleIdentifier != "com.ameba.TRex.cli" else { return }
-        let content = UNMutableNotificationContent()
-        content.title = "TRex"
-        content.subtitle = "Captured text"
-        content.body = text
-
-        let uuidString = UUID().uuidString
-        let request = UNNotificationRequest(identifier: uuidString,
-                                            content: content, trigger: nil)
-
+        
         let notificationCenter = UNUserNotificationCenter.current()
-        notificationCenter.requestAuthorization(options: [.alert, .sound]) { _, _ in }
-        notificationCenter.add(request)
+        
+        // Set delegate to handle foreground notifications
+        notificationCenter.delegate = NotificationDelegate.shared
+        
+        // Request authorization if not already granted
+        notificationCenter.requestAuthorization(options: [.alert, .sound]) { granted, error in
+            guard granted else { return }
+            
+            let content = UNMutableNotificationContent()
+            content.title = "TRex"
+            content.subtitle = "Captured text"
+            content.body = text
+            content.sound = .default
+            
+            let uuidString = UUID().uuidString
+            // Using immediate trigger instead of nil
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+            let request = UNNotificationRequest(identifier: uuidString,
+                                                content: content,
+                                                trigger: trigger)
+            
+            notificationCenter.add(request) { error in
+                if let error = error {
+                    print("Error showing notification: \(error.localizedDescription)")
+                }
+            }
+        }
     }
 }
