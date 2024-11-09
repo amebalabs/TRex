@@ -32,7 +32,7 @@ struct ShortcutsSettingsView: View {
                 }
             }
             Divider()
-            Section(header: Text("Quick Action").bold(), footer: Text("Trigger with 􀆕+click on menu bar icon")) {
+            Section(header: Text("Quick Action").bold(), footer: Text("Trigger with ⌥+click on menu bar icon")) {
                 EnumPicker(selected: $preferences.optionQuickAction, title: "")
             }
             Spacer()
