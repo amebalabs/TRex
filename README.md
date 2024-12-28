@@ -50,7 +50,7 @@ Download from [GitHub Releases](https://github.com/amebalabs/TRex/releases/lates
 Install from Homebrew
 
 ```
-brew install trex
+brew install --cask trex
 ```
 
 Runs on macOS Big Sur (11.0) and up.
