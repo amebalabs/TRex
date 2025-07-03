@@ -43,7 +43,7 @@ public class TRex: NSObject {
 
     private func getImage(_ imagePath: String? = nil) -> NSImage? {
         switch currentInvocationMode {
-        case .captureScreen, .captureScreenAndTriggerAutomation:
+        case .captureScreen, .captureScreenAndTriggerAutomation, .captureTesseract:
             task = Process()
             task?.executableURL = sceenCaptureURL
 
@@ -83,22 +83,82 @@ public class TRex: NSObject {
     private func getText(_ imagePath: String? = nil) -> String? {
         guard task == nil else { return nil }
 
-        guard let image = getImage(imagePath)?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+        guard let nsImage = getImage(imagePath) else {
+            return nil
+        }
+        
+        // Use Tesseract if explicitly requested or if enabled and preferred
+        let useTesseract = currentInvocationMode == .captureTesseract || 
+                          (preferences.tesseractEnabled && preferences.preferTesseractShortcut)
+        
+        print("[TRex] Current invocation mode: \(currentInvocationMode)")
+        print("[TRex] Use Tesseract: \(useTesseract)")
+        print("[TRex] Tesseract enabled: \(preferences.tesseractEnabled)")
+        print("[TRex] Prefer Tesseract shortcut: \(preferences.preferTesseractShortcut)")
+        
+        if useTesseract {
+            print("[TRex] Attempting to use Tesseract OCR")
+            print("[TRex] Tesseract path from preferences: '\(preferences.tesseractPath)'")
+            print("[TRex] Selected languages: \(preferences.tesseractLanguages)")
+            
+            // Check if Tesseract is available
+            if !preferences.tesseractPath.isEmpty && FileManager.default.fileExists(atPath: preferences.tesseractPath) {
+                print("[TRex] Tesseract found at saved path: \(preferences.tesseractPath)")
+                if let result = TesseractCLIEngine.shared.performOCR(
+                    on: nsImage,
+                    languages: preferences.tesseractLanguages,
+                    tesseractPath: preferences.tesseractPath
+                ) {
+                    print("[TRex] Tesseract OCR successful, result length: \(result.count)")
+                    return result
+                } else {
+                    print("[TRex] Tesseract OCR failed to return results")
+                }
+            } else if let detectedInfo = TesseractCLIEngine.shared.detectTesseract() {
+                print("[TRex] Tesseract auto-detected at: \(detectedInfo.path)")
+                // Update the path if it was detected but not saved
+                preferences.tesseractPath = detectedInfo.path
+                if let result = TesseractCLIEngine.shared.performOCR(
+                    on: nsImage,
+                    languages: preferences.tesseractLanguages,
+                    tesseractPath: detectedInfo.path
+                ) {
+                    print("[TRex] Tesseract OCR successful with detected path, result length: \(result.count)")
+                    return result
+                } else {
+                    print("[TRex] Tesseract OCR failed with detected path")
+                }
+            } else {
+                print("[TRex] Tesseract not found at path or could not be detected")
+            }
+        }
+        
+        // Fall back to Vision framework
+        print("[TRex] Falling back to Vision framework")
+        guard let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            print("[TRex] Failed to convert NSImage to CGImage")
             return nil
         }
 
-        let text = parseQR(image: image)
+        let text = parseQR(image: cgImage)
         guard text.isEmpty else {
+            print("[TRex] QR code detected: \(text)")
             if preferences.autoOpenQRCodeURL {
                 detectAndOpenURL(text: text)
             }
             return text
         }
 
+        print("[TRex] No QR code detected, using Vision text recognition")
         var out: String?
         let group = DispatchGroup()
         group.enter()
-        detectText(in: image) { result in
+        detectText(in: cgImage) { result in
+            if let result = result {
+                print("[TRex] Vision OCR successful, result length: \(result.count)")
+            } else {
+                print("[TRex] Vision OCR returned nil")
+            }
             out = result
             group.leave()
         }

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3957B9C52646DAEF00A62506 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 3957B9C42646DAEF00A62506 /* README.md */; };
+		FA04A09F2E16C70900C6FCA2 /* TesseractSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */; };
 		FA2B835B25DEBF8200B23F25 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = FA2B835A25DEBF8200B23F25 /* Credits.rtf */; };
 		FA2B836125DEC31400B23F25 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2B836025DEC31400B23F25 /* OnboardingView.swift */; };
 		FA3AEAA82C9B85710096CCA5 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA3AEAA72C9B85710096CCA5 /* TRexCore */; };
@@ -74,6 +75,7 @@
 
 /* Begin PBXFileReference section */
 		3957B9C42646DAEF00A62506 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesseractSettingsView.swift; sourceTree = "<group>"; };
 		FA2B835A25DEBF8200B23F25 /* Credits.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = Credits.rtf; sourceTree = "<group>"; };
 		FA2B836025DEC31400B23F25 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		FA3AEAA62C9B85230096CCA5 /* TRexCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = TRexCore; sourceTree = "<group>"; };
@@ -140,6 +142,7 @@
 		FA2B835F25DEC2FD00B23F25 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */,
 				FA5F874A25DCB50A00B1AF77 /* SettingsView.swift */,
 				FAFAC6F8272C4CEA00011ED6 /* GeneralSettingsView.swift */,
 				FAFAC6FA272C4D3E00011ED6 /* ShortcutsSettingsView.swift */,
@@ -451,6 +454,7 @@
 				FA2B836125DEC31400B23F25 /* OnboardingView.swift in Sources */,
 				FAFAC6FB272C4D3E00011ED6 /* ShortcutsSettingsView.swift in Sources */,
 				FA66345F25DF05950087CCEA /* PagerView.swift in Sources */,
+				FA04A09F2E16C70900C6FCA2 /* TesseractSettingsView.swift in Sources */,
 				FAFAC6F5272C4CAE00011ED6 /* AboutSettingsView.swift in Sources */,
 				FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */,
 				FAFF12D12739E24600B3993B /* Localizable.swift in Sources */,
