@@ -14,5 +14,9 @@
 	<true/>
 	<key>com.apple.security.temporary-exception.mach-register.global-name</key>
 	<string>com.apple.screencapture.interactive</string>
+	<key>com.apple.security.temporary-exception.files.absolute-path.read-execute</key>
+	<array>
+		<string>/usr/local/bin/tesseract</string>
+	</array>
 </dict>
 </plist>

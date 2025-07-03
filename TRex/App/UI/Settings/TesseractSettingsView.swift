@@ -30,24 +30,6 @@ struct TesseractSettingsView: View {
                 }
                 .padding(.vertical, 4)
                 
-                // Add button to manually select tesseract binary for sandboxed app
-                HStack {
-                    Text("For sandboxed app:")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Button("Select Tesseract Binary") {
-                        TesseractSecurityBookmark.requestTesseractAccess { url in
-                            if let url = url {
-                                // Re-detect tesseract after getting permission
-                                detectTesseract()
-                                preferences.tesseractPath = url.path
-                            }
-                        }
-                    }
-                    .font(.caption)
-                }
-                .padding(.vertical, 2)
-                
                 if tesseractInfo != nil {
                     Toggle("Enable Tesseract OCR", isOn: $preferences.tesseractEnabled)
                         .padding(.vertical, 2)

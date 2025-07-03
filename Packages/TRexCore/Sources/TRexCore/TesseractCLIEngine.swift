@@ -57,6 +57,12 @@ public class TesseractCLIEngine {
     
     private init() {}
     
+    private func resolvingSymlinks(for path: String) -> String {
+        let url = URL(fileURLWithPath: path)
+        let resolvedURL = url.resolvingSymlinksInPath()
+        return resolvedURL.path
+    }
+    
     public func detectTesseract() -> TesseractInfo? {
         for path in tesseractPaths {
             if FileManager.default.fileExists(atPath: path) {
@@ -161,27 +167,14 @@ public class TesseractCLIEngine {
         print("[TesseractCLI] Starting OCR with languages: \(languages)")
         print("[TesseractCLI] Tesseract path: \(tesseractPath)")
         
-        // For sandboxed apps, we need to use the security-scoped bookmark
+        // Try to use the original path first (for symlinks in allowed paths)
         var actualTesseractPath = tesseractPath
-        var usingSecurityScope = false
         
-        // Check if we're sandboxed
-        if ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil {
-            print("[TesseractCLI] Running in sandbox, attempting to use security-scoped bookmark")
-            if let bookmarkedPath = TesseractSecurityBookmark.getBookmarkedPath() {
-                actualTesseractPath = bookmarkedPath
-                usingSecurityScope = true
-                print("[TesseractCLI] Using bookmarked path: \(actualTesseractPath)")
-            } else {
-                print("[TesseractCLI] No valid bookmark found, OCR cannot proceed in sandbox")
-                return nil
-            }
-        }
-        
-        defer {
-            if usingSecurityScope {
-                TesseractSecurityBookmark.stopAccessingBookmarkedPath()
-            }
+        // Check if the path exists and is executable
+        if !FileManager.default.isExecutableFile(atPath: tesseractPath) {
+            print("[TesseractCLI] Path not executable, trying to resolve symlinks")
+            actualTesseractPath = resolvingSymlinks(for: tesseractPath)
+            print("[TesseractCLI] Resolved tesseract path: \(actualTesseractPath)")
         }
         
         // Save image to temporary file
@@ -229,6 +222,7 @@ public class TesseractCLIEngine {
             task.standardOutput = outputPipe
             
             try task.run()
+            print("[TesseractCLI] Process launched successfully")
             task.waitUntilExit()
             
             print("[TesseractCLI] Process exit code: \(task.terminationStatus)")
@@ -262,6 +256,14 @@ public class TesseractCLIEngine {
             }
         } catch {
             print("[TesseractCLI] Error performing OCR: \(error)")
+            if let nsError = error as NSError? {
+                print("[TesseractCLI] Error domain: \(nsError.domain)")
+                print("[TesseractCLI] Error code: \(nsError.code)")
+                print("[TesseractCLI] Error description: \(nsError.localizedDescription)")
+                if nsError.domain == NSCocoaErrorDomain && nsError.code == NSFileNoSuchFileError {
+                    print("[TesseractCLI] The file doesn't exist at path: \(actualTesseractPath)")
+                }
+            }
         }
         
         return nil
