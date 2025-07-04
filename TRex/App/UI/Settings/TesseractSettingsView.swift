@@ -15,12 +15,13 @@ struct TesseractSettingsView: View {
     var body: some View {
         Form {
             Section(header: Text("Tesseract OCR Library").bold()) {
-                Toggle("Enable Tesseract OCR (Opt-in)", isOn: $preferences.tesseractEnabled)
+                Toggle("Enable Tesseract OCR", isOn: $preferences.tesseractEnabled)
                     .padding(.vertical, 2)
                 Text("Enable, if you want to use Tesseract OCR instead of Apple Vision")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .padding(.top, 2)
+                Spacer()
             }
             
             if preferences.tesseractEnabled {

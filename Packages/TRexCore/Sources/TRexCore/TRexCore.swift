@@ -87,9 +87,6 @@ public class TRex: NSObject {
             return nil
         }
         
-        // Tesseract is now only used as automatic fallback for unsupported languages
-        // through the OCRManager, not as a dedicated shortcut option
-        
         print("[TRex] Current invocation mode: \(currentInvocationMode)")
         print("[TRex] Tesseract enabled: \(preferences.tesseractEnabled)")
         
