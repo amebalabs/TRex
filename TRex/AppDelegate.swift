@@ -99,13 +99,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         for url in urls {
             switch url.host?.lowercased() {
             case "capture":
-                trex.capture(.captureScreen)
+                Task {
+                    await trex.capture(.captureScreen)
+                }
             case "captureclipboard":
-                trex.capture(.captureClipboard)
+                Task {
+                    await trex.capture(.captureClipboard)
+                }
             case "captureautomation":
-                trex.capture(.captureScreenAndTriggerAutomation)
+                Task {
+                    await trex.capture(.captureScreenAndTriggerAutomation)
+                }
             case "captureclipboardautomation":
-                trex.capture(.captureClipboardAndTriggerAutomation)
+                Task {
+                    await trex.capture(.captureClipboardAndTriggerAutomation)
+                }
             case "showpreferences":
                 NSApp.openSettings()
             case "shortcut":
@@ -120,16 +128,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func setupShortcuts() {
         KeyboardShortcuts.onKeyUp(for: .captureScreen) { [self] in
-            trex.capture(.captureScreen)
+            Task {
+                await trex.capture(.captureScreen)
+            }
         }
         KeyboardShortcuts.onKeyUp(for: .captureScreenAndTriggerAutomation) { [self] in
-            trex.capture(.captureScreenAndTriggerAutomation)
+            Task {
+                await trex.capture(.captureScreenAndTriggerAutomation)
+            }
         }
         KeyboardShortcuts.onKeyUp(for: .captureClipboard) { [self] in
-            trex.capture(.captureClipboard)
+            Task {
+                await trex.capture(.captureClipboard)
+            }
         }
         KeyboardShortcuts.onKeyUp(for: .captureClipboardAndTriggerAutomation) { [self] in
-            trex.capture(.captureClipboardAndTriggerAutomation)
+            Task {
+                await trex.capture(.captureClipboardAndTriggerAutomation)
+            }
         }
     }
 
@@ -162,7 +178,9 @@ extension AppDelegate {
             let url = URL(string: path) ?? URL(fileURLWithPath: path)
             let coord = NSFileCoordinator()
             coord.coordinate(readingItemAt: url, options: .forUploading, error: nil, byAccessor: { url in
-                trex.capture(.captureFromFile, imagePath: url.path)
+                Task {
+                    await trex.capture(.captureFromFile, imagePath: url.path)
+                }
             })
         }
     }

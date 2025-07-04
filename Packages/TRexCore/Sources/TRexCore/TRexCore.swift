@@ -2,23 +2,26 @@ import SwiftUI
 import UserNotifications
 import Vision
 
-// Helper extension to bridge async/sync code
-extension NSObject {
-    static func awaitTaskResult<T>(_ task: Task<T, Never>, timeout: TimeInterval) throws -> T? {
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: T?
-        var taskCompleted = false
-        
-        Task {
-            result = await task.value
-            taskCompleted = true
-            semaphore.signal()
+// Timeout error for async operations
+enum TimeoutError: Error {
+    case timedOut
+}
+
+// Async timeout utility
+func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask {
+            try await operation()
         }
         
-        _ = semaphore.wait(timeout: .now() + timeout)
+        group.addTask {
+            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            throw TimeoutError.timedOut
+        }
         
-        // Return nil only if task didn't complete, not if result is nil
-        return taskCompleted ? result : nil
+        let result = try await group.next()!
+        group.cancelAll()
+        return result
     }
 }
 
@@ -54,20 +57,14 @@ public class TRex: NSObject {
             currentInvocationMode == .captureFromFileAndTriggerAutomation
     }
 
-    public func capture(_ mode: InvocationMode, imagePath: String? = nil) {
+    public func capture(_ mode: InvocationMode, imagePath: String? = nil) async {
         currentInvocationMode = mode
         
-        // Dispatch to background queue to avoid blocking main thread
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            
-            let text = self.getText(imagePath)
-            guard let text = text else { return }
-            
-            // Process results back on main thread for UI updates
-            DispatchQueue.main.async {
-                self.precessDetectedText(text)
-            }
+        guard let text = await getText(imagePath) else { return }
+        
+        // Process results back on main thread for UI updates
+        await MainActor.run {
+            self.precessDetectedText(text)
         }
     }
 
@@ -110,7 +107,7 @@ public class TRex: NSObject {
         }
     }
 
-    private func getText(_ imagePath: String? = nil) -> String? {
+    private func getText(_ imagePath: String? = nil) async -> String? {
         guard task == nil else { return nil }
 
         guard let nsImage = getImage(imagePath) else {
@@ -144,72 +141,53 @@ public class TRex: NSObject {
         
         if let engine = OCRManager.shared.findEngine(for: languages) {
             print("[TRex] Using \(engine.name) engine")
-            return performOCR(with: engine, cgImage: cgImage, languages: languages)
+            return await performOCR(with: engine, cgImage: cgImage, languages: languages)
         } else {
             print("[TRex] No suitable engine found, falling back to Vision")
-            return performVisionOCR(cgImage: cgImage)
+            return await performVisionOCR(cgImage: cgImage)
         }
     }
     
     
-    private func performOCR(with engine: OCREngine, cgImage: CGImage, languages: [String]) -> String? {
-        // Use async/await properly without blocking
-        let task = Task { () -> String? in
-            do {
-                let result = try await engine.recognizeText(
+    private func performOCR(with engine: OCREngine, cgImage: CGImage, languages: [String]) async -> String? {
+        do {
+            // Use timeout utility for 5 second timeout
+            let result = try await withTimeout(seconds: 5.0) {
+                try await engine.recognizeText(
                     in: cgImage,
                     languages: languages,
                     recognitionLevel: .accurate
                 )
-                print("[TRex] \(engine.name) OCR successful, result length: \(result.text.count)")
-                return result.text
-            } catch {
-                print("[TRex] \(engine.name) OCR failed: \(error)")
-                return nil
             }
-        }
-        
-        // Block the current thread to wait for async result (necessary for current architecture)
-        // This is not ideal but maintains compatibility with existing synchronous API
-        // Use 5 second timeout for better UI responsiveness
-        let taskResult = try? NSObject.awaitTaskResult(task, timeout: 5.0)
-        
-        // Check if task timed out
-        if taskResult == nil {
+            
+            print("[TRex] \(engine.name) OCR successful, result length: \(result.text.count)")
+            
+            // Handle URL opening if needed
+            if preferences.autoOpenCapturedURL {
+                detectAndOpenURL(text: result.text)
+            }
+            
+            return result.text
+        } catch TimeoutError.timedOut {
             print("[TRex] OCR timed out after 5 seconds, falling back to Vision")
-            task.cancel()
-            return performVisionOCR(cgImage: cgImage)
+            return await performVisionOCR(cgImage: cgImage)
+        } catch {
+            print("[TRex] \(engine.name) failed: \(error), falling back to Vision")
+            return await performVisionOCR(cgImage: cgImage)
         }
-        
-        // Task completed but returned nil (OCR failed)
-        if let result = taskResult, result == nil {
-            print("[TRex] \(engine.name) failed, falling back to Vision")
-            return performVisionOCR(cgImage: cgImage)
-        }
-        
-        // Success - handle URL opening if needed
-        if let result = taskResult!, preferences.autoOpenCapturedURL {
-            detectAndOpenURL(text: result)
-        }
-        
-        return taskResult!
     }
     
-    private func performVisionOCR(cgImage: CGImage) -> String? {
-        var out: String?
-        let group = DispatchGroup()
-        group.enter()
-        detectText(in: cgImage) { result in
-            if let result = result {
-                print("[TRex] Vision OCR successful, result length: \(result.count)")
-            } else {
-                print("[TRex] Vision OCR returned nil")
+    private func performVisionOCR(cgImage: CGImage) async -> String? {
+        await withCheckedContinuation { continuation in
+            detectText(in: cgImage) { result in
+                if let result = result {
+                    print("[TRex] Vision OCR successful, result length: \(result.count)")
+                } else {
+                    print("[TRex] Vision OCR returned nil")
+                }
+                continuation.resume(returning: result)
             }
-            out = result
-            group.leave()
         }
-        _ = group.wait(timeout: .now() + 2)
-        return out
     }
 
     func precessDetectedText(_ text: String) {

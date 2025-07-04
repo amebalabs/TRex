@@ -59,15 +59,21 @@ class MenubarItem: NSObject {
     }
 
     @objc func captureScreen() {
-        trex.capture(.captureScreen)
+        Task {
+            await trex.capture(.captureScreen)
+        }
     }
 
     @objc func captureScreenAndTriggerAutomation() {
-        trex.capture(.captureScreenAndTriggerAutomation)
+        Task {
+            await trex.capture(.captureScreenAndTriggerAutomation)
+        }
     }
 
     @objc func captureClipboard() {
-        trex.capture(.captureClipboard)
+        Task {
+            await trex.capture(.captureClipboard)
+        }
     }
 
     @objc func ignoreLineBreaks() {
@@ -103,11 +109,15 @@ extension MenubarItem: NSMenuDelegate {
                 dialog.allowedContentTypes = [.jpeg, .png, .tiff, .gif]
                 
                 if dialog.runModal() == .OK {
-                    trex.capture(preferences.optionQuickAction, imagePath: dialog.url?.path(percentEncoded: false))
+                    Task {
+                        await trex.capture(preferences.optionQuickAction, imagePath: dialog.url?.path(percentEncoded: false))
+                    }
                 }
                 return
             }
-            trex.capture(preferences.optionQuickAction)
+            Task {
+                await trex.capture(preferences.optionQuickAction)
+            }
             return
         }
         
@@ -138,7 +148,9 @@ extension MenubarItem: NSWindowDelegate, NSDraggingDestination {
         }
 
         if !filesURL.isEmpty, let imagePath = filesURL.first?.path {
-            trex.capture(.captureFromFile, imagePath: imagePath)
+            Task {
+                await trex.capture(.captureFromFile, imagePath: imagePath)
+            }
         }
 
         return true
