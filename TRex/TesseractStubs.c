@@ -42,6 +42,41 @@ int curl_easy_setopt(void* curl, int option, ...) { return 0; }
 int curl_easy_perform(void* curl) { return -1; }
 const char* curl_easy_strerror(int errornum) { return "Stub implementation"; }
 
+// PNG stubs
+void* png_create_read_struct(const char* user_png_ver, void* error_ptr, void* error_fn, void* warn_fn) { return NULL; }
+void* png_create_write_struct(const char* user_png_ver, void* error_ptr, void* error_fn, void* warn_fn) { return NULL; }
+void* png_create_info_struct(void* png_ptr) { return NULL; }
+void png_destroy_read_struct(void** png_ptr_ptr, void** info_ptr_ptr, void** end_info_ptr_ptr) {}
+void png_destroy_write_struct(void** png_ptr_ptr, void** info_ptr_ptr) {}
+void png_set_read_fn(void* png_ptr, void* io_ptr, void* read_data_fn) {}
+void png_set_write_fn(void* png_ptr, void* io_ptr, void* write_data_fn, void* output_flush_fn) {}
+void png_read_info(void* png_ptr, void* info_ptr) {}
+void png_read_image(void* png_ptr, unsigned char** row_pointers) {}
+void png_read_end(void* png_ptr, void* end_info_ptr) {}
+void png_write_info(void* png_ptr, void* info_ptr) {}
+void png_write_image(void* png_ptr, unsigned char** row_pointers) {}
+void png_write_end(void* png_ptr, void* info_ptr) {}
+int png_sig_cmp(const unsigned char* sig, size_t start, size_t num_to_check) { return -1; }
+unsigned int png_get_IHDR(void* png_ptr, void* info_ptr, unsigned int* width, unsigned int* height,
+                         int* bit_depth, int* color_type, int* interlace_method,
+                         int* compression_method, int* filter_method) { return 0; }
+void png_set_IHDR(void* png_ptr, void* info_ptr, unsigned int width, unsigned int height,
+                  int bit_depth, int color_type, int interlace_method,
+                  int compression_method, int filter_method) {}
+void png_set_packing(void* png_ptr) {}
+void png_set_strip_16(void* png_ptr) {}
+void png_set_expand(void* png_ptr) {}
+void png_set_gray_to_rgb(void* png_ptr) {}
+int png_set_interlace_handling(void* png_ptr) { return 1; }
+void png_read_update_info(void* png_ptr, void* info_ptr) {}
+int png_get_channels(void* png_ptr, void* info_ptr) { return 0; }
+size_t png_get_rowbytes(void* png_ptr, void* info_ptr) { return 0; }
+void png_set_bgr(void* png_ptr) {}
+void png_set_strip_alpha(void* png_ptr) {}
+void png_error(void* png_ptr, const char* error_message) {}
+void* png_jmpbuf(void* png_ptr) { return NULL; }
+int setjmp(void* env) { return 0; }
+
 // JPEG stubs
 struct jpeg_compress_struct;
 struct jpeg_decompress_struct;

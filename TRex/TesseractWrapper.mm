@@ -8,10 +8,12 @@
 #include <tesseract/baseapi.h>
 #include <memory>
 #include <string>
+#include <cstring>
 
 @interface TesseractWrapper () {
     std::unique_ptr<tesseract::TessBaseAPI> _tesseract;
     NSString *_currentLanguage;
+    dispatch_queue_t _queue;  // Serial queue for thread safety
 }
 @end
 
@@ -26,74 +28,102 @@
     self = [super init];
     if (self) {
         _tesseract = std::make_unique<tesseract::TessBaseAPI>();
+        // Create a serial queue for thread-safe access to Tesseract
+        _queue = dispatch_queue_create("com.ameba.TRex.TesseractWrapper", DISPATCH_QUEUE_SERIAL);
     }
     return self;
 }
 
 - (BOOL)initializeWithDataPath:(NSString *)dataPath language:(NSString *)language {
-    if (!_tesseract) {
-        return NO;
-    }
+    __block BOOL result = NO;
     
-    // End any previous initialization
-    _tesseract->End();
+    dispatch_sync(_queue, ^{
+        if (!_tesseract) {
+            result = NO;
+            return;
+        }
+        
+        // End any previous initialization
+        _tesseract->End();
+        
+        // Initialize Tesseract with language and data path
+        const char *langCStr = [language UTF8String];
+        const char *dataPathCStr = [dataPath UTF8String];
+        
+        if (_tesseract->Init(dataPathCStr, langCStr) != 0) {
+            NSLog(@"[TesseractWrapper] Failed to initialize Tesseract with language: %@, dataPath: %@", language, dataPath);
+            result = NO;
+            return;
+        }
+        
+        _currentLanguage = language;
+        NSLog(@"[TesseractWrapper] Successfully initialized with language: %@", language);
+        result = YES;
+    });
     
-    // Initialize Tesseract with language and data path
-    const char *langCStr = [language UTF8String];
-    const char *dataPathCStr = [dataPath UTF8String];
-    
-    if (_tesseract->Init(dataPathCStr, langCStr) != 0) {
-        NSLog(@"[TesseractWrapper] Failed to initialize Tesseract with language: %@, dataPath: %@", language, dataPath);
-        return NO;
-    }
-    
-    _currentLanguage = language;
-    NSLog(@"[TesseractWrapper] Successfully initialized with language: %@", language);
-    return YES;
+    return result;
 }
 
 - (void)setImageData:(NSData *)imageData width:(NSInteger)width height:(NSInteger)height bytesPerRow:(NSInteger)bytesPerRow {
-    if (!_tesseract || !imageData) {
-        NSLog(@"[TesseractWrapper] setImageData called with invalid state");
-        return;
-    }
-    
-    // Tesseract expects RGBA data
-    _tesseract->SetImage((unsigned char *)imageData.bytes,
-                        (int)width,
-                        (int)height,
-                        4,  // bytes per pixel (RGBA)
-                        (int)bytesPerRow);
+    dispatch_sync(_queue, ^{
+        if (!_tesseract || !imageData) {
+            NSLog(@"[TesseractWrapper] setImageData called with invalid state");
+            return;
+        }
+        
+        // Tesseract expects RGBA data
+        _tesseract->SetImage((unsigned char *)imageData.bytes,
+                            (int)width,
+                            (int)height,
+                            4,  // bytes per pixel (RGBA)
+                            (int)bytesPerRow);
+    });
 }
 
 - (NSString *)recognizedText {
-    if (!_tesseract) {
-        return @"";
-    }
+    __block NSString *result = @"";
     
-    char *outText = _tesseract->GetUTF8Text();
-    if (!outText) {
-        return @"";
-    }
+    dispatch_sync(_queue, ^{
+        if (!_tesseract) {
+            return;
+        }
+        
+        char *outText = _tesseract->GetUTF8Text();
+        if (!outText) {
+            return;
+        }
+        
+        result = [NSString stringWithUTF8String:outText];
+        delete[] outText;
+        
+        if (!result) {
+            result = @"";
+        }
+    });
     
-    NSString *result = [NSString stringWithUTF8String:outText];
-    delete[] outText;
-    
-    return result ? result : @"";
+    return result;
 }
 
 - (NSInteger)meanConfidence {
-    if (!_tesseract) {
-        return 0;
-    }
+    __block NSInteger confidence = 0;
     
-    return _tesseract->MeanTextConf();
+    dispatch_sync(_queue, ^{
+        if (!_tesseract) {
+            return;
+        }
+        
+        confidence = _tesseract->MeanTextConf();
+    });
+    
+    return confidence;
 }
 
 - (void)clear {
-    if (_tesseract) {
-        _tesseract->Clear();
-    }
+    dispatch_sync(_queue, ^{
+        if (_tesseract) {
+            _tesseract->Clear();
+        }
+    });
 }
 
 + (NSArray<NSString *> *)availableLanguagesAtPath:(NSString *)dataPath {

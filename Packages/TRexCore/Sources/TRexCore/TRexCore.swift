@@ -2,6 +2,26 @@ import SwiftUI
 import UserNotifications
 import Vision
 
+// Helper extension to bridge async/sync code
+extension NSObject {
+    static func awaitTaskResult<T>(_ task: Task<T, Never>, timeout: TimeInterval) throws -> T? {
+        let semaphore = DispatchSemaphore(value: 0)
+        var result: T?
+        var taskCompleted = false
+        
+        Task {
+            result = await task.value
+            taskCompleted = true
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + timeout)
+        
+        // Return nil only if task didn't complete, not if result is nil
+        return taskCompleted ? result : nil
+    }
+}
+
 public class TRex: NSObject {
     public static let shared = TRex()
     let preferences = Preferences.shared
@@ -105,95 +125,64 @@ public class TRex: NSObject {
         print("[TRex] No QR code detected, proceeding with text recognition")
         print("[TRex] Tesseract enabled: \(preferences.tesseractEnabled)")
         
-        // Simple logic: Use Tesseract if enabled, otherwise use Vision
-        if preferences.tesseractEnabled {
-            print("[TRex] Using Tesseract OCR")
-            return performTesseractOCR(cgImage: cgImage)
+        // Use OCRManager to select appropriate engine
+        let languages = preferences.tesseractEnabled && !preferences.tesseractLanguages.isEmpty
+            ? preferences.tesseractLanguages.map { LanguageCodeMapper.fromTesseract($0) }
+            : [preferences.recongitionLanguage.languageCode()]
+        
+        print("[TRex] Requested languages: \(languages)")
+        
+        if let engine = OCRManager.shared.findEngine(for: languages) {
+            print("[TRex] Using \(engine.name) engine")
+            return performOCR(with: engine, cgImage: cgImage, languages: languages)
         } else {
-            print("[TRex] Using Vision framework")
+            print("[TRex] No suitable engine found, falling back to Vision")
             return performVisionOCR(cgImage: cgImage)
         }
     }
     
-    private func tesseractToLanguageCode(_ tesseractCode: String) -> String {
-        // Map Tesseract language codes back to standard language codes
-        let mapping: [String: String] = [
-            "eng": "en-US",
-            "fra": "fr-FR",
-            "deu": "de-DE",
-            "spa": "es-ES",
-            "ita": "it-IT",
-            "por": "pt-BR",
-            "rus": "ru-RU",
-            "jpn": "ja-JP",
-            "chi_sim": "zh-Hans",
-            "chi_tra": "zh-Hant",
-            "kor": "ko-KR",
-            "ara": "ar-SA",
-            "hin": "hi-IN",
-            "tha": "th-TH",
-            "vie": "vi-VN",
-            "heb": "he-IL",
-            "pol": "pl-PL",
-            "tur": "tr-TR",
-            "ukr": "uk-UA",
-            "ces": "cs-CZ",
-            "hun": "hu-HU",
-            "swe": "sv-SE",
-            "dan": "da-DK",
-            "nor": "no-NO",
-            "fin": "fi-FI",
-            "nld": "nl-NL",
-            "ell": "el-GR"
-        ]
-        
-        // Return mapped code or original if not found
-        return mapping[tesseractCode] ?? tesseractCode
-    }
     
-    private func performTesseractOCR(cgImage: CGImage) -> String? {
-        let tesseractEngine = TesseractOCREngine()
-        
-        // Check if Tesseract is available
-        guard tesseractEngine.isAvailable else {
-            print("[TRex] Tesseract is not available, falling back to Vision")
-            return performVisionOCR(cgImage: cgImage)
-        }
-        
-        // Convert Tesseract language codes from preferences to standard format for OCREngine API
-        let languages = preferences.tesseractLanguages.isEmpty ? ["en-US"] : preferences.tesseractLanguages.map { tesseractToLanguageCode($0) }
-        
-        // Perform OCR synchronously
-        var ocrResult: String?
-        let semaphore = DispatchSemaphore(value: 0)
-        
-        Task {
+    private func performOCR(with engine: OCREngine, cgImage: CGImage, languages: [String]) -> String? {
+        // Use async/await properly without blocking
+        let task = Task { () -> String? in
             do {
-                let result = try await tesseractEngine.recognizeText(
+                let result = try await engine.recognizeText(
                     in: cgImage,
                     languages: languages,
                     recognitionLevel: .accurate
                 )
-                ocrResult = result.text
-                print("[TRex] Tesseract OCR successful, result length: \(result.text.count)")
+                print("[TRex] \(engine.name) OCR successful, result length: \(result.text.count)")
+                return result.text
             } catch {
-                print("[TRex] Tesseract OCR failed: \(error)")
+                print("[TRex] \(engine.name) OCR failed: \(error)")
+                return nil
             }
-            semaphore.signal()
         }
         
-        _ = semaphore.wait(timeout: .now() + 5) // 5 second timeout
+        // Block the current thread to wait for async result (necessary for current architecture)
+        // This is not ideal but maintains compatibility with existing synchronous API
+        // Increase timeout to 30 seconds for Tesseract processing
+        let taskResult = try? NSObject.awaitTaskResult(task, timeout: 30.0)
         
-        if let result = ocrResult {
-            if preferences.autoOpenCapturedURL {
-                detectAndOpenURL(text: result)
-            }
-            return result
+        // Check if task timed out
+        if taskResult == nil {
+            print("[TRex] OCR timed out after 30 seconds, falling back to Vision")
+            task.cancel()
+            return performVisionOCR(cgImage: cgImage)
         }
         
-        // If Tesseract fails, fall back to Vision
-        print("[TRex] Tesseract failed, falling back to Vision")
-        return performVisionOCR(cgImage: cgImage)
+        // Task completed but returned nil (OCR failed)
+        if let result = taskResult, result == nil {
+            print("[TRex] \(engine.name) failed, falling back to Vision")
+            return performVisionOCR(cgImage: cgImage)
+        }
+        
+        // Success - handle URL opening if needed
+        if let result = taskResult!, preferences.autoOpenCapturedURL {
+            detectAndOpenURL(text: result)
+        }
+        
+        return taskResult!
     }
     
     private func performVisionOCR(cgImage: CGImage) -> String? {
