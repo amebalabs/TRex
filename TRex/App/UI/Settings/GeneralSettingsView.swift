@@ -39,20 +39,23 @@ struct GeneralSettingsView: View {
                     .padding([.leading, .trailing], 10)
             }
 
-            Section(header: Text("Recognition Language")) {
-                if #available(OSX 13.0, *) {
-                    ToggleView(label: "Detection", secondLabel: "Automatic",
-                               state: $preferences.automaticLanguageDetection,
-                               width: width)
-                }
-                HStack {
-                    EnumPicker(selected: $preferences.recongitionLanguage, title: "")
-                        .disabled(preferences.automaticLanguageDetection)
+            // Only show Recognition Language section when using Apple Vision (not Tesseract)
+            if !preferences.tesseractEnabled {
+                Section(header: Text("Recognition Language")) {
+                    if #available(OSX 13.0, *) {
+                        ToggleView(label: "Detection", secondLabel: "Automatic",
+                                   state: $preferences.automaticLanguageDetection,
+                                   width: width)
+                    }
+                    HStack {
+                        EnumPicker(selected: $preferences.recongitionLanguage, title: "")
+                            .disabled(preferences.automaticLanguageDetection)
+                    }
                 }
             }
         }
         .padding(20)
-        .frame(width: 410, height: preferences.showMenuBarIcon ? 260 : 180)
+        .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 180 : 260) : (preferences.tesseractEnabled ? 100 : 180))
     }
 }
 

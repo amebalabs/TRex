@@ -17,6 +17,11 @@
 
 @implementation TesseractWrapper
 
++ (void)load {
+    // This ensures the class is registered with the Objective-C runtime
+    // and can be found via NSClassFromString
+}
+
 - (instancetype)init {
     self = [super init];
     if (self) {

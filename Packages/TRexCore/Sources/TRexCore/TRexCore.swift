@@ -87,16 +87,12 @@ public class TRex: NSObject {
             return nil
         }
         
-        print("[TRex] Current invocation mode: \(currentInvocationMode)")
-        print("[TRex] Tesseract enabled: \(preferences.tesseractEnabled)")
-        
-        // Use Vision framework for all direct OCR requests
-        print("[TRex] Using Vision framework")
         guard let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             print("[TRex] Failed to convert NSImage to CGImage")
             return nil
         }
 
+        // Always check for QR codes first
         let text = parseQR(image: cgImage)
         guard text.isEmpty else {
             print("[TRex] QR code detected: \(text)")
@@ -106,7 +102,101 @@ public class TRex: NSObject {
             return text
         }
 
-        print("[TRex] No QR code detected, using Vision text recognition")
+        print("[TRex] No QR code detected, proceeding with text recognition")
+        print("[TRex] Tesseract enabled: \(preferences.tesseractEnabled)")
+        
+        // Simple logic: Use Tesseract if enabled, otherwise use Vision
+        if preferences.tesseractEnabled {
+            print("[TRex] Using Tesseract OCR")
+            return performTesseractOCR(cgImage: cgImage)
+        } else {
+            print("[TRex] Using Vision framework")
+            return performVisionOCR(cgImage: cgImage)
+        }
+    }
+    
+    private func tesseractToLanguageCode(_ tesseractCode: String) -> String {
+        // Map Tesseract language codes back to standard language codes
+        let mapping: [String: String] = [
+            "eng": "en-US",
+            "fra": "fr-FR",
+            "deu": "de-DE",
+            "spa": "es-ES",
+            "ita": "it-IT",
+            "por": "pt-BR",
+            "rus": "ru-RU",
+            "jpn": "ja-JP",
+            "chi_sim": "zh-Hans",
+            "chi_tra": "zh-Hant",
+            "kor": "ko-KR",
+            "ara": "ar-SA",
+            "hin": "hi-IN",
+            "tha": "th-TH",
+            "vie": "vi-VN",
+            "heb": "he-IL",
+            "pol": "pl-PL",
+            "tur": "tr-TR",
+            "ukr": "uk-UA",
+            "ces": "cs-CZ",
+            "hun": "hu-HU",
+            "swe": "sv-SE",
+            "dan": "da-DK",
+            "nor": "no-NO",
+            "fin": "fi-FI",
+            "nld": "nl-NL",
+            "ell": "el-GR"
+        ]
+        
+        // Return mapped code or original if not found
+        return mapping[tesseractCode] ?? tesseractCode
+    }
+    
+    private func performTesseractOCR(cgImage: CGImage) -> String? {
+        let tesseractEngine = TesseractOCREngine()
+        
+        // Check if Tesseract is available
+        guard tesseractEngine.isAvailable else {
+            print("[TRex] Tesseract is not available, falling back to Vision")
+            return performVisionOCR(cgImage: cgImage)
+        }
+        
+        // Convert Tesseract language codes from preferences to standard format for OCREngine API
+        let languages = preferences.tesseractLanguages.isEmpty ? ["en-US"] : preferences.tesseractLanguages.map { tesseractToLanguageCode($0) }
+        
+        // Perform OCR synchronously
+        var ocrResult: String?
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        Task {
+            do {
+                let result = try await tesseractEngine.recognizeText(
+                    in: cgImage,
+                    languages: languages,
+                    recognitionLevel: .accurate
+                )
+                ocrResult = result.text
+                print("[TRex] Tesseract OCR successful, result length: \(result.text.count)")
+            } catch {
+                print("[TRex] Tesseract OCR failed: \(error)")
+            }
+            semaphore.signal()
+        }
+        
+        _ = semaphore.wait(timeout: .now() + 5) // 5 second timeout
+        
+        if let result = ocrResult {
+            if preferences.autoOpenCapturedURL {
+                detectAndOpenURL(text: result)
+            }
+            return result
+        }
+        
+        // If Tesseract fails, fall back to Vision
+        print("[TRex] Tesseract failed, falling back to Vision")
+        return performVisionOCR(cgImage: cgImage)
+    }
+    
+    private func performVisionOCR(cgImage: CGImage) -> String? {
         var out: String?
         let group = DispatchGroup()
         group.enter()

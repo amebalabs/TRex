@@ -28,15 +28,6 @@ struct TesseractSettingsView: View {
                 Divider()
                 
                 Section(header: Text("Language Management").bold()) {
-                    HStack {
-                        Text("Total Space Used:")
-                        Spacer()
-                        let totalSize = ByteCountFormatter.string(fromByteCount: languageDownloader.totalInstalledSize, countStyle: .file)
-                        Text(totalSize)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    
                     ScrollView {
                         VStack(alignment: .leading, spacing: 8) {
                             ForEach(installedLanguages, id: \.code) { lang in
@@ -94,12 +85,18 @@ struct TesseractSettingsView: View {
                     .frame(height: 200)
                     .background(Color(NSColor.controlBackgroundColor))
                     .cornerRadius(8)
-                    
-                    if !selectedLanguages.isEmpty {
-                        Text("Active: \(selectedLanguages.joined(separator: ", "))")
+                    HStack {
+                        if !selectedLanguages.isEmpty {
+                            Text("Active: \(selectedLanguages.joined(separator: ", "))")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.top, 4)
+                        }
+                        Spacer()
+                        let totalSize = ByteCountFormatter.string(fromByteCount: languageDownloader.totalInstalledSize, countStyle: .file)
+                        Text("Total Space Used:\(totalSize)")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                            .padding(.top, 4)
                     }
                 }
             }
@@ -107,7 +104,7 @@ struct TesseractSettingsView: View {
             Spacer()
         }
         .padding(20)
-        .frame(width: 550, height: 400)
+        .frame(width: 550, height: 350)
         .onAppear {
             refreshLanguageList()
             selectedLanguages = Set(preferences.tesseractLanguages)

@@ -3,7 +3,7 @@ import Cocoa
 import Vision
 
 // Protocol that matches the TesseractWrapper interface
-@objc protocol TesseractWrapperProtocol {
+@objc public protocol TesseractWrapperProtocol {
     func initialize(withDataPath dataPath: String, language: String) -> Bool
     func setImageData(_ imageData: Data, width: Int, height: Int, bytesPerRow: Int)
     func recognizedText() -> String
@@ -33,9 +33,8 @@ public class TesseractOCREngine: OCREngine {
     public var priority: Int { 100 }
     
     public var isAvailable: Bool {
-        // Check if TesseractWrapper class is available
-        // This will be true if the wrapper is compiled into the main app
-        return NSClassFromString("TesseractWrapper") != nil
+        // Check if TesseractWrapper has been registered via the bridge
+        return TesseractBridge.shared.isAvailable
     }
     
     public func availableLanguages() -> [String] {
@@ -63,17 +62,12 @@ public class TesseractOCREngine: OCREngine {
     }
     
     public func recognizeText(in image: CGImage, languages: [String], recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult {
-        // Try to get the TesseractWrapper class dynamically
-        guard let wrapperClass = NSClassFromString("TesseractWrapper") as? NSObject.Type else {
+        // Get wrapper instance from the bridge
+        guard let wrapper = TesseractBridge.shared.createWrapper() else {
             throw OCRError.initializationFailed("TesseractWrapper not available. Please ensure the library is properly linked.")
         }
         
-        // Create wrapper instance
-        guard let wrapper = wrapperClass.init() as? TesseractWrapperProtocol else {
-            throw OCRError.initializationFailed("Failed to create TesseractWrapper instance")
-        }
-        
-        // Convert languages to Tesseract format
+        // Languages should be in standard format (e.g., "en-US"), convert to Tesseract format
         let tesseractLangs = languages.map { languageCodeToTesseract($0) }
         let langString = tesseractLangs.joined(separator: "+")
         

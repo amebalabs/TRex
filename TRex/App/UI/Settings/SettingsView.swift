@@ -40,7 +40,7 @@ struct SettingsView: View {
                 .tag(Tabs.customWords)
             TesseractSettingsView()
                 .tabItem {
-                    Label("Tesseract OCR", systemImage: "text.viewfinder")
+                    Label("Tesseract", systemImage: "text.viewfinder")
                 }
                 .tag(Tabs.tesseract)
             AboutSettingsView()
