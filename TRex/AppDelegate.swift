@@ -92,9 +92,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         KeyboardShortcuts.onKeyUp(for: .captureClipboardAndTriggerAutomation) { [self] in
             trex.capture(.captureClipboardAndTriggerAutomation)
         }
-        KeyboardShortcuts.onKeyUp(for: .captureTesseract) { [self] in
-            trex.capture(.captureTesseract)
-        }
     }
 
     func showOnboardingIfNeeded() {

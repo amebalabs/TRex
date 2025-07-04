@@ -43,7 +43,7 @@ public class TRex: NSObject {
 
     private func getImage(_ imagePath: String? = nil) -> NSImage? {
         switch currentInvocationMode {
-        case .captureScreen, .captureScreenAndTriggerAutomation, .captureTesseract:
+        case .captureScreen, .captureScreenAndTriggerAutomation:
             task = Process()
             task?.executableURL = sceenCaptureURL
 
@@ -87,99 +87,14 @@ public class TRex: NSObject {
             return nil
         }
         
-        // Use Tesseract if explicitly requested or if enabled and preferred
-        let useTesseract = currentInvocationMode == .captureTesseract || 
-                          (preferences.tesseractEnabled && preferences.preferTesseractShortcut)
+        // Tesseract is now only used as automatic fallback for unsupported languages
+        // through the OCRManager, not as a dedicated shortcut option
         
         print("[TRex] Current invocation mode: \(currentInvocationMode)")
-        print("[TRex] Use Tesseract: \(useTesseract)")
         print("[TRex] Tesseract enabled: \(preferences.tesseractEnabled)")
-        print("[TRex] Prefer Tesseract shortcut: \(preferences.preferTesseractShortcut)")
         
-        if useTesseract {
-            print("[TRex] Attempting to use Tesseract OCR")
-            print("[TRex] Selected languages: \(preferences.tesseractLanguages)")
-            
-            // Convert NSImage to CGImage for the OCR engine
-            guard let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-                print("[TRex] Failed to convert NSImage to CGImage for Tesseract")
-                return nil
-            }
-            
-            // Use the new Tesseract OCR engine
-            let tesseractEngine = TesseractOCREngine()
-            
-            // Convert language codes from preferences to Vision-style codes
-            let languageCodes = preferences.tesseractLanguages.map { lang in
-                // The preferences store Tesseract-style codes (e.g., "eng", "fra")
-                // Convert them to Vision-style codes for consistency
-                let visionMapping: [String: String] = [
-                    "eng": "en-US",
-                    "fra": "fr-FR",
-                    "deu": "de-DE",
-                    "spa": "es-ES",
-                    "ita": "it-IT",
-                    "por": "pt-BR",
-                    "rus": "ru-RU",
-                    "jpn": "ja-JP",
-                    "chi_sim": "zh-Hans",
-                    "chi_tra": "zh-Hant",
-                    "kor": "ko-KR",
-                    "ara": "ar-SA",
-                    "hin": "hi-IN",
-                    "tha": "th-TH",
-                    "vie": "vi-VN",
-                    "heb": "he-IL",
-                    "pol": "pl-PL",
-                    "tur": "tr-TR",
-                    "ukr": "uk-UA",
-                    "ces": "cs-CZ",
-                    "hun": "hu-HU",
-                    "swe": "sv-SE",
-                    "dan": "da-DK",
-                    "nor": "no-NO",
-                    "fin": "fi-FI",
-                    "nld": "nl-NL",
-                    "ell": "el-GR"
-                ]
-                return visionMapping[lang] ?? lang
-            }
-            
-            // Check if Tesseract supports the requested languages
-            let supportedLanguages = languageCodes.filter { tesseractEngine.supportsLanguage($0) }
-            if supportedLanguages.isEmpty {
-                print("[TRex] Tesseract doesn't support any of the requested languages")
-                return nil
-            }
-            
-            // Perform OCR synchronously
-            var ocrResult: String?
-            let semaphore = DispatchSemaphore(value: 0)
-            
-            Task {
-                do {
-                    let result = try await tesseractEngine.recognizeText(
-                        in: cgImage,
-                        languages: supportedLanguages,
-                        recognitionLevel: .accurate
-                    )
-                    ocrResult = result.text
-                    print("[TRex] Tesseract OCR successful, result length: \(result.text.count)")
-                } catch {
-                    print("[TRex] Tesseract OCR failed: \(error)")
-                }
-                semaphore.signal()
-            }
-            
-            _ = semaphore.wait(timeout: .now() + 5) // 5 second timeout
-            
-            if let result = ocrResult {
-                return result
-            }
-        }
-        
-        // Fall back to Vision framework
-        print("[TRex] Falling back to Vision framework")
+        // Use Vision framework for all direct OCR requests
+        print("[TRex] Using Vision framework")
         guard let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             print("[TRex] Failed to convert NSImage to CGImage")
             return nil

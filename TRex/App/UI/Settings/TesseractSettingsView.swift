@@ -15,36 +15,20 @@ struct TesseractSettingsView: View {
     var body: some View {
         Form {
             Section(header: Text("Tesseract OCR Library").bold()) {
-                HStack {
-                    if tesseractEngine.isAvailable {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                        Text("Tesseract library integrated")
-                    } else {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.red)
-                        Text("Tesseract library not available")
-                    }
-                }
-                .padding(.vertical, 4)
-                
-                if tesseractEngine.isAvailable {
-                    Toggle("Enable Tesseract OCR (Opt-in)", isOn: $preferences.tesseractEnabled)
-                        .padding(.vertical, 2)
-                    
-                    Text("When enabled, Tesseract provides OCR for languages not supported by Apple Vision")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 2)
-                }
+                Toggle("Enable Tesseract OCR (Opt-in)", isOn: $preferences.tesseractEnabled)
+                    .padding(.vertical, 2)
+                Text("Enable, if you want to use Tesseract OCR instead of Apple Vision")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 2)
             }
             
-            if tesseractEngine.isAvailable && preferences.tesseractEnabled {
+            if preferences.tesseractEnabled {
                 Divider()
                 
                 Section(header: Text("Language Management").bold()) {
                     HStack {
-                        Text("Downloaded Languages")
+                        Text("Total Space Used:")
                         Spacer()
                         let totalSize = ByteCountFormatter.string(fromByteCount: languageDownloader.totalInstalledSize, countStyle: .file)
                         Text(totalSize)
@@ -117,57 +101,12 @@ struct TesseractSettingsView: View {
                             .padding(.top, 4)
                     }
                 }
-                
-                Divider()
-                
-                Section(header: Text("Keyboard Shortcut").bold()) {
-                    Toggle("Use separate shortcut for Tesseract OCR", isOn: $preferences.preferTesseractShortcut)
-                    
-                    if preferences.preferTesseractShortcut {
-                        HStack {
-                            Text("Tesseract OCR:")
-                            Spacer()
-                            KeyboardShortcuts.Recorder(for: .captureTesseract)
-                        }
-                        .padding(.top, 4)
-                        
-                        Text("This shortcut will explicitly use Tesseract for OCR")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                Divider()
-                
-                Section(header: Text("OCR Behavior").bold()) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "info.circle")
-                                .foregroundColor(.blue)
-                            Text("Default behavior:")
-                                .font(.caption)
-                        }
-                        
-                        Text("• Primary shortcut uses Apple Vision (fast, 14 languages)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Text("• Falls back to Tesseract for unsupported languages")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Text("• Tesseract shortcut forces Tesseract engine")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 4)
-                }
             }
             
             Spacer()
         }
         .padding(20)
-        .frame(width: 550, height: 600)
+        .frame(width: 550, height: 400)
         .onAppear {
             refreshLanguageList()
             selectedLanguages = Set(preferences.tesseractLanguages)

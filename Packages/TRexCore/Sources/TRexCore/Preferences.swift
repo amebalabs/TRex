@@ -25,7 +25,6 @@ public class Preferences: ObservableObject {
         case TesseractEnabled
         case TesseractLanguages
         case TesseractPath
-        case PreferTesseractShortcut
     }
 
     public enum MenuBarIcon: String, CaseIterable {
@@ -229,12 +228,6 @@ public class Preferences: ObservableObject {
             Preferences.setValue(value: tesseractPath, key: .TesseractPath)
         }
     }
-    
-    @Published public var preferTesseractShortcut: Bool {
-        didSet {
-            Preferences.setValue(value: preferTesseractShortcut, key: .PreferTesseractShortcut)
-        }
-    }
 
     init() {
         needsOnboarding = Preferences.getValue(key: .NeedsOnboarding) as? Bool ?? true
@@ -264,7 +257,6 @@ public class Preferences: ObservableObject {
         tesseractEnabled = Preferences.getValue(key: .TesseractEnabled) as? Bool ?? false
         tesseractLanguages = Preferences.getValue(key: .TesseractLanguages) as? [String] ?? ["eng"]
         tesseractPath = Preferences.getValue(key: .TesseractPath) as? String ?? ""
-        preferTesseractShortcut = Preferences.getValue(key: .PreferTesseractShortcut) as? Bool ?? false
     }
 
     static func removeAll() {
