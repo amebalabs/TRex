@@ -4,31 +4,33 @@ import KeyboardShortcuts
 
 struct TesseractSettingsView: View {
     @EnvironmentObject var preferences: Preferences
-    @State private var tesseractEngine = TesseractOCREngine()
-    @State private var languageDownloader = TesseractLanguageDownloader.shared
-    @State private var installedLanguages: [TesseractLanguageDownloader.LanguageInfo] = []
+    @State private var languages: [LanguageManager.Language] = []
     @State private var selectedLanguages: Set<String> = []
     @State private var isDownloading = false
     @State private var downloadProgress: Double = 0
     @State private var downloadingLanguage: String? = nil
     @State private var searchText = ""
+    @State private var storageInfo: (usedSpace: Int64, languageCount: Int) = (0, 0)
     
-    var filteredLanguages: [TesseractLanguageDownloader.LanguageInfo] {
+    var filteredLanguages: [LanguageManager.Language] {
+        let tesseractOnly = languages.filter { $0.source == .tesseract || $0.source == .both }
         if searchText.isEmpty {
-            return installedLanguages
+            return tesseractOnly
         }
-        return installedLanguages.filter { 
-            $0.name.localizedCaseInsensitiveContains(searchText) || 
+        return tesseractOnly.filter { 
+            $0.displayName.localizedCaseInsensitiveContains(searchText) || 
             $0.code.localizedCaseInsensitiveContains(searchText)
         }
     }
     
-    var installedLanguagesFirst: [TesseractLanguageDownloader.LanguageInfo] {
+    var sortedLanguages: [LanguageManager.Language] {
         filteredLanguages.sorted { lhs, rhs in
-            if lhs.isInstalled != rhs.isInstalled {
-                return lhs.isInstalled
+            // Downloaded languages first
+            if lhs.isDownloaded != rhs.isDownloaded {
+                return lhs.isDownloaded
             }
-            return lhs.name < rhs.name
+            // Then alphabetical
+            return lhs.displayName < rhs.displayName
         }
     }
     
@@ -48,7 +50,7 @@ struct TesseractSettingsView: View {
                         .toggleStyle(SwitchToggleStyle())
                 }
                 
-                Text("Enable for advanced language support beyond Apple Vision's 14 languages")
+                Text("Enable additional OCR languages beyond Apple Vision's built-in support")
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -84,17 +86,18 @@ struct TesseractSettingsView: View {
                     // Language List
                     ScrollView {
                         LazyVStack(spacing: 0) {
-                            ForEach(installedLanguagesFirst, id: \.code) { lang in
+                            ForEach(sortedLanguages, id: \.code) { lang in
                                 LanguageRow(
                                     language: lang,
-                                    isSelected: selectedLanguages.contains(lang.code),
+                                    isSelected: selectedLanguages.contains(LanguageCodeMapper.toTesseract(lang.code)),
                                     isDownloading: isDownloading && downloadingLanguage == lang.code,
                                     downloadProgress: downloadProgress,
                                     onToggle: { isSelected in
+                                        let tesseractCode = LanguageCodeMapper.toTesseract(lang.code)
                                         if isSelected {
-                                            selectedLanguages.insert(lang.code)
+                                            selectedLanguages.insert(tesseractCode)
                                         } else {
-                                            selectedLanguages.remove(lang.code)
+                                            selectedLanguages.remove(tesseractCode)
                                         }
                                         preferences.tesseractLanguages = Array(selectedLanguages)
                                     },
@@ -107,7 +110,7 @@ struct TesseractSettingsView: View {
                                 )
                                 .disabled(isDownloading && downloadingLanguage != lang.code)
                                 
-                                if lang.code != installedLanguagesFirst.last?.code {
+                                if lang.code != sortedLanguages.last?.code {
                                     Divider()
                                         .padding(.horizontal, 12)
                                 }
@@ -136,8 +139,8 @@ struct TesseractSettingsView: View {
                         
                         Spacer()
                         
-                        let totalSize = ByteCountFormatter.string(fromByteCount: languageDownloader.totalInstalledSize, countStyle: .file)
-                        Label(totalSize, systemImage: "square.stack.3d.up.fill")
+                        let totalSize = ByteCountFormatter.string(fromByteCount: storageInfo.usedSpace, countStyle: .file)
+                        Label("\(totalSize) • \(storageInfo.languageCount) languages", systemImage: "square.stack.3d.up.fill")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -154,27 +157,34 @@ struct TesseractSettingsView: View {
     }
     
     private func refreshLanguageList() {
-        installedLanguages = languageDownloader.getInstalledLanguages()
+        languages = LanguageManager.shared.availableLanguages()
+        storageInfo = LanguageManager.shared.storageInfo()
     }
     
     private func downloadLanguage(_ code: String) {
+        let tesseractCode = LanguageCodeMapper.toTesseract(code)
         isDownloading = true
         downloadingLanguage = code
         downloadProgress = 0
         
-        languageDownloader.downloadLanguage(code, progress: { progress in
-            DispatchQueue.main.async {
-                self.downloadProgress = progress
-            }
-        }) { result in
-            DispatchQueue.main.async {
-                self.isDownloading = false
-                self.downloadingLanguage = nil
+        Task {
+            do {
+                try await LanguageManager.shared.downloadLanguage(tesseractCode) { progress in
+                    DispatchQueue.main.async {
+                        self.downloadProgress = progress
+                    }
+                }
                 
-                switch result {
-                case .success:
+                await MainActor.run {
+                    self.isDownloading = false
+                    self.downloadingLanguage = nil
                     self.refreshLanguageList()
-                case .failure(let error):
+                }
+            } catch {
+                await MainActor.run {
+                    self.isDownloading = false
+                    self.downloadingLanguage = nil
+                    
                     // Show error alert
                     let alert = NSAlert()
                     alert.messageText = "Download Failed"
@@ -187,9 +197,10 @@ struct TesseractSettingsView: View {
     }
     
     private func deleteLanguage(_ code: String) {
+        let tesseractCode = LanguageCodeMapper.toTesseract(code)
         do {
-            try languageDownloader.deleteLanguage(code)
-            selectedLanguages.remove(code)
+            try LanguageManager.shared.deleteLanguage(tesseractCode)
+            selectedLanguages.remove(tesseractCode)
             preferences.tesseractLanguages = Array(selectedLanguages)
             refreshLanguageList()
         } catch {
@@ -204,7 +215,7 @@ struct TesseractSettingsView: View {
 
 // MARK: - Language Row Component
 struct LanguageRow: View {
-    let language: TesseractLanguageDownloader.LanguageInfo
+    let language: LanguageManager.Language
     let isSelected: Bool
     let isDownloading: Bool
     let downloadProgress: Double
@@ -216,9 +227,12 @@ struct LanguageRow: View {
         HStack(spacing: 12) {
             // Language Info
             VStack(alignment: .leading, spacing: 4) {
-                Text(language.name)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.primary)
+                HStack(spacing: 6) {
+                    Text(language.displayName)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.primary)
+                    
+                }
                 
                 HStack(spacing: 6) {
                     Text(language.code)
@@ -230,7 +244,7 @@ struct LanguageRow: View {
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                         
-                        Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
+                        Text(ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file))
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
@@ -240,8 +254,8 @@ struct LanguageRow: View {
             Spacer()
             
             // Action Buttons
-            if language.isInstalled {
-                // Active toggle
+            if language.isDownloaded {
+                // Active toggle for downloaded Tesseract languages
                 Toggle("", isOn: Binding(
                     get: { isSelected },
                     set: { onToggle($0) }

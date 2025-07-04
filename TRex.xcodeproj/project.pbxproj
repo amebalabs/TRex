@@ -8,12 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3957B9C52646DAEF00A62506 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 3957B9C42646DAEF00A62506 /* README.md */; };
-		FA01868E2E1735A2003E84EB /* libleptonica.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FA01868B2E1735A2003E84EB /* libleptonica.a */; };
-		FA01868F2E1735A2003E84EB /* libtesseract.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FA01868C2E1735A2003E84EB /* libtesseract.a */; };
-		FA0186902E1735A2003E84EB /* libTesseractWrapper.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FA01868D2E1735A2003E84EB /* libTesseractWrapper.a */; };
 		FA04A09F2E16C70900C6FCA2 /* TesseractSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */; };
-		FA245B5B2E1742DA006CFFF2 /* TesseractWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = FA245B5A2E1742DA006CFFF2 /* TesseractWrapper.mm */; };
-		FA245B5C2E1742DB006CFFF2 /* TesseractStubs.c in Sources */ = {isa = PBXBuildFile; fileRef = FA245B5D2E1742DB006CFFF2 /* TesseractStubs.c */; };
 		FA2B835B25DEBF8200B23F25 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = FA2B835A25DEBF8200B23F25 /* Credits.rtf */; };
 		FA2B836125DEC31400B23F25 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2B836025DEC31400B23F25 /* OnboardingView.swift */; };
 		FA3AEAA82C9B85710096CCA5 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA3AEAA72C9B85710096CCA5 /* TRexCore */; };
@@ -34,6 +29,7 @@
 		FA5F876225DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F876125DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift */; };
 		FA66345C25DEFD500087CCEA /* NSImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */; };
 		FA66345F25DF05950087CCEA /* PagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345E25DF05950087CCEA /* PagerView.swift */; };
+		FA6648712E18469400EF497A /* TesseractSwift in Frameworks */ = {isa = PBXBuildFile; productRef = FA6648702E18469400EF497A /* TesseractSwift */; };
 		FA8A957C2B67CA41008C0B7B /* UniversalShowSettingsHack.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA8A957B2B67CA41008C0B7B /* UniversalShowSettingsHack.swift */; };
 		FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */; };
 		FAFAC6F5272C4CAE00011ED6 /* AboutSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */; };
@@ -78,14 +74,7 @@
 
 /* Begin PBXFileReference section */
 		3957B9C42646DAEF00A62506 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		FA01868B2E1735A2003E84EB /* libleptonica.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libleptonica.a; path = Libraries/tesseract/lib/libleptonica.a; sourceTree = "<group>"; };
-		FA01868C2E1735A2003E84EB /* libtesseract.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libtesseract.a; path = Libraries/tesseract/lib/libtesseract.a; sourceTree = "<group>"; };
-		FA01868D2E1735A2003E84EB /* libTesseractWrapper.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libTesseractWrapper.a; path = Libraries/tesseract/lib/libTesseractWrapper.a; sourceTree = "<group>"; };
-		FA0186912E173BF2003E84EB /* TesseractWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TesseractWrapper.h; sourceTree = "<group>"; };
-		FA0186942E173BF6003E84EB /* TRex-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TRex-Bridging-Header.h"; sourceTree = "<group>"; };
 		FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesseractSettingsView.swift; sourceTree = "<group>"; };
-		FA245B5A2E1742DA006CFFF2 /* TesseractWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = TesseractWrapper.mm; sourceTree = "<group>"; };
-		FA245B5D2E1742DB006CFFF2 /* TesseractStubs.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = TesseractStubs.c; sourceTree = "<group>"; };
 		FA2B835A25DEBF8200B23F25 /* Credits.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = Credits.rtf; sourceTree = "<group>"; };
 		FA2B836025DEC31400B23F25 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		FA3AEAA62C9B85230096CCA5 /* TRexCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = TRexCore; sourceTree = "<group>"; };
@@ -132,11 +121,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FA01868E2E1735A2003E84EB /* libleptonica.a in Frameworks */,
-				FA01868F2E1735A2003E84EB /* libtesseract.a in Frameworks */,
-				FA0186902E1735A2003E84EB /* libTesseractWrapper.a in Frameworks */,
 				FA3AEAA82C9B85710096CCA5 /* TRexCore in Frameworks */,
 				FA5F875F25DD637300B1AF77 /* KeyboardShortcuts in Frameworks */,
+				FA6648712E18469400EF497A /* TesseractSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -197,9 +184,6 @@
 		FA58E3AA27AE1D8F0034837F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				FA01868B2E1735A2003E84EB /* libleptonica.a */,
-				FA01868C2E1735A2003E84EB /* libtesseract.a */,
-				FA01868D2E1735A2003E84EB /* libTesseractWrapper.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -228,16 +212,12 @@
 		FA5F873025DC243200B1AF77 /* TRex */ = {
 			isa = PBXGroup;
 			children = (
-				FA245B5A2E1742DA006CFFF2 /* TesseractWrapper.mm */,
-				FA245B5D2E1742DB006CFFF2 /* TesseractStubs.c */,
-				FA0186912E173BF2003E84EB /* TesseractWrapper.h */,
 				FA5F873125DC243200B1AF77 /* TRexApp.swift */,
 				FA5F874725DCB3B200B1AF77 /* AppDelegate.swift */,
 				FA3AEAAE2C9B8BCB0096CCA5 /* LaunchAtLogin.swift */,
 				FA5F876425DDE12A00B1AF77 /* Resources */,
 				FA5F876A25DDE20D00B1AF77 /* App */,
 				FA5F873725DC243400B1AF77 /* Preview Content */,
-				FA0186942E173BF6003E84EB /* TRex-Bridging-Header.h */,
 			);
 			path = TRex;
 			sourceTree = "<group>";
@@ -337,6 +317,7 @@
 			packageProductDependencies = (
 				FA5F875E25DD637300B1AF77 /* KeyboardShortcuts */,
 				FA3AEAA72C9B85710096CCA5 /* TRexCore */,
+				FA6648702E18469400EF497A /* TesseractSwift */,
 			);
 			productName = TRex;
 			productReference = FA5F872E25DC243200B1AF77 /* TRex.app */;
@@ -484,8 +465,6 @@
 				FA5F875B25DD59D000B1AF77 /* MenuBarItem.swift in Sources */,
 				FA5F876225DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift in Sources */,
 				FA8A957C2B67CA41008C0B7B /* UniversalShowSettingsHack.swift in Sources */,
-				FA245B5B2E1742DA006CFFF2 /* TesseractWrapper.mm in Sources */,
-				FA245B5C2E1742DB006CFFF2 /* TesseractStubs.c in Sources */,
 				FA5F874B25DCB50A00B1AF77 /* SettingsView.swift in Sources */,
 				FAFAC6F9272C4CEA00011ED6 /* GeneralSettingsView.swift in Sources */,
 				FA48BA3025DDEBCE00E98F77 /* EnumPicker.swift in Sources */,
@@ -684,27 +663,17 @@
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/Libraries/tesseract/include",
-					"$(PROJECT_DIR)/Libraries/tesseract/include/tesseract",
-					"$(PROJECT_DIR)/Libraries/tesseract/include/leptonica",
-				);
 				INFOPLIST_FILE = TRex/Resources/info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/Libraries/tesseract/lib",
-				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				MARKETING_VERSION = 1.9.0;
 				OTHER_LDFLAGS = "-lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "TRex/TRex-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
@@ -728,27 +697,17 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				EXCLUDED_ARCHS = x86_64;
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/Libraries/tesseract/include",
-					"$(PROJECT_DIR)/Libraries/tesseract/include/tesseract",
-					"$(PROJECT_DIR)/Libraries/tesseract/include/leptonica",
-				);
 				INFOPLIST_FILE = TRex/Resources/info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/Libraries/tesseract/lib",
-				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				MARKETING_VERSION = 1.9.0;
 				OTHER_LDFLAGS = "-lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "TRex/TRex-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -822,6 +781,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA5F875D25DD637300B1AF77 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
 			productName = KeyboardShortcuts;
+		};
+		FA6648702E18469400EF497A /* TesseractSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TesseractSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

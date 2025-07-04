@@ -3,38 +3,7 @@ import KeyboardShortcuts
 import SwiftUI
 import TRexCore
 
-// Swift adapter that bridges the Objective-C TesseractWrapper to the Swift protocol
-private class TesseractWrapperAdapter: TesseractWrapperProtocol {
-    private let wrapper: TesseractWrapper
-    
-    init() {
-        self.wrapper = TesseractWrapper()
-    }
-    
-    func initialize(withDataPath dataPath: String, language: String) -> Bool {
-        return wrapper.initialize(withDataPath: dataPath, language: language)
-    }
-    
-    func setImageData(_ imageData: Data, width: Int, height: Int, bytesPerRow: Int) {
-        wrapper.setImageData(imageData, width: width, height: height, bytesPerRow: bytesPerRow)
-    }
-    
-    func recognizedText() -> String {
-        return wrapper.recognizedText()
-    }
-    
-    func meanConfidence() -> Int {
-        return wrapper.meanConfidence()
-    }
-    
-    func clear() {
-        wrapper.clear()
-    }
-    
-    static func availableLanguages(atPath dataPath: String) -> [String] {
-        return TesseractWrapper.availableLanguages(atPath: dataPath)
-    }
-}
+// TesseractWrapper bridge removed - now using TesseractSwift directly in TRexCore
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var menuBarItem: MenubarItem?
@@ -44,11 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var onboardingWindowController: NSWindowController?
 
     func applicationDidFinishLaunching(_: Notification) {
-        // Register TesseractWrapper with TRexCore
-        TesseractBridge.shared.registerWrapperFactory {
-            return TesseractWrapperAdapter()
-        }
-        print("[TRex] TesseractWrapper registered with TRexCore")
+        // TesseractSwift is now integrated directly in TRexCore
         
         let bundleID = Bundle.main.bundleIdentifier!
         NSApp.servicesProvider = self

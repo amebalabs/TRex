@@ -1,29 +1,25 @@
 import Foundation
 import Cocoa
 import Vision
-
-// Protocol that matches the TesseractWrapper interface
-@objc public protocol TesseractWrapperProtocol {
-    func initialize(withDataPath dataPath: String, language: String) -> Bool
-    func setImageData(_ imageData: Data, width: Int, height: Int, bytesPerRow: Int)
-    func recognizedText() -> String
-    func meanConfidence() -> Int
-    func clear()
-    static func availableLanguages(atPath dataPath: String) -> [String]
-}
+import TesseractSwift
 
 public class TesseractOCREngine: OCREngine {
-    private let tessdataPath: String
+    private let tessdataPath: URL
+    private let tesseractEngine: TesseractEngine
+    private let languageDownloader = LanguageDownloader.shared
     
     public init() {
         // Always use Library/Application Support for tessdata
         let appSupportPath = FileManager.default.urls(for: .applicationSupportDirectory, 
                                                      in: .userDomainMask).first!
         let trexPath = appSupportPath.appendingPathComponent("TRex")
-        self.tessdataPath = trexPath.appendingPathComponent("tessdata").path
+        self.tessdataPath = trexPath.appendingPathComponent("tessdata")
         
         // Ensure tessdata directory exists
-        try? FileManager.default.createDirectory(atPath: tessdataPath, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: tessdataPath, withIntermediateDirectories: true)
+        
+        // Initialize Tesseract engine
+        self.tesseractEngine = TesseractEngine(dataPath: tessdataPath.path)
     }
     
     public var name: String { "Tesseract OCR" }
@@ -33,88 +29,55 @@ public class TesseractOCREngine: OCREngine {
     public var priority: Int { 100 }
     
     public var isAvailable: Bool {
-        // Check if TesseractWrapper has been registered via the bridge
-        return TesseractBridge.shared.isAvailable
+        // TesseractSwift is always available as a direct dependency
+        return true
     }
     
     public func availableLanguages() -> [String] {
-        // Get list of available language files
-        do {
-            let files = try FileManager.default.contentsOfDirectory(atPath: tessdataPath)
-            return files.compactMap { file in
-                if file.hasSuffix(".traineddata") {
-                    return String(file.dropLast(12)) // Remove .traineddata extension
-                }
-                return nil
-            }
-        } catch {
-            return []
-        }
+        // Get list of downloaded languages
+        return languageDownloader.downloadedLanguages(in: tessdataPath)
     }
     
     public func supportsLanguage(_ language: String) -> Bool {
         // Convert language code to Tesseract format
         let tesseractLang = LanguageCodeMapper.toTesseract(language)
         
-        // Check if the traineddata file exists
-        let dataFile = (tessdataPath as NSString).appendingPathComponent("\(tesseractLang).traineddata")
-        return FileManager.default.fileExists(atPath: dataFile)
+        // Check if the language file exists
+        let languageFile = tessdataPath.appendingPathComponent("\(tesseractLang).traineddata")
+        return FileManager.default.fileExists(atPath: languageFile.path)
     }
     
     public func recognizeText(in image: CGImage, languages: [String], recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult {
-        // Get wrapper instance from the bridge
-        guard let wrapper = TesseractBridge.shared.createWrapper() else {
-            throw OCRError.initializationFailed("TesseractWrapper not available. Please ensure the library is properly linked.")
-        }
-        
         // Languages should be in standard format (e.g., "en-US"), convert to Tesseract format
         let tesseractLangs = languages.map { LanguageCodeMapper.toTesseract($0) }
-        let langString = tesseractLangs.joined(separator: "+")
+        let primaryLang = tesseractLangs.first ?? "eng"
         
-        // Initialize Tesseract
-        guard wrapper.initialize(withDataPath: tessdataPath, language: langString) else {
-            throw OCRError.initializationFailed("Failed to initialize Tesseract with languages: \(langString)")
+        // Ensure the language is downloaded
+        if !supportsLanguage(languages.first ?? "en-US") {
+            // Try to download the language
+            if let langInfo = LanguageDownloader.commonLanguages.first(where: { $0.code == primaryLang }) {
+                try await languageDownloader.downloadLanguage(langInfo, to: tessdataPath)
+            } else {
+                throw OCRError.initializationFailed("Language not available: \(primaryLang)")
+            }
         }
         
-        // Convert CGImage to raw pixel data
-        let width = image.width
-        let height = image.height
-        let bitsPerComponent = 8
-        let bytesPerPixel = 4 // RGBA
-        let bytesPerRow = bytesPerPixel * width
+        // Initialize Tesseract with the language
+        try tesseractEngine.initialize(language: primaryLang)
         
-        // Create bitmap context
-        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
-              let context = CGContext(data: nil,
-                                     width: width,
-                                     height: height,
-                                     bitsPerComponent: bitsPerComponent,
-                                     bytesPerRow: bytesPerRow,
-                                     space: colorSpace,
-                                     bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else {
-            throw OCRError.imageProcessingFailed("Failed to create bitmap context")
+        // Set page segmentation mode based on recognition level
+        if recognitionLevel == .accurate {
+            tesseractEngine.setPageSegmentationMode(.auto)
+        } else {
+            tesseractEngine.setPageSegmentationMode(.sparseText)
         }
         
-        // Draw image into context
-        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
-        
-        // Get pixel data
-        guard let pixelData = context.data else {
-            throw OCRError.imageProcessingFailed("Failed to get pixel data")
-        }
-        
-        // Convert to NSData for Objective-C bridge
-        let imageData = NSData(bytes: pixelData, length: height * bytesPerRow)
-        
-        // Process with Tesseract
-        wrapper.setImageData(imageData as Data, width: width, height: height, bytesPerRow: bytesPerRow)
-        
-        // Get recognized text
-        let text = wrapper.recognizedText()
-        let confidence = Float(wrapper.meanConfidence()) / 100.0
+        // Perform OCR
+        let text = try tesseractEngine.recognize(cgImage: image)
+        let confidence = Float(tesseractEngine.confidence()) / 100.0
         
         // Clear for memory efficiency
-        wrapper.clear()
+        tesseractEngine.clear()
         
         // Return result
         return OCRResult(
@@ -129,6 +92,33 @@ public class TesseractOCREngine: OCREngine {
         return try await recognizeText(in: image, languages: ["en-US"], recognitionLevel: recognitionLevel)
     }
     
+    // MARK: - Language Management
+    
+    public func downloadLanguage(_ code: String, progress: ((Double) -> Void)? = nil) async throws {
+        let tesseractCode = LanguageCodeMapper.toTesseract(code)
+        
+        guard let language = LanguageDownloader.commonLanguages.first(where: { $0.code == tesseractCode }) else {
+            throw OCRError.initializationFailed("Language not supported: \(code)")
+        }
+        
+        try await languageDownloader.downloadLanguage(language, to: tessdataPath, progress: progress)
+    }
+    
+    public func deleteLanguage(_ code: String) throws {
+        let tesseractCode = LanguageCodeMapper.toTesseract(code)
+        
+        guard let language = LanguageDownloader.commonLanguages.first(where: { $0.code == tesseractCode }) else {
+            throw OCRError.initializationFailed("Language not supported: \(code)")
+        }
+        
+        try languageDownloader.deleteLanguage(language, from: tessdataPath)
+    }
+    
+    public func supportedLanguages() -> [(code: String, name: String)] {
+        return LanguageDownloader.commonLanguages.map { 
+            (code: $0.code, name: $0.name)
+        }
+    }
 }
 
 // OCR Error types

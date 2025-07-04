@@ -35,11 +35,8 @@ public class OCRManager {
         // Register engines
         registerEngine(VisionOCREngine())
         
-        // Register Tesseract if available
-        let tesseractEngine = TesseractOCREngine()
-        if tesseractEngine.isAvailable {
-            registerEngine(tesseractEngine)
-        }
+        // Register Tesseract engine (always available with TesseractSwift)
+        registerEngine(TesseractOCREngine())
     }
     
     public func registerEngine(_ engine: OCREngine) {
