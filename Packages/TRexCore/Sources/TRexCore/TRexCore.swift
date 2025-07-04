@@ -98,38 +98,83 @@ public class TRex: NSObject {
         
         if useTesseract {
             print("[TRex] Attempting to use Tesseract OCR")
-            print("[TRex] Tesseract path from preferences: '\(preferences.tesseractPath)'")
             print("[TRex] Selected languages: \(preferences.tesseractLanguages)")
             
-            // Check if Tesseract is available
-            if !preferences.tesseractPath.isEmpty && FileManager.default.fileExists(atPath: preferences.tesseractPath) {
-                print("[TRex] Tesseract found at saved path: \(preferences.tesseractPath)")
-                if let result = TesseractCLIEngine.shared.performOCR(
-                    on: nsImage,
-                    languages: preferences.tesseractLanguages,
-                    tesseractPath: preferences.tesseractPath
-                ) {
-                    print("[TRex] Tesseract OCR successful, result length: \(result.count)")
-                    return result
-                } else {
-                    print("[TRex] Tesseract OCR failed to return results")
+            // Convert NSImage to CGImage for the OCR engine
+            guard let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+                print("[TRex] Failed to convert NSImage to CGImage for Tesseract")
+                return nil
+            }
+            
+            // Use the new Tesseract OCR engine
+            let tesseractEngine = TesseractOCREngine()
+            
+            // Convert language codes from preferences to Vision-style codes
+            let languageCodes = preferences.tesseractLanguages.map { lang in
+                // The preferences store Tesseract-style codes (e.g., "eng", "fra")
+                // Convert them to Vision-style codes for consistency
+                let visionMapping: [String: String] = [
+                    "eng": "en-US",
+                    "fra": "fr-FR",
+                    "deu": "de-DE",
+                    "spa": "es-ES",
+                    "ita": "it-IT",
+                    "por": "pt-BR",
+                    "rus": "ru-RU",
+                    "jpn": "ja-JP",
+                    "chi_sim": "zh-Hans",
+                    "chi_tra": "zh-Hant",
+                    "kor": "ko-KR",
+                    "ara": "ar-SA",
+                    "hin": "hi-IN",
+                    "tha": "th-TH",
+                    "vie": "vi-VN",
+                    "heb": "he-IL",
+                    "pol": "pl-PL",
+                    "tur": "tr-TR",
+                    "ukr": "uk-UA",
+                    "ces": "cs-CZ",
+                    "hun": "hu-HU",
+                    "swe": "sv-SE",
+                    "dan": "da-DK",
+                    "nor": "no-NO",
+                    "fin": "fi-FI",
+                    "nld": "nl-NL",
+                    "ell": "el-GR"
+                ]
+                return visionMapping[lang] ?? lang
+            }
+            
+            // Check if Tesseract supports the requested languages
+            let supportedLanguages = languageCodes.filter { tesseractEngine.supportsLanguage($0) }
+            if supportedLanguages.isEmpty {
+                print("[TRex] Tesseract doesn't support any of the requested languages")
+                return nil
+            }
+            
+            // Perform OCR synchronously
+            var ocrResult: String?
+            let semaphore = DispatchSemaphore(value: 0)
+            
+            Task {
+                do {
+                    let result = try await tesseractEngine.recognizeText(
+                        in: cgImage,
+                        languages: supportedLanguages,
+                        recognitionLevel: .accurate
+                    )
+                    ocrResult = result.text
+                    print("[TRex] Tesseract OCR successful, result length: \(result.text.count)")
+                } catch {
+                    print("[TRex] Tesseract OCR failed: \(error)")
                 }
-            } else if let detectedInfo = TesseractCLIEngine.shared.detectTesseract() {
-                print("[TRex] Tesseract auto-detected at: \(detectedInfo.path)")
-                // Update the path if it was detected but not saved
-                preferences.tesseractPath = detectedInfo.path
-                if let result = TesseractCLIEngine.shared.performOCR(
-                    on: nsImage,
-                    languages: preferences.tesseractLanguages,
-                    tesseractPath: detectedInfo.path
-                ) {
-                    print("[TRex] Tesseract OCR successful with detected path, result length: \(result.count)")
-                    return result
-                } else {
-                    print("[TRex] Tesseract OCR failed with detected path")
-                }
-            } else {
-                print("[TRex] Tesseract not found at path or could not be detected")
+                semaphore.signal()
+            }
+            
+            _ = semaphore.wait(timeout: .now() + 5) // 5 second timeout
+            
+            if let result = ocrResult {
+                return result
             }
         }
         

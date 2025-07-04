@@ -1,0 +1,17 @@
+// TRex Configuration
+// This file should be added to the project configuration
+
+// Header Search Paths
+HEADER_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)/Libraries/tesseract/include
+
+// Library Search Paths  
+LIBRARY_SEARCH_PATHS = $(inherited) $(PROJECT_DIR)/Libraries/tesseract/lib
+
+// Other Linker Flags
+OTHER_LDFLAGS = $(inherited) -lTesseractWrapper -ltesseract -lleptonica -lc++
+
+// Swift Import Paths
+SWIFT_INCLUDE_PATHS = $(inherited) $(PROJECT_DIR)/Libraries/tesseract/include
+
+// Module Map File
+MODULEMAP_FILE = $(PROJECT_DIR)/Libraries/tesseract/include/module.modulemap

@@ -4,85 +4,117 @@ import KeyboardShortcuts
 
 struct TesseractSettingsView: View {
     @EnvironmentObject var preferences: Preferences
-    @State private var tesseractInfo: TesseractCLIEngine.TesseractInfo?
+    @State private var tesseractEngine = TesseractOCREngine()
+    @State private var languageDownloader = TesseractLanguageDownloader.shared
+    @State private var installedLanguages: [TesseractLanguageDownloader.LanguageInfo] = []
     @State private var selectedLanguages: Set<String> = []
-    @State private var isTestingOCR = false
-    @State private var testResult = ""
+    @State private var isDownloading = false
+    @State private var downloadProgress: Double = 0
+    @State private var downloadingLanguage: String? = nil
     
     var body: some View {
         Form {
-            Section(header: Text("Tesseract OCR Engine").bold()) {
+            Section(header: Text("Tesseract OCR Library").bold()) {
                 HStack {
-                    if let info = tesseractInfo {
+                    if tesseractEngine.isAvailable {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.green)
-                        Text("Tesseract \(info.version) found at \(info.path)")
-                            .font(.system(.body, design: .monospaced))
+                        Text("Tesseract library integrated")
                     } else {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.red)
-                        Text("Tesseract not found")
-                        Spacer()
-                        Button("Install Guide") {
-                            NSWorkspace.shared.open(URL(string: "https://tesseract-ocr.github.io/tessdoc/Installation.html")!)
-                        }
+                        Text("Tesseract library not available")
                     }
                 }
                 .padding(.vertical, 4)
                 
-                if tesseractInfo != nil {
-                    Toggle("Enable Tesseract OCR", isOn: $preferences.tesseractEnabled)
+                if tesseractEngine.isAvailable {
+                    Toggle("Enable Tesseract OCR (Opt-in)", isOn: $preferences.tesseractEnabled)
                         .padding(.vertical, 2)
+                    
+                    Text("When enabled, Tesseract provides OCR for languages not supported by Apple Vision")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 2)
                 }
             }
             
-            if let info = tesseractInfo, preferences.tesseractEnabled {
+            if tesseractEngine.isAvailable && preferences.tesseractEnabled {
                 Divider()
                 
-                Section(header: Text("Language Configuration").bold()) {
-                    Text("Available Languages (\(info.availableLanguages.count)):")
-                        .font(.caption)
+                Section(header: Text("Language Management").bold()) {
+                    HStack {
+                        Text("Downloaded Languages")
+                        Spacer()
+                        let totalSize = ByteCountFormatter.string(fromByteCount: languageDownloader.totalInstalledSize, countStyle: .file)
+                        Text(totalSize)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                     
                     ScrollView {
                         VStack(alignment: .leading, spacing: 8) {
-                            ForEach(info.availableLanguages.sorted(), id: \.self) { lang in
+                            ForEach(installedLanguages, id: \.code) { lang in
                                 HStack {
-                                    Toggle(isOn: Binding(
-                                        get: { selectedLanguages.contains(lang) },
-                                        set: { isSelected in
-                                            if isSelected {
-                                                selectedLanguages.insert(lang)
-                                            } else {
-                                                selectedLanguages.remove(lang)
-                                            }
-                                            preferences.tesseractLanguages = Array(selectedLanguages)
-                                        }
-                                    )) {
-                                        HStack {
-                                            Text(TesseractCLIEngine.Language.displayName(for: lang))
-                                            Text("(\(lang))")
+                                    VStack(alignment: .leading) {
+                                        Text(lang.displayName)
+                                            .font(.body)
+                                        if let size = lang.fileSize {
+                                            Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
                                                 .font(.caption)
                                                 .foregroundColor(.secondary)
                                         }
                                     }
+                                    
+                                    Spacer()
+                                    
+                                    if lang.isInstalled {
+                                        Toggle("", isOn: Binding(
+                                            get: { selectedLanguages.contains(lang.code) },
+                                            set: { isSelected in
+                                                if isSelected {
+                                                    selectedLanguages.insert(lang.code)
+                                                } else {
+                                                    selectedLanguages.remove(lang.code)
+                                                }
+                                                preferences.tesseractLanguages = Array(selectedLanguages)
+                                            }
+                                        ))
+                                        .toggleStyle(SwitchToggleStyle())
+                                        
+                                        Button(action: {
+                                            deleteLanguage(lang.code)
+                                        }) {
+                                            Image(systemName: "trash")
+                                                .foregroundColor(.red)
+                                        }
+                                        .buttonStyle(BorderlessButtonStyle())
+                                    } else {
+                                        if isDownloading && downloadingLanguage == lang.code {
+                                            ProgressView()
+                                                .scaleEffect(0.7)
+                                        } else {
+                                            Button("Download") {
+                                                downloadLanguage(lang.code)
+                                            }
+                                            .disabled(isDownloading)
+                                        }
+                                    }
                                 }
+                                .padding(.vertical, 4)
                             }
                         }
                         .padding(.horizontal)
                     }
-                    .frame(height: 150)
+                    .frame(height: 200)
                     .background(Color(NSColor.controlBackgroundColor))
                     .cornerRadius(8)
                     
-                    HStack {
-                        Text("Selected: \(selectedLanguages.joined(separator: ", "))")
+                    if !selectedLanguages.isEmpty {
+                        Text("Active: \(selectedLanguages.joined(separator: ", "))")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Spacer()
-                        Button("Get More Languages") {
-                            NSWorkspace.shared.open(URL(string: "https://github.com/tesseract-ocr/tessdata")!)
-                        }
-                        .font(.caption)
+                            .padding(.top, 4)
                     }
                 }
                 
@@ -98,105 +130,95 @@ struct TesseractSettingsView: View {
                             KeyboardShortcuts.Recorder(for: .captureTesseract)
                         }
                         .padding(.top, 4)
+                        
+                        Text("This shortcut will explicitly use Tesseract for OCR")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }
                 
                 Divider()
                 
-                Section(header: Text("Test OCR").bold()) {
-                    Button(action: testTesseractOCR) {
+                Section(header: Text("OCR Behavior").bold()) {
+                    VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            if isTestingOCR {
-                                ProgressView()
-                                    .scaleEffect(0.7)
-                                    .padding(.trailing, 4)
-                            }
-                            Text(isTestingOCR ? "Testing..." : "Test Tesseract OCR")
+                            Image(systemName: "info.circle")
+                                .foregroundColor(.blue)
+                            Text("Default behavior:")
+                                .font(.caption)
                         }
-                    }
-                    .disabled(isTestingOCR || selectedLanguages.isEmpty)
-                    
-                    if !testResult.isEmpty {
-                        Text(testResult)
+                        
+                        Text("• Primary shortcut uses Apple Vision (fast, 14 languages)")
                             .font(.caption)
-                            .foregroundColor(testResult.contains("Error") ? .red : .green)
-                            .padding(.top, 2)
+                            .foregroundColor(.secondary)
+                        
+                        Text("• Falls back to Tesseract for unsupported languages")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text("• Tesseract shortcut forces Tesseract engine")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
+                    .padding(.vertical, 4)
                 }
             }
             
             Spacer()
         }
         .padding(20)
-        .frame(width: 500, height: 450)
+        .frame(width: 550, height: 600)
         .onAppear {
-            detectTesseract()
+            refreshLanguageList()
             selectedLanguages = Set(preferences.tesseractLanguages)
         }
     }
     
-    private func detectTesseract() {
-        tesseractInfo = TesseractCLIEngine.shared.detectTesseract()
-        if let info = tesseractInfo, preferences.tesseractPath.isEmpty {
-            preferences.tesseractPath = info.path
-        }
+    private func refreshLanguageList() {
+        installedLanguages = languageDownloader.getInstalledLanguages()
     }
     
-    private func testTesseractOCR() {
-        isTestingOCR = true
-        testResult = ""
+    private func downloadLanguage(_ code: String) {
+        isDownloading = true
+        downloadingLanguage = code
+        downloadProgress = 0
         
-        // Create a test image with text
-        let testImage = createTestImage()
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            if let result = TesseractCLIEngine.shared.performOCR(
-                on: testImage,
-                languages: Array(selectedLanguages),
-                tesseractPath: preferences.tesseractPath
-            ) {
-                DispatchQueue.main.async {
-                    testResult = "Success! Recognized: \"\(result)\""
-                    isTestingOCR = false
-                }
-            } else {
-                DispatchQueue.main.async {
-                    testResult = "Error: Failed to perform OCR"
-                    isTestingOCR = false
+        languageDownloader.downloadLanguage(code, progress: { progress in
+            DispatchQueue.main.async {
+                self.downloadProgress = progress
+            }
+        }) { result in
+            DispatchQueue.main.async {
+                self.isDownloading = false
+                self.downloadingLanguage = nil
+                
+                switch result {
+                case .success:
+                    self.refreshLanguageList()
+                case .failure(let error):
+                    // Show error alert
+                    let alert = NSAlert()
+                    alert.messageText = "Download Failed"
+                    alert.informativeText = error.localizedDescription
+                    alert.alertStyle = .warning
+                    alert.runModal()
                 }
             }
         }
     }
     
-    private func createTestImage() -> NSImage {
-        let size = NSSize(width: 300, height: 100)
-        let image = NSImage(size: size)
-        
-        image.lockFocus()
-        
-        // White background
-        NSColor.white.setFill()
-        NSRect(origin: .zero, size: size).fill()
-        
-        // Draw test text
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 24),
-            .foregroundColor: NSColor.black
-        ]
-        
-        let text = "TRex OCR Test"
-        let textSize = text.size(withAttributes: attributes)
-        let textRect = NSRect(
-            x: (size.width - textSize.width) / 2,
-            y: (size.height - textSize.height) / 2,
-            width: textSize.width,
-            height: textSize.height
-        )
-        
-        text.draw(in: textRect, withAttributes: attributes)
-        
-        image.unlockFocus()
-        
-        return image
+    private func deleteLanguage(_ code: String) {
+        do {
+            try languageDownloader.deleteLanguage(code)
+            selectedLanguages.remove(code)
+            preferences.tesseractLanguages = Array(selectedLanguages)
+            refreshLanguageList()
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Delete Failed"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
     }
 }

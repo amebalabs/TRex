@@ -1,0 +1,13 @@
+prefix=/Users/alex/Developer/GitHub/TRex/Libraries/tesseract
+exec_prefix=${prefix}/bin
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: libtesseract
+Description: An OCR Engine that was developed at HP Labs between 1985 and 1995... and now at Google.
+URL: https://github.com/tesseract-ocr/tesseract
+Version: 5.3.3
+Requires.private: lept
+Libs: -L${libdir} -ltesseract   
+Libs.private:
+Cflags: -I${includedir}
