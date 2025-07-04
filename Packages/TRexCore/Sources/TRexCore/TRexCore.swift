@@ -56,9 +56,19 @@ public class TRex: NSObject {
 
     public func capture(_ mode: InvocationMode, imagePath: String? = nil) {
         currentInvocationMode = mode
-        let text = getText(imagePath)
-        guard let text = text else { return }
-        precessDetectedText(text)
+        
+        // Dispatch to background queue to avoid blocking main thread
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            let text = self.getText(imagePath)
+            guard let text = text else { return }
+            
+            // Process results back on main thread for UI updates
+            DispatchQueue.main.async {
+                self.precessDetectedText(text)
+            }
+        }
     }
 
     private func getImage(_ imagePath: String? = nil) -> NSImage? {
@@ -161,12 +171,12 @@ public class TRex: NSObject {
         
         // Block the current thread to wait for async result (necessary for current architecture)
         // This is not ideal but maintains compatibility with existing synchronous API
-        // Increase timeout to 30 seconds for Tesseract processing
-        let taskResult = try? NSObject.awaitTaskResult(task, timeout: 30.0)
+        // Use 5 second timeout for better UI responsiveness
+        let taskResult = try? NSObject.awaitTaskResult(task, timeout: 5.0)
         
         // Check if task timed out
         if taskResult == nil {
-            print("[TRex] OCR timed out after 30 seconds, falling back to Vision")
+            print("[TRex] OCR timed out after 5 seconds, falling back to Vision")
             task.cancel()
             return performVisionOCR(cgImage: cgImage)
         }

@@ -1,5 +1,28 @@
 import Foundation
 
+// Download delegate to track progress
+private class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
+    private let progressHandler: (Double) -> Void
+    
+    init(progressHandler: @escaping (Double) -> Void) {
+        self.progressHandler = progressHandler
+        super.init()
+    }
+    
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        if totalBytesExpectedToWrite > 0 {
+            let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+            DispatchQueue.main.async {
+                self.progressHandler(progress)
+            }
+        }
+    }
+    
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        // Handled in the completion handler of downloadTask
+    }
+}
+
 public class TesseractLanguageDownloader {
     public static let shared = TesseractLanguageDownloader()
     
@@ -212,7 +235,11 @@ public class TesseractLanguageDownloader {
             return
         }
         
-        let task = URLSession.shared.downloadTask(with: url) { [weak self] tempURL, response, error in
+        // Create a custom URLSession with delegate for progress tracking
+        let sessionConfig = URLSessionConfiguration.default
+        let session = URLSession(configuration: sessionConfig, delegate: DownloadDelegate(progressHandler: progress), delegateQueue: nil)
+        
+        let task = session.downloadTask(with: url) { [weak self] tempURL, response, error in
             guard let self = self else { return }
             
             if let error = error {
@@ -247,9 +274,11 @@ public class TesseractLanguageDownloader {
                     completion(.failure(error))
                 }
             }
+            
+            // Clean up the session
+            session.finishTasksAndInvalidate()
         }
         
-        // Observe progress
         task.resume()
     }
     

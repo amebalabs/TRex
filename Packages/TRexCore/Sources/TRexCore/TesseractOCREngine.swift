@@ -54,7 +54,7 @@ public class TesseractOCREngine: OCREngine {
     
     public func supportsLanguage(_ language: String) -> Bool {
         // Convert language code to Tesseract format
-        let tesseractLang = languageCodeToTesseract(language)
+        let tesseractLang = LanguageCodeMapper.toTesseract(language)
         
         // Check if the traineddata file exists
         let dataFile = (tessdataPath as NSString).appendingPathComponent("\(tesseractLang).traineddata")
@@ -68,7 +68,7 @@ public class TesseractOCREngine: OCREngine {
         }
         
         // Languages should be in standard format (e.g., "en-US"), convert to Tesseract format
-        let tesseractLangs = languages.map { languageCodeToTesseract($0) }
+        let tesseractLangs = languages.map { LanguageCodeMapper.toTesseract($0) }
         let langString = tesseractLangs.joined(separator: "+")
         
         // Initialize Tesseract
@@ -129,68 +129,6 @@ public class TesseractOCREngine: OCREngine {
         return try await recognizeText(in: image, languages: ["en-US"], recognitionLevel: recognitionLevel)
     }
     
-    // Helper function to convert language codes
-    private func languageCodeToTesseract(_ code: String) -> String {
-        // Map common language codes to Tesseract format
-        let mapping: [String: String] = [
-            "en-US": "eng",
-            "en": "eng",
-            "fr-FR": "fra",
-            "fr": "fra",
-            "de-DE": "deu",
-            "de": "deu",
-            "es-ES": "spa",
-            "es": "spa",
-            "it-IT": "ita",
-            "it": "ita",
-            "pt-BR": "por",
-            "pt": "por",
-            "ru-RU": "rus",
-            "ru": "rus",
-            "ja-JP": "jpn",
-            "ja": "jpn",
-            "zh-Hans": "chi_sim",
-            "zh-CN": "chi_sim",
-            "zh-Hant": "chi_tra",
-            "zh-TW": "chi_tra",
-            "ko-KR": "kor",
-            "ko": "kor",
-            "ar-SA": "ara",
-            "ar": "ara",
-            "hi-IN": "hin",
-            "hi": "hin",
-            "th-TH": "tha",
-            "th": "tha",
-            "vi-VN": "vie",
-            "vi": "vie",
-            "he-IL": "heb",
-            "he": "heb",
-            "pl-PL": "pol",
-            "pl": "pol",
-            "tr-TR": "tur",
-            "tr": "tur",
-            "uk-UA": "ukr",
-            "uk": "ukr",
-            "cs-CZ": "ces",
-            "cs": "ces",
-            "hu-HU": "hun",
-            "hu": "hun",
-            "sv-SE": "swe",
-            "sv": "swe",
-            "da-DK": "dan",
-            "da": "dan",
-            "no-NO": "nor",
-            "no": "nor",
-            "fi-FI": "fin",
-            "fi": "fin",
-            "nl-NL": "nld",
-            "nl": "nld",
-            "el-GR": "ell",
-            "el": "ell"
-        ]
-        
-        return mapping[code] ?? code
-    }
 }
 
 // OCR Error types

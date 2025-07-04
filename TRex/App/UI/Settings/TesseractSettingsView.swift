@@ -67,8 +67,14 @@ struct TesseractSettingsView: View {
                                         .buttonStyle(BorderlessButtonStyle())
                                     } else {
                                         if isDownloading && downloadingLanguage == lang.code {
-                                            ProgressView()
-                                                .scaleEffect(0.7)
+                                            VStack(spacing: 2) {
+                                                ProgressView(value: downloadProgress, total: 1.0)
+                                                    .progressViewStyle(LinearProgressViewStyle())
+                                                    .frame(width: 80)
+                                                Text("\(Int(downloadProgress * 100))%")
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                            }
                                         } else {
                                             Button("Download") {
                                                 downloadLanguage(lang.code)
