@@ -34,6 +34,7 @@
 		FA5F876225DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F876125DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift */; };
 		FA66345C25DEFD500087CCEA /* NSImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */; };
 		FA66345F25DF05950087CCEA /* PagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345E25DF05950087CCEA /* PagerView.swift */; };
+		FA66486E2E18350900EF497A /* trex in Embed TRex CLI */ = {isa = PBXBuildFile; fileRef = FA58E39F27AE1CFA0034837F /* trex */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		FA8A957C2B67CA41008C0B7B /* UniversalShowSettingsHack.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA8A957B2B67CA41008C0B7B /* UniversalShowSettingsHack.swift */; };
 		FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */; };
 		FAFAC6F5272C4CAE00011ED6 /* AboutSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */; };
@@ -60,6 +61,7 @@
 			dstPath = cli;
 			dstSubfolderSpec = 6;
 			files = (
+				FA66486E2E18350900EF497A /* trex in Embed TRex CLI */,
 			);
 			name = "Embed TRex CLI";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -677,7 +679,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 120;
+				CURRENT_PROJECT_VERSION = 133;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
 				DEVELOPMENT_TEAM = X93LWC49WV;
@@ -720,7 +722,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 120;
+				CURRENT_PROJECT_VERSION = 133;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
 				DEVELOPMENT_TEAM = X93LWC49WV;
