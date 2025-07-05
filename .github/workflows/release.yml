@@ -17,7 +17,7 @@ permissions:
 
 env:
   XCODE_VERSION: "16.2.0"
-  BUNDLE_ID: "com.naveedhasan.TRex"
+  BUNDLE_ID: "com.ameba.TRex"
   APP_NAME: "TRex"
   BETA_FEED_URL: "https://ameba.github.io/TRex/appcast_beta.xml"
   PROD_FEED_URL: "https://ameba.github.io/TRex/appcast.xml"
@@ -110,7 +110,6 @@ jobs:
             MARKETING_VERSION="$MARKETING_VERSION" \
             CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
             build
-
 
       - name: Verify Universal Binary
         run: |
@@ -318,24 +317,24 @@ jobs:
             cat "CHANGELOG.md" >> "$TEMP_FILE"
           fi
           mv "$TEMP_FILE" "CHANGELOG.md"
-          
+
       - name: Generate Homebrew Formula
         if: ${{ env.IS_BETA != 'true' }}
         run: |
           # Only generate formula for non-beta releases
           echo "Generating Homebrew formula for version $VERSION"
-          
+
           # Ensure Formula directory exists
           mkdir -p Formula
-          
+
           # Create the formula from template
           FORMULA_FILE="Formula/trex.rb"
           cp docs/templates/trex.rb.template "$FORMULA_FILE"
-          
+
           # Replace template variables
           sed -i '' "s/{{VERSION}}/$VERSION/g" "$FORMULA_FILE"
           sed -i '' "s/{{SHA256}}/$ZIP_SHA/g" "$FORMULA_FILE"
-          
+
           echo "Generated Homebrew formula at $FORMULA_FILE"
 
       - name: Commit and Push Changes
