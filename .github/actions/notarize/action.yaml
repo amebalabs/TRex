@@ -1,99 +1,67 @@
-name: 'Notarize macOS App'
-description: 'Submit a macOS application for notarization with Apple'
+name: "Notarize"
+description: "A GitHub Action to notarize macOS applications."
 inputs:
+  username:
+    description: "The Apple ID username to use for notarization."
+    required: true
+  password:
+    description: "The Apple ID password to use for notarization."
+    required: true
+  apple-team-id:
+    description: "The Apple Team ID to use for notarization."
+    required: true
   app-path:
-    description: 'Path to the .app bundle'
+    description: "The path to the application to notarize."
     required: true
-  bundle-id:
-    description: 'Bundle identifier of the app'
-    required: true
-  apple-id:
-    description: 'Apple ID for notarization'
-    required: true
-  app-password:
-    description: 'App-specific password for notarization'
-    required: true
-  team-id:
-    description: 'Team ID for notarization'
-    required: true
+
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
-    - name: Create ZIP for notarization
+    - name: Check that we are on macOS
+      if: ${{ runner.os != 'macos' }}
       shell: bash
       run: |
-        ZIP_PATH="$RUNNER_TEMP/app-for-notarization.zip"
+        echo "This action only works on macOS."
+        exit 1
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        brew install zip
+
+    - name: Create temporary directory
+      id: tmp
+      shell: bash
+      run: |
+        echo "path=$(mktemp -d -t notarize.XXXXXXXXXX)" >> $GITHUB_OUTPUT
+
+    - name: Create ZIP for notarization
+      id: zip
+      shell: bash
+      run: |
+        ZIP_PATH="${{ steps.tmp.outputs.path }}/app.zip"
         ditto -c -k --keepParent "${{ inputs.app-path }}" "$ZIP_PATH"
-        echo "ZIP_PATH=$ZIP_PATH" >> $GITHUB_ENV
+        echo "zip_path=$ZIP_PATH" >> $GITHUB_OUTPUT
 
     - name: Submit for notarization
       shell: bash
       run: |
-        echo "Submitting app for notarization..."
-        
-        # Store credentials in keychain for xcrun notarytool
-        xcrun notarytool store-credentials "notarization-profile" \
-          --apple-id "${{ inputs.apple-id }}" \
-          --password "${{ inputs.app-password }}" \
-          --team-id "${{ inputs.team-id }}"
-        
-        # Submit for notarization
-        SUBMISSION_ID=$(xcrun notarytool submit "$ZIP_PATH" \
-          --keychain-profile "notarization-profile" \
+        xcrun notarytool submit \
+          "${{ steps.zip.outputs.zip_path }}" \
           --wait \
-          --timeout 30m \
-          --output-format json | jq -r '.id')
-        
-        if [ -z "$SUBMISSION_ID" ]; then
-          echo "Error: Failed to get submission ID"
+          --apple-id "${{ inputs.username }}" \
+          --password "${{ inputs.password }}" \
+          --team-id "${{ inputs.apple-team-id }}" \
+          --output-format json \
+          | tee "${{ steps.tmp.outputs.path }}/notarization_output.json"
+
+        if ! grep -q "Accepted" "${{ steps.tmp.outputs.path }}/notarization_output.json"; then
+          echo "Notarization failed"
           exit 1
         fi
-        
-        echo "SUBMISSION_ID=$SUBMISSION_ID" >> $GITHUB_ENV
-        echo "Notarization submission ID: $SUBMISSION_ID"
 
-    - name: Check notarization status
+    - name: Staple notarization ticket
       shell: bash
       run: |
-        echo "Checking notarization status..."
-        
-        # Get detailed log
-        xcrun notarytool log "$SUBMISSION_ID" \
-          --keychain-profile "notarization-profile" \
-          notarization-log.json || true
-        
-        if [ -f "notarization-log.json" ]; then
-          echo "Notarization log:"
-          cat notarization-log.json | jq '.'
-        fi
-        
-        # Get final status
-        STATUS=$(xcrun notarytool info "$SUBMISSION_ID" \
-          --keychain-profile "notarization-profile" \
-          --output-format json | jq -r '.status')
-        
-        if [ "$STATUS" != "Accepted" ]; then
-          echo "Error: Notarization failed with status: $STATUS"
-          exit 1
-        fi
-        
-        echo "Notarization successful!"
-
-    - name: Staple notarization
-      shell: bash
-      run: |
-        echo "Stapling notarization to app..."
         xcrun stapler staple "${{ inputs.app-path }}"
-        
-        echo "Validating stapled app..."
         xcrun stapler validate "${{ inputs.app-path }}"
-
-    - name: Cleanup
-      if: always()
-      shell: bash
-      run: |
-        # Remove stored credentials
-        security delete-generic-password -s "notarization-profile" || true
-        
-        # Remove temporary files
-        rm -f "$ZIP_PATH" notarization-log.json

@@ -1,93 +1,67 @@
-name: 'Sign macOS App'
-description: 'Sign a macOS application with Developer ID'
+name: "Codesign"
+description: "A GitHub Action to codesign macOS applications."
 inputs:
-  app-path:
-    description: 'Path to the .app bundle'
-    required: true
-  certificate-p12:
-    description: 'Base64 encoded P12 certificate'
+  certificate:
+    description: "The certificate for signing."
     required: true
   certificate-password:
-    description: 'Password for the P12 certificate'
+    description: "The password for the certificate."
     required: true
-  bundle-id:
-    description: 'Bundle identifier of the app'
+  apple-team-id:
+    description: "The Apple Team ID to use for signing."
     required: true
+  app-path:
+    description: "The path to the application to sign."
+    required: true
+  entitlements-path:
+    description: "The path to the entitlements file to use for signing."
+    required: false
+    default: ""
+
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
-    - name: Import certificate
+    - name: Check that we are on macOS
+      if: ${{ runner.os != 'macos' }}
       shell: bash
       run: |
-        # Create temporary keychain
-        KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
-        KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
-        security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-        security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-        security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-        
-        # Import certificate
-        CERTIFICATE_PATH="$RUNNER_TEMP/certificate.p12"
-        echo "${{ inputs.certificate-p12 }}" | base64 --decode > "$CERTIFICATE_PATH"
-        security import "$CERTIFICATE_PATH" -P "${{ inputs.certificate-password }}" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
-        security list-keychain -d user -s "$KEYCHAIN_PATH"
-        
-        # Allow codesign to access the certificate without prompting
-        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-        
-        # Store keychain info for later cleanup
-        echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
-        echo "ORIGINAL_KEYCHAINS=$(security list-keychains -d user | tr -d '\n')" >> $GITHUB_ENV
+        echo "This action only works on macOS."
+        exit 1
 
-    - name: Sign app bundle
+    - name: Import signing keychain
+      uses: apple-actions/import-codesign-certs@v3
+      with:
+        keychain: signing_temp
+        p12-file-base64: ${{ inputs.certificate }}
+        p12-password: ${{ inputs.certificate-password }}
+
+    - name: Set Entitlements Argument
+      if: ${{ inputs.entitlements-path != '' }}
       shell: bash
       run: |
-        # Find signing identity
-        IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | awk '{print $2}')
-        if [ -z "$IDENTITY" ]; then
-          echo "Error: No Developer ID Application certificate found"
-          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
-          exit 1
-        fi
-        echo "Using signing identity: $IDENTITY"
-        
-        # Sign embedded frameworks and libraries first
-        find "${{ inputs.app-path }}" -name "*.framework" -o -name "*.dylib" -o -name "*.bundle" | while read -r item; do
-          echo "Signing: $item"
-          codesign --force --deep --sign "$IDENTITY" \
-            --options runtime \
-            --timestamp \
-            "$item"
-        done
-        
-        # Sign the main app
-        echo "Signing main app: ${{ inputs.app-path }}"
-        codesign --force --deep --sign "$IDENTITY" \
-          --options runtime \
-          --timestamp \
-          --entitlements "${{ inputs.app-path }}/Contents/Info.plist" \
-          "${{ inputs.app-path }}"
+        echo "entitlements_arg=--entitlements \"${{ inputs.entitlements-path }}\"" >> $GITHUB_ENV
 
-    - name: Verify signature
+    - name: Code sign
       shell: bash
       run: |
-        echo "Verifying signature..."
-        codesign --verify --deep --strict --verbose=2 "${{ inputs.app-path }}"
-        
-        echo "Checking signature details..."
-        codesign -dv --verbose=4 "${{ inputs.app-path }}"
-        
-        echo "Verifying with spctl..."
-        spctl -a -t exec -vv "${{ inputs.app-path }}" || true
+        security find-identity -v signing_temp.keychain | grep "${{ inputs.apple-team-id }}" | grep "Developer ID Application"
+        codesign --keychain signing_temp.keychain --force --deep --sign "${{ inputs.apple-team-id }}" ${{ env.entitlements_arg }} --options=runtime "${{ inputs.app-path }}"
 
-    - name: Cleanup
+    - name: Validate code signature
+      shell: bash
+      run: |
+        echo "Validating signature for ${{ inputs.app-path }}"
+        echo "Basic signature verification..."
+        codesign --verify --verbose=4 "${{ inputs.app-path }}"
+        echo "Deep signature verification..."
+        codesign --verify --verbose=4 --deep "${{ inputs.app-path }}"
+        echo "Strict requirement verification..."
+        codesign --verify --verbose=4 --strict "${{ inputs.app-path }}"
+        echo "Signature details..."
+        codesign --display --verbose=4 "${{ inputs.app-path }}"
+
+    - name: Cleanup keychain
       if: always()
       shell: bash
       run: |
-        if [ -n "$KEYCHAIN_PATH" ]; then
-          security delete-keychain "$KEYCHAIN_PATH" || true
-        fi
-        if [ -n "$ORIGINAL_KEYCHAINS" ]; then
-          eval "security list-keychains -d user -s $ORIGINAL_KEYCHAINS"
-        fi
-        rm -f "$RUNNER_TEMP/certificate.p12"
+        security delete-keychain signing_temp.keychain || true

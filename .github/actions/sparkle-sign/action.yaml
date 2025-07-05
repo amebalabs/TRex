@@ -1,66 +1,111 @@
-name: 'Generate Sparkle Signature'
-description: 'Generate EdDSA signature for Sparkle updates'
+name: "Sparkle Sign"
+description: "Sign updates with Sparkle EdDSA"
 inputs:
-  app-path:
-    description: 'Path to the .app bundle'
+  private-key:
+    description: "Base64 encoded EdDSA private key"
     required: true
-  sparkle-private-key:
-    description: 'Sparkle EdDSA private key'
+  file-path:
+    description: "Path to the file to sign"
     required: true
 outputs:
   signature:
-    description: 'The generated EdDSA signature'
+    description: "Generated EdDSA signature"
     value: ${{ steps.sign.outputs.signature }}
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
-    - name: Download Sparkle
+    - name: Setup Sparkle
       shell: bash
       run: |
+        set -e
         SPARKLE_VERSION="2.6.4"
-        SPARKLE_URL="https://github.com/sparkle-project/Sparkle/releases/download/$SPARKLE_VERSION/Sparkle-$SPARKLE_VERSION.tar.xz"
-        
-        echo "Downloading Sparkle $SPARKLE_VERSION..."
-        curl -L -o sparkle.tar.xz "$SPARKLE_URL"
-        tar -xf sparkle.tar.xz
-        
-        # Extract signing tools
-        cp -R Sparkle.framework/Versions/Current/bin "$RUNNER_TEMP/sparkle-bin"
-        echo "SPARKLE_BIN=$RUNNER_TEMP/sparkle-bin" >> $GITHUB_ENV
+        TEMP_DIR=$(mktemp -d)
+        echo "TEMP_DIR=$TEMP_DIR" >> $GITHUB_ENV
 
-    - name: Generate signature
+        echo "Downloading Sparkle..."
+        curl -L -o "$TEMP_DIR/sparkle.tar.xz" \
+          "https://github.com/sparkle-project/Sparkle/releases/download/$SPARKLE_VERSION/Sparkle-$SPARKLE_VERSION.tar.xz"
+
+        echo "Extracting Sparkle..."
+        cd "$TEMP_DIR"
+        tar -xf sparkle.tar.xz
+
+        echo "Verifying Sparkle tools..."
+        if [ ! -f "bin/sign_update" ]; then
+          echo "Error: sign_update tool not found"
+          exit 1
+        fi
+
+        chmod +x bin/sign_update
+        echo "SPARKLE_BIN=$TEMP_DIR/bin" >> $GITHUB_ENV
+
+    - name: Generate Signature
       id: sign
       shell: bash
       run: |
-        # Save private key to file
-        echo "${{ inputs.sparkle-private-key }}" > "$RUNNER_TEMP/sparkle-private-key"
-        
-        # Create ZIP of the app for signing
-        cd "$(dirname "${{ inputs.app-path }}")"
-        APP_NAME=$(basename "${{ inputs.app-path }}")
-        ZIP_PATH="$RUNNER_TEMP/app-for-sparkle.zip"
-        zip -r "$ZIP_PATH" "$APP_NAME"
-        
-        # Generate signature
-        SIGNATURE=$("$SPARKLE_BIN/sign_update" \
-          -f "$RUNNER_TEMP/sparkle-private-key" \
-          "$ZIP_PATH" | tail -1)
-        
-        if [ -z "$SIGNATURE" ]; then
-          echo "Error: Failed to generate Sparkle signature"
+        set -e
+
+        # Debug information
+        echo "Current directory: $(pwd)"
+        echo "File to sign: ${{ inputs.file-path }}"
+        echo "File exists check:"
+        ls -la "${{ inputs.file-path }}" || echo "File not found"
+
+        # Verify file exists
+        if [ ! -f "${{ inputs.file-path }}" ]; then
+          echo "Error: File not found: ${{ inputs.file-path }}"
           exit 1
         fi
-        
-        echo "Generated Sparkle signature: $SIGNATURE"
+
+        # Create temporary directory for keys
+        KEYS_DIR=$(mktemp -d)
+        echo "Created temp dir for keys: $KEYS_DIR"
+
+        # Decode private key with error checking
+        echo "Decoding private key..."
+        if ! echo "${{ inputs.private-key }}" | base64 -d > "$KEYS_DIR/private_key" 2>/dev/null; then
+          echo "Error: Failed to decode private key (invalid base64)"
+          exit 1
+        fi
+
+        if [ ! -s "$KEYS_DIR/private_key" ]; then
+          echo "Error: Decoded private key is empty"
+          exit 1
+        fi
+
+        # Verify sign_update tool
+        if [ ! -x "$SPARKLE_BIN/sign_update" ]; then
+          echo "Error: sign_update tool not found or not executable"
+          echo "SPARKLE_BIN contents:"
+          ls -la "$SPARKLE_BIN"
+          exit 1
+        fi
+
+        # Generate signature with full error output
+        echo "Generating signature..."
+        if ! SIGNATURE=$("$SPARKLE_BIN/sign_update" \
+                  --ed-key-file "$KEYS_DIR/private_key" \
+                  "${{ inputs.file-path }}" 2>&1); then
+                  echo "Error generating signature: $SIGNATURE"
+                  exit 1
+                fi
+
+        if [ -z "$SIGNATURE" ]; then
+          echo "Error: Empty signature generated"
+          exit 1
+        fi
+
+        # Clean up
+        rm -rf "$KEYS_DIR"
+
+        # Set output
         echo "signature=$SIGNATURE" >> $GITHUB_OUTPUT
-        echo "SPARKLE_SIGNATURE=$SIGNATURE" >> $GITHUB_ENV
+        echo "Signature generated successfully"
 
     - name: Cleanup
       if: always()
       shell: bash
       run: |
-        rm -f "$RUNNER_TEMP/sparkle-private-key"
-        rm -rf "$RUNNER_TEMP/sparkle-bin"
-        rm -f sparkle.tar.xz
-        rm -rf Sparkle.framework
-        rm -f "$RUNNER_TEMP/app-for-sparkle.zip"
+        if [ -n "$TEMP_DIR" ]; then
+          rm -rf "$TEMP_DIR"
+        fi
