@@ -111,20 +111,6 @@ jobs:
             CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
             build
 
-      - name: Build CMD Tool
-        env:
-          MARKETING_VERSION: ${{ steps.get_versions.outputs.VERSION }}
-          CURRENT_PROJECT_VERSION: ${{ steps.get_versions.outputs.BUILD_NUMBER }}
-        run: |
-          xcodebuild \
-            -scheme "TRex CMD" \
-            -configuration Release \
-            -derivedDataPath build \
-            -arch arm64 -arch x86_64 \
-            ONLY_ACTIVE_ARCH=NO \
-            MARKETING_VERSION="$MARKETING_VERSION" \
-            CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
-            build
 
       - name: Verify Universal Binary
         run: |
