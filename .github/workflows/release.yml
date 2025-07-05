@@ -166,7 +166,7 @@ jobs:
             mv "${APPCAST_FILE}.tmp" "$APPCAST_FILE"
           else
             # Create new appcast file
-            cat > "$APPCAST_FILE" << EOF
+            cat > "$APPCAST_FILE" << 'APPCAST_EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
   <channel>
@@ -174,10 +174,12 @@ jobs:
     <link>https://github.com/${{ github.repository }}/releases</link>
     <description>Text Recognition for macOS</description>
     <language>en</language>
-$NEW_ITEM
+APPCAST_EOF
+            echo "$NEW_ITEM" >> "$APPCAST_FILE"
+            cat >> "$APPCAST_FILE" << 'APPCAST_EOF'
   </channel>
 </rss>
-EOF
+APPCAST_EOF
           fi
           
           # Validate XML
