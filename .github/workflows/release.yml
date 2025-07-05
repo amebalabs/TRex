@@ -200,7 +200,7 @@ jobs:
         run: |
           # Extract version and determine if beta
           VERSION=$(echo "${{ github.ref_name }}" | sed 's/v//')
-          if echo "${{ github.ref_name }}" | grep -q 'beta'; then
+          if echo "${{ github.ref_name }}" | grep -qi 'beta'; then
             IS_BETA=true
           else
             IS_BETA=false
