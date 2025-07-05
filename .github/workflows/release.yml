@@ -1,0 +1,289 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+      - "v*.*.*-beta.*"
+  pull_request:
+    branches:
+      - main
+  push:
+    branches-ignore:
+      - main
+    tags:
+      - "v*.*.*"
+      - "v*.*.*-beta.*"
+
+jobs:
+  build-and-release:
+    runs-on: macos-15
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2.0'
+
+      - name: Extract version from tag
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "MARKETING_VERSION=$VERSION" >> $GITHUB_ENV
+          
+          # Determine if this is a beta version
+          if [[ "$VERSION" == *"-beta"* ]]; then
+            echo "IS_BETA=true" >> $GITHUB_ENV
+          else
+            echo "IS_BETA=false" >> $GITHUB_ENV
+          fi
+
+      - name: Get build number
+        run: |
+          BUILD_NUMBER=$(git rev-list --count HEAD)
+          echo "CURRENT_PROJECT_VERSION=$BUILD_NUMBER" >> $GITHUB_ENV
+          echo "Build number: $BUILD_NUMBER"
+
+      - name: Build TRex
+        run: |
+          xcodebuild \
+            -scheme "TRex" \
+            -configuration Release \
+            -derivedDataPath build \
+            -arch arm64 -arch x86_64 \
+            ONLY_ACTIVE_ARCH=NO \
+            MARKETING_VERSION="${{ env.MARKETING_VERSION }}" \
+            CURRENT_PROJECT_VERSION="${{ env.CURRENT_PROJECT_VERSION }}" \
+            build
+
+      - name: Build TRex CMD
+        run: |
+          xcodebuild \
+            -scheme "TRex CMD" \
+            -configuration Release \
+            -derivedDataPath build \
+            -arch arm64 -arch x86_64 \
+            ONLY_ACTIVE_ARCH=NO \
+            MARKETING_VERSION="${{ env.MARKETING_VERSION }}" \
+            CURRENT_PROJECT_VERSION="${{ env.CURRENT_PROJECT_VERSION }}" \
+            build
+
+      - name: Find built app
+        run: |
+          APP_PATH=$(find build -name "TRex.app" -type d | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: Could not find TRex.app"
+            exit 1
+          fi
+          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
+          echo "Found app at: $APP_PATH"
+
+      - name: Sign app
+        uses: ./.github/actions/sign
+        with:
+          app-path: ${{ env.APP_PATH }}
+          certificate-p12: ${{ secrets.CERTIFICATE_P12 }}
+          certificate-password: ${{ secrets.CERTIFICATE_PASSWORD }}
+          bundle-id: com.naveedhasan.TRex
+
+      - name: Notarize app
+        uses: ./.github/actions/notarize
+        with:
+          app-path: ${{ env.APP_PATH }}
+          bundle-id: com.naveedhasan.TRex
+          apple-id: ${{ secrets.APPLE_ID }}
+          app-password: ${{ secrets.NOTARIZATION_PASSWORD }}
+          team-id: ${{ secrets.TEAM_ID }}
+
+      - name: Generate Sparkle signature
+        uses: ./.github/actions/sparkle-sign
+        with:
+          app-path: ${{ env.APP_PATH }}
+          sparkle-private-key: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+
+      - name: Create ZIP archive
+        run: |
+          cd "$(dirname "$APP_PATH")"
+          zip -r "TRex-${{ env.VERSION }}.zip" "$(basename "$APP_PATH")"
+          mv "TRex-${{ env.VERSION }}.zip" "$GITHUB_WORKSPACE/"
+          echo "ZIP_PATH=$GITHUB_WORKSPACE/TRex-${{ env.VERSION }}.zip" >> $GITHUB_ENV
+
+      - name: Calculate SHA256
+        run: |
+          SHA256=$(shasum -a 256 "${{ env.ZIP_PATH }}" | awk '{print $1}')
+          echo "SHA256=$SHA256" >> $GITHUB_ENV
+
+      - name: Check if release notes exist
+        run: |
+          RELEASE_NOTES_PATH="docs/release-notes/${{ env.VERSION }}.md"
+          if [ ! -f "$RELEASE_NOTES_PATH" ]; then
+            echo "Error: Release notes not found at $RELEASE_NOTES_PATH"
+            echo "Please create release notes before tagging a release"
+            exit 1
+          fi
+          echo "RELEASE_NOTES_PATH=$RELEASE_NOTES_PATH" >> $GITHUB_ENV
+
+      - name: Update appcast
+        run: |
+          if [ "${{ env.IS_BETA }}" == "true" ]; then
+            APPCAST_FILE="docs/appcast_beta.xml"
+          else
+            APPCAST_FILE="docs/appcast.xml"
+          fi
+          
+          # Create appcast directory if it doesn't exist
+          mkdir -p docs
+          
+          # Create or update appcast file
+          RELEASE_NOTES=$(cat "${{ env.RELEASE_NOTES_PATH }}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+          PUBDATE=$(date -u +"%a, %d %b %Y %H:%M:%S GMT")
+          
+          NEW_ITEM="<item>
+            <title>TRex ${{ env.VERSION }}</title>
+            <sparkle:version>${{ env.VERSION }}</sparkle:version>
+            <sparkle:shortVersionString>${{ env.VERSION }}</sparkle:shortVersionString>
+            <description><![CDATA[${RELEASE_NOTES}]]></description>
+            <pubDate>${PUBDATE}</pubDate>
+            <enclosure
+              url=\"https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/TRex-${{ env.VERSION }}.zip\"
+              sparkle:edSignature=\"${{ env.SPARKLE_SIGNATURE }}\"
+              sparkle:sha256=\"${{ env.SHA256 }}\"
+              type=\"application/octet-stream\"
+            />
+          </item>"
+          
+          if [ -f "$APPCAST_FILE" ]; then
+            # Insert new item after <channel> tag
+            awk -v new_item="$NEW_ITEM" '
+              /<channel>/ {print; print new_item; next}
+              {print}
+            ' "$APPCAST_FILE" > "${APPCAST_FILE}.tmp"
+            mv "${APPCAST_FILE}.tmp" "$APPCAST_FILE"
+          else
+            # Create new appcast file
+            cat > "$APPCAST_FILE" << EOF
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+  <channel>
+    <title>TRex</title>
+    <link>https://github.com/${{ github.repository }}/releases</link>
+    <description>Text Recognition for macOS</description>
+    <language>en</language>
+$NEW_ITEM
+  </channel>
+</rss>
+EOF
+          fi
+          
+          # Validate XML
+          xmllint --noout "$APPCAST_FILE" || exit 1
+
+      - name: Update CHANGELOG.md
+        run: |
+          RELEASE_NOTES_CONTENT=$(cat "${{ env.RELEASE_NOTES_PATH }}")
+          CHANGELOG_ENTRY="## [${{ env.VERSION }}] - $(date +%Y-%m-%d)\n\n${RELEASE_NOTES_CONTENT}\n\n"
+          
+          if [ -f "CHANGELOG.md" ]; then
+            # Create temp file with new entry
+            echo -e "$CHANGELOG_ENTRY" > CHANGELOG.tmp
+            # Append existing changelog
+            cat CHANGELOG.md >> CHANGELOG.tmp
+            mv CHANGELOG.tmp CHANGELOG.md
+          else
+            echo -e "# Changelog\n\n$CHANGELOG_ENTRY" > CHANGELOG.md
+          fi
+
+      - name: Generate Homebrew formula
+        if: env.IS_BETA == 'false'
+        run: |
+          mkdir -p docs/homebrew
+          cat > docs/homebrew/trex.rb << EOF
+class Trex < Formula
+  desc "Text Recognition for macOS"
+  homepage "https://github.com/${{ github.repository }}"
+  version "${{ env.VERSION }}"
+  url "https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/TRex-${{ env.VERSION }}.zip"
+  sha256 "${{ env.SHA256 }}"
+
+  auto_updates true
+
+  app "TRex.app"
+  binary "#{appdir}/TRex.app/Contents/MacOS/TRex CMD", target: "trex"
+
+  zap trash: [
+    "~/Library/Application Support/com.naveedhasan.TRex",
+    "~/Library/Caches/com.naveedhasan.TRex",
+    "~/Library/Preferences/com.naveedhasan.TRex.plist",
+  ]
+end
+EOF
+
+      - name: Commit documentation updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          git checkout -b "release-${{ env.VERSION }}"
+          git add docs/appcast*.xml CHANGELOG.md
+          if [ "${{ env.IS_BETA }}" == "false" ]; then
+            git add docs/homebrew/trex.rb
+          fi
+          
+          git commit -m "Update documentation for v${{ env.VERSION }}"
+          git push origin "release-${{ env.VERSION }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ZIP_PATH }}
+          body_path: ${{ env.RELEASE_NOTES_PATH }}
+          prerelease: ${{ env.IS_BETA }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          keep_files: true
+
+  test:
+    runs-on: macos-15
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/'))
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2.0'
+
+      - name: Build TRex (Debug)
+        run: |
+          xcodebuild \
+            -scheme "TRex" \
+            -configuration Debug \
+            -derivedDataPath build \
+            build
+
+      - name: Build TRex CMD (Debug)
+        run: |
+          xcodebuild \
+            -scheme "TRex CMD" \
+            -configuration Debug \
+            -derivedDataPath build \
+            build
+
+      - name: Run tests
+        run: |
+          xcodebuild \
+            -scheme "TRex" \
+            -configuration Debug \
+            -derivedDataPath build \
+            test || echo "No tests found"

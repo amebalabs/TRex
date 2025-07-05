@@ -1,0 +1,66 @@
+name: 'Generate Sparkle Signature'
+description: 'Generate EdDSA signature for Sparkle updates'
+inputs:
+  app-path:
+    description: 'Path to the .app bundle'
+    required: true
+  sparkle-private-key:
+    description: 'Sparkle EdDSA private key'
+    required: true
+outputs:
+  signature:
+    description: 'The generated EdDSA signature'
+    value: ${{ steps.sign.outputs.signature }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Download Sparkle
+      shell: bash
+      run: |
+        SPARKLE_VERSION="2.6.4"
+        SPARKLE_URL="https://github.com/sparkle-project/Sparkle/releases/download/$SPARKLE_VERSION/Sparkle-$SPARKLE_VERSION.tar.xz"
+        
+        echo "Downloading Sparkle $SPARKLE_VERSION..."
+        curl -L -o sparkle.tar.xz "$SPARKLE_URL"
+        tar -xf sparkle.tar.xz
+        
+        # Extract signing tools
+        cp -R Sparkle.framework/Versions/Current/bin "$RUNNER_TEMP/sparkle-bin"
+        echo "SPARKLE_BIN=$RUNNER_TEMP/sparkle-bin" >> $GITHUB_ENV
+
+    - name: Generate signature
+      id: sign
+      shell: bash
+      run: |
+        # Save private key to file
+        echo "${{ inputs.sparkle-private-key }}" > "$RUNNER_TEMP/sparkle-private-key"
+        
+        # Create ZIP of the app for signing
+        cd "$(dirname "${{ inputs.app-path }}")"
+        APP_NAME=$(basename "${{ inputs.app-path }}")
+        ZIP_PATH="$RUNNER_TEMP/app-for-sparkle.zip"
+        zip -r "$ZIP_PATH" "$APP_NAME"
+        
+        # Generate signature
+        SIGNATURE=$("$SPARKLE_BIN/sign_update" \
+          -f "$RUNNER_TEMP/sparkle-private-key" \
+          "$ZIP_PATH" | tail -1)
+        
+        if [ -z "$SIGNATURE" ]; then
+          echo "Error: Failed to generate Sparkle signature"
+          exit 1
+        fi
+        
+        echo "Generated Sparkle signature: $SIGNATURE"
+        echo "signature=$SIGNATURE" >> $GITHUB_OUTPUT
+        echo "SPARKLE_SIGNATURE=$SIGNATURE" >> $GITHUB_ENV
+
+    - name: Cleanup
+      if: always()
+      shell: bash
+      run: |
+        rm -f "$RUNNER_TEMP/sparkle-private-key"
+        rm -rf "$RUNNER_TEMP/sparkle-bin"
+        rm -f sparkle.tar.xz
+        rm -rf Sparkle.framework
+        rm -f "$RUNNER_TEMP/app-for-sparkle.zip"
