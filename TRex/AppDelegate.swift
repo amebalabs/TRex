@@ -11,26 +11,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let preferences = Preferences.shared
     var cancellable: Set<AnyCancellable> = []
     var onboardingWindowController: NSWindowController?
-
+    let bundleID = Bundle.main.bundleIdentifier!
+    
     func applicationDidFinishLaunching(_: Notification) {
-        // TesseractSwift is now integrated directly in TRexCore
-        
-        let bundleID = Bundle.main.bundleIdentifier!
         NSApp.servicesProvider = self
 
-        // this is a dumb workaround for but that causes Settings to open on app launch
-        // this happens since macOS 15, for SwiftUI apps without windows macOS will open settings
-        // a better workaround would be migrating to MenuBar extra, but this touches to many things and I don't want to invest time at the moment
-        // another alternative could look like this
-        // WindowGroup {
-        //   EmptyView()
-        //      .hidden()
-        // }.defaultSize(width: 0, height: 0)
-
-        if let window = NSApplication.shared.windows.first {
-            window.close()
-        }
-        
         if NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).count > 1 {
             NSWorkspace.shared.open(URL(string: "trex://showPreferences")!)
             NSApp.terminate(nil)
@@ -56,7 +41,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        NSApp.openSettings()
+//        NSApp.openSettings()
         return true
     }
     
