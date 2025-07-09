@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "tesseractswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/amebalabs/TesseractSwift.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "f3e2a44213fccba908ac2040296b0bc9423c5bc7"
+      }
+    }
+  ],
+  "version" : 2
+}

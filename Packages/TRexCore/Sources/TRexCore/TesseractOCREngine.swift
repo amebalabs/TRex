@@ -55,7 +55,7 @@ public class TesseractOCREngine: OCREngine {
         // Ensure the language is downloaded
         if !supportsLanguage(languages.first ?? "en-US") {
             // Try to download the language
-            if let langInfo = LanguageDownloader.commonLanguages.first(where: { $0.code == primaryLang }) {
+            if let langInfo = LanguageDownloader.allAvailableLanguages().first(where: { $0.code == primaryLang }) {
                 try await languageDownloader.downloadLanguage(langInfo, to: tessdataPath)
             } else {
                 throw OCRError.initializationFailed("Language not available: \(primaryLang)")
@@ -97,7 +97,7 @@ public class TesseractOCREngine: OCREngine {
     public func downloadLanguage(_ code: String, progress: ((Double) -> Void)? = nil) async throws {
         let tesseractCode = LanguageCodeMapper.toTesseract(code)
         
-        guard let language = LanguageDownloader.commonLanguages.first(where: { $0.code == tesseractCode }) else {
+        guard let language = LanguageDownloader.allAvailableLanguages().first(where: { $0.code == tesseractCode }) else {
             throw OCRError.initializationFailed("Language not supported: \(code)")
         }
         
@@ -107,7 +107,7 @@ public class TesseractOCREngine: OCREngine {
     public func deleteLanguage(_ code: String) throws {
         let tesseractCode = LanguageCodeMapper.toTesseract(code)
         
-        guard let language = LanguageDownloader.commonLanguages.first(where: { $0.code == tesseractCode }) else {
+        guard let language = LanguageDownloader.allAvailableLanguages().first(where: { $0.code == tesseractCode }) else {
             throw OCRError.initializationFailed("Language not supported: \(code)")
         }
         
@@ -115,7 +115,7 @@ public class TesseractOCREngine: OCREngine {
     }
     
     public func supportedLanguages() -> [(code: String, name: String)] {
-        return LanguageDownloader.commonLanguages.map { 
+        return LanguageDownloader.allAvailableLanguages().map { 
             (code: $0.code, name: $0.name)
         }
     }
