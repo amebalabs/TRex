@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
-    <title>TRex Beta</title>
-    <link>https://github.com/ameba/TRex/releases</link>
-    <description>Text Recognition for macOS - Beta Channel</description>
+    <title>TRex Beta Appcast</title>
+    <link>https://ameba.github.io/TRex/appcast_beta.xml</link>
+    <description>TRex Beta Updates</description>
     <language>en</language>
-    <!-- New beta releases will be automatically added here by CI -->
+    <item>
+      <title>TRex 1.9.0-BETA-3</title>
+      <sparkle:version>1.9.0-BETA-3</sparkle:version>
+      <sparkle:shortVersionString>1.9.0-BETA-3</sparkle:shortVersionString>
+      <description><![CDATA[]]></description>
+      <pubDate>Wed, 09 Jul 2025 18:49:21 +0000</pubDate>
+      <enclosure
+        url="https://github.com/amebalabs/TRex/releases/download/v1.9.0-BETA-3/TRex-1.9.0-BETA-3.zip"
+        sparkle:version="1.9.0-BETA-3"
+        sparkle:shortVersionString="1.9.0-BETA-3"
+        type="application/octet-stream"
+        sparkle:edSignature="F4ONdXqNiIBqj4td2Y4njaNof+VlSEikmTixoOLOdhJtxsT7VfbkrzPoKiXgdh/kFQ+26yBZQ+i3j+0Q6w0JDA==" length="2510915"
+        sparkle:sha256="064b75e288863eefe396d978527e7b64f50bbc661555ec0cf6280ae43b7af0ad"
+      />
+    </item>
   </channel>
 </rss>
