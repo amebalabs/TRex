@@ -15,7 +15,7 @@ struct AboutSettingsView: View {
                         .bold()
                     Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""))")
                         .font(.subheadline)
-                    Text("Copyright ©2024 Ameba Labs. All rights reserved.")
+                    Text("Copyright ©2025 Ameba Labs. All rights reserved.")
                         .font(.footnote)
                         .padding(.top, 10)
                 }
