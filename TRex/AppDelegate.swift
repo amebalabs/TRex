@@ -101,20 +101,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func showOnboardingIfNeeded() {
         guard preferences.needsOnboarding else { return }
-
+        
         onboardingWindowController = NSWindowController()
 
         let myWindow = NSWindow(
-            contentRect: .init(origin: .zero, size: CGSize(width: 400, height: 500)),
-            styleMask: [.titled],
+            contentRect: .init(origin: .zero, size: CGSize(width: 900, height: 700)),
+            styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         myWindow.title = "Welcome to TRex"
+        myWindow.titlebarAppearsTransparent = true
+        myWindow.isMovableByWindowBackground = true
+        myWindow.backgroundColor = NSColor.windowBackgroundColor
+        myWindow.minSize = CGSize(width: 1000, height: 800)
+        myWindow.maxSize = CGSize(width: 1000, height: 800)
         myWindow.center()
 
         onboardingWindowController = NSWindowController(window: myWindow)
-        onboardingWindowController?.contentViewController = NSHostingController(rootView: OnboardingView())
+        onboardingWindowController?.contentViewController = NSHostingController(
+            rootView: OnboardingView()
+                .environmentObject(preferences)
+        )
 
         onboardingWindowController?.showWindow(self)
         onboardingWindowController?.window?.makeKeyAndOrderFront(nil)

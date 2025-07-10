@@ -51,11 +51,22 @@ struct GeneralSettingsView: View {
                         EnumPicker(selected: $preferences.recongitionLanguage, title: "")
                             .disabled(preferences.automaticLanguageDetection)
                     }
+                    Text("More languages are available in the Tesseract menu")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 4)
+                }
+            } else {
+                // When Tesseract is enabled, show a note about language configuration
+                Section(header: Text("Language Settings")) {
+                    Text("Language configuration is available in the Tesseract settings tab")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
         }
         .padding(20)
-        .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 180 : 260) : (preferences.tesseractEnabled ? 100 : 180))
+        .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 220 : 280) : (preferences.tesseractEnabled ? 140 : 200))
     }
 }
 
