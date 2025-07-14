@@ -50,7 +50,7 @@ struct TesseractSettingsView: View {
                         .toggleStyle(SwitchToggleStyle())
                 }
                 
-                Text("Enable additional OCR languages beyond Apple Vision's built-in support")
+                Text("Additional OCR languages beyond Apple Vision's built-in support")
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -149,7 +149,7 @@ struct TesseractSettingsView: View {
                 .padding(.bottom, 16)
             }
         }
-        .frame(width: 550, height: preferences.tesseractEnabled ? 430 : 140)
+        .frame(width: 410, height: preferences.tesseractEnabled ? 430 : 140)
         .onAppear {
             refreshLanguageList()
             selectedLanguages = Set(preferences.tesseractLanguages)

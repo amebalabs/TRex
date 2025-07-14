@@ -1,6 +1,9 @@
 import SwiftUI
+import TRexCore
 
 struct AboutSettingsView: View {
+    @EnvironmentObject var preferences: Preferences
+    
     var body: some View {
         VStack {
             HStack {

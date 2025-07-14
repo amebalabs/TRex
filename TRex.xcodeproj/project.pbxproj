@@ -35,6 +35,7 @@
 		FA1EE63D2E1F2F5F009D86D8 /* QLImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE63C2E1F2F5F009D86D8 /* QLImage.swift */; };
 		FA1EE6412E1F32C0009D86D8 /* step2.gif in Resources */ = {isa = PBXBuildFile; fileRef = FA1EE63E2E1F32C0009D86D8 /* step2.gif */; };
 		FA1EE6422E1F32C0009D86D8 /* step3.gif in Resources */ = {isa = PBXBuildFile; fileRef = FA1EE63F2E1F32C0009D86D8 /* step3.gif */; };
+		FA1EE6452E254E54009D86D8 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = FA1EE6442E254E54009D86D8 /* Sparkle */; };
 		FA2B835B25DEBF8200B23F25 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = FA2B835A25DEBF8200B23F25 /* Credits.rtf */; };
 		FA3AEAA82C9B85710096CCA5 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA3AEAA72C9B85710096CCA5 /* TRexCore */; };
 		FA3AEAAA2C9B85790096CCA5 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA3AEAA92C9B85790096CCA5 /* TRexCore */; };
@@ -172,6 +173,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FA3AEAA82C9B85710096CCA5 /* TRexCore in Frameworks */,
+				FA1EE6452E254E54009D86D8 /* Sparkle in Frameworks */,
 				FA5F875F25DD637300B1AF77 /* KeyboardShortcuts in Frameworks */,
 				FA6648712E18469400EF497A /* TesseractSwift in Frameworks */,
 			);
@@ -457,6 +459,7 @@
 				FA5F875E25DD637300B1AF77 /* KeyboardShortcuts */,
 				FA3AEAA72C9B85710096CCA5 /* TRexCore */,
 				FA6648702E18469400EF497A /* TesseractSwift */,
+				FA1EE6442E254E54009D86D8 /* Sparkle */,
 			);
 			productName = TRex;
 			productReference = FA5F872E25DC243200B1AF77 /* TRex.app */;
@@ -493,6 +496,7 @@
 			packageReferences = (
 				FA5F875D25DD637300B1AF77 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 				FA58E3DF27AE31DF0034837F /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
+				FA1EE6432E254E54009D86D8 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			productRefGroup = FA5F872F25DC243200B1AF77 /* Products */;
 			projectDirPath = "";
@@ -835,7 +839,9 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MAC_APP_STORE = NO;
 				MARKETING_VERSION = 1.9.0;
+				MTL_ENABLE_DEBUG_INFO = "";
 				OTHER_LDFLAGS = "-lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -870,6 +876,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MAC_APP_STORE = NO;
 				MARKETING_VERSION = 1.9.0;
 				OTHER_LDFLAGS = "-lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
@@ -911,6 +918,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		FA1EE6432E254E54009D86D8 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.1;
+			};
+		};
 		FA58E3DF27AE31DF0034837F /* XCRemoteSwiftPackageReference "swift-argument-parser" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-argument-parser.git";
@@ -930,6 +945,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		FA1EE6442E254E54009D86D8 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA1EE6432E254E54009D86D8 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
 		FA3AEAA72C9B85710096CCA5 /* TRexCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = TRexCore;

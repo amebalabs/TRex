@@ -64,10 +64,37 @@ struct GeneralSettingsView: View {
                         .foregroundColor(.secondary)
                 }
             }
+            
+            #if !MAC_APP_STORE
+            Spacer()
+            Divider()
+            Section(header: Text("Updates")) {
+                HStack {
+                    Button("Check for Updates", action: {
+                        checkForUpdates()
+                    })
+                    Spacer()
+                    Toggle("Include beta updates", isOn: $preferences.includeBetaUpdates)
+                        .toggleStyle(.checkbox)
+                }
+            }
+            #endif
         }
         .padding(20)
+        #if MAC_APP_STORE
         .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 220 : 280) : (preferences.tesseractEnabled ? 140 : 200))
+        #else
+        .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 280 : 340) : (preferences.tesseractEnabled ? 200 : 260))
+        #endif
     }
+    
+    #if !MAC_APP_STORE
+    func checkForUpdates() {
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            appDelegate.softwareUpdater.checkForUpdates()
+        }
+    }
+    #endif
 }
 
 struct MenuBarIconView: View {

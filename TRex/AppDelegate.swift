@@ -2,6 +2,9 @@ import Combine
 import KeyboardShortcuts
 import SwiftUI
 import TRexCore
+#if !MAC_APP_STORE
+import Sparkle
+#endif
 
 // TesseractWrapper bridge removed - now using TesseractSwift directly in TRexCore
 
@@ -12,6 +15,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var cancellable: Set<AnyCancellable> = []
     var onboardingWindowController: NSWindowController?
     let bundleID = Bundle.main.bundleIdentifier!
+    #if !MAC_APP_STORE
+    var softwareUpdater: SPUUpdater!
+    #endif
     
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.servicesProvider = self
@@ -20,6 +26,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSWorkspace.shared.open(URL(string: "trex://showPreferences")!)
             NSApp.terminate(nil)
         }
+        
+        #if !MAC_APP_STORE
+        setupSparkle()
+        #endif
 
         preferences.$showMenuBarIcon.sink(receiveValue: { [weak self] show in
             guard let self = self else { return }
@@ -143,3 +153,26 @@ extension AppDelegate {
         }
     }
 }
+
+#if !MAC_APP_STORE
+extension AppDelegate: SPUUpdaterDelegate, SPUStandardUserDriverDelegate {
+    func setupSparkle() {
+        let hostBundle = Bundle.main
+        let updateDriver = SPUStandardUserDriver(hostBundle: hostBundle, delegate: self)
+        softwareUpdater = SPUUpdater(hostBundle: hostBundle, applicationBundle: hostBundle, userDriver: updateDriver, delegate: self)
+        
+        do {
+            try softwareUpdater.start()
+        } catch {
+            print("Failed to start software updater with error: \(error)")
+        }
+    }
+    
+    func feedURLString(for updater: SPUUpdater) -> String? {
+        if preferences.includeBetaUpdates {
+            return "https://ameba.github.io/TRex/appcast_beta.xml"
+        }
+        return "https://ameba.github.io/TRex/appcast.xml"
+    }
+}
+#endif
