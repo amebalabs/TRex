@@ -6,18 +6,18 @@
     <description>TRex Beta Updates</description>
     <language>en</language>
     <item>
-      <title>TRex 1.9.0-BETA-3</title>
-      <sparkle:version>1.9.0-BETA-3</sparkle:version>
-      <sparkle:shortVersionString>1.9.0-BETA-3</sparkle:shortVersionString>
+      <title>TRex 1.9.0-BETA-4</title>
+      <sparkle:version>1.9.0-BETA-4</sparkle:version>
+      <sparkle:shortVersionString>1.9.0-BETA-4</sparkle:shortVersionString>
       <description><![CDATA[]]></description>
-      <pubDate>Wed, 09 Jul 2025 18:49:21 +0000</pubDate>
+      <pubDate>Mon, 14 Jul 2025 20:30:07 +0000</pubDate>
       <enclosure
-        url="https://github.com/amebalabs/TRex/releases/download/v1.9.0-BETA-3/TRex-1.9.0-BETA-3.zip"
-        sparkle:version="1.9.0-BETA-3"
-        sparkle:shortVersionString="1.9.0-BETA-3"
+        url="https://github.com/amebalabs/TRex/releases/download/v1.9.0-BETA-4/TRex-1.9.0-BETA-4.zip"
+        sparkle:version="1.9.0-BETA-4"
+        sparkle:shortVersionString="1.9.0-BETA-4"
         type="application/octet-stream"
-        sparkle:edSignature="F4ONdXqNiIBqj4td2Y4njaNof+VlSEikmTixoOLOdhJtxsT7VfbkrzPoKiXgdh/kFQ+26yBZQ+i3j+0Q6w0JDA==" length="2510915"
-        sparkle:sha256="064b75e288863eefe396d978527e7b64f50bbc661555ec0cf6280ae43b7af0ad"
+        sparkle:edSignature="e7CsBfs9rPcsR4/6kcJ1+1LY+1c5b6hmaxNwHINY1IRi3TLhU+gGVuOlKtzAjANNvs6xBNJPYiZOVvTEa1lGBg==" length="4101569"
+        sparkle:sha256="4c13923687e4ebdd5a89c6cc1300dc7f18b9f1e543c4aa2a4feedb281d3e5637"
       />
     </item>
   </channel>
