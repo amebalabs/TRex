@@ -34,7 +34,11 @@ public enum LanguageCodeMapper {
             "th-TH": "tha",
             "th": "tha",
             "vi-VN": "vie",
+            "vi-VT": "vie",  // Vision framework variant
             "vi": "vie",
+            "ars-SA": "ara",  // Arabic secondary variant
+            "yue-Hans": "chi_sim",  // Cantonese Simplified
+            "yue-Hant": "chi_tra",  // Cantonese Traditional
             "he-IL": "heb",
             "he": "heb",
             "pl-PL": "pol",

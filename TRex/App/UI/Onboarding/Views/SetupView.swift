@@ -35,7 +35,7 @@ struct SetupView: View {
                     SettingsSection(preferences: preferences, launchAtLogin: launchAtLogin.isEnabled)
                         .transition(AnyTransition.slideFade)
                 case .language:
-                    LanguageSection(selectedLanguage: $vm.selectedLanguage, preferences: preferences)
+                    LanguageSection(selectedLanguageCode: $vm.selectedLanguageCode, preferences: preferences, availableLanguages: vm.availableLanguages)
                         .transition(AnyTransition.slideFade)
                 }
             }
@@ -48,10 +48,10 @@ struct SetupView: View {
         .padding(OnboardingDimensions.contentPadding)
         .onAppear {
             animateContent = true
-            preferences.recongitionLanguage = vm.selectedLanguage
+            preferences.recognitionLanguageCode = vm.selectedLanguageCode
         }
-        .onChange(of: vm.selectedLanguage) { newValue in
-            preferences.recongitionLanguage = newValue
+        .onChange(of: vm.selectedLanguageCode) { newValue in
+            preferences.recognitionLanguageCode = newValue
         }
     }
 }

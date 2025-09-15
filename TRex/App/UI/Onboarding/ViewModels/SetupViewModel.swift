@@ -7,13 +7,24 @@ import TRexCore
 class SetupViewModel: ObservableObject {
     @Published var activeSection: SetupSection = .permissions
     @Published var screenRecordingPermission = false
-    @Published var selectedLanguage: Preferences.RecongitionLanguage
+    @Published var selectedLanguageCode: String
+    @Published var availableLanguages: [LanguageManager.Language] = []
     
     private var permissionTimer: Timer?
     
     init() {
-        self.selectedLanguage = Preferences.shared.recongitionLanguage
+        self.selectedLanguageCode = Preferences.shared.recognitionLanguageCode
+        loadAvailableLanguages()
         checkScreenRecordingPermission()
+    }
+    
+    private func loadAvailableLanguages() {
+        let manager = LanguageManager.shared
+        let allLanguages = manager.availableLanguages()
+        // Filter to only Vision-supported languages for onboarding
+        availableLanguages = allLanguages
+            .filter { $0.source == .vision || $0.source == .both }
+            .sorted { $0.displayName < $1.displayName }
     }
     
     deinit {

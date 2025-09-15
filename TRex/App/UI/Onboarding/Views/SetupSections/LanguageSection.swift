@@ -2,12 +2,13 @@ import SwiftUI
 import TRexCore
 
 struct LanguageSection: View {
-    @Binding var selectedLanguage: Preferences.RecongitionLanguage
+    @Binding var selectedLanguageCode: String
     let preferences: Preferences
+    let availableLanguages: [LanguageManager.Language]
     
     var body: some View {
         VStack(spacing: 25) {
-            LanguageGrid(selectedLanguage: $selectedLanguage)
+            LanguageGrid(selectedLanguageCode: $selectedLanguageCode, availableLanguages: availableLanguages)
             
             VStack(spacing: 20) {
                 Toggle("Enable automatic language detection", isOn: .init(
@@ -32,7 +33,8 @@ struct LanguageSection: View {
 }
 
 struct LanguageGrid: View {
-    @Binding var selectedLanguage: Preferences.RecongitionLanguage
+    @Binding var selectedLanguageCode: String
+    let availableLanguages: [LanguageManager.Language]
     
     let columns = [
         GridItem(.flexible()),
@@ -42,13 +44,13 @@ struct LanguageGrid: View {
     
     var body: some View {
         LazyVGrid(columns: columns, spacing: 15) {
-            ForEach(Preferences.RecongitionLanguage.allCases, id: \.self) { language in
+            ForEach(availableLanguages, id: \.code) { language in
                 LanguageGridItem(
                     language: language,
-                    isSelected: selectedLanguage == language,
+                    isSelected: selectedLanguageCode == language.code,
                     action: {
                         withAnimation(Animation.brandSpring) {
-                            selectedLanguage = language
+                            selectedLanguageCode = language.code
                         }
                     }
                 )
@@ -59,14 +61,14 @@ struct LanguageGrid: View {
 }
 
 struct LanguageGridItem: View {
-    let language: Preferences.RecongitionLanguage
+    let language: LanguageManager.Language
     let isSelected: Bool
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
             HStack {
-                Text(language.rawValue)
+                Text(language.displayNameWithFlag)
                     .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
                     .foregroundColor(isSelected ? .white : .primary)
                     .lineLimit(1)

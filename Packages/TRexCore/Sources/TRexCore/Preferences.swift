@@ -62,61 +62,6 @@ public class Preferences: ObservableObject {
         }
     }
 
-    public enum RecongitionLanguage: String, CaseIterable {
-        public static var allCases: [Preferences.RecongitionLanguage] = {
-            var languages: [RecongitionLanguage] = [.English, .French, .Italian, .German, .Spanish, .Portuguese, .Chinese, .ChineseTraditional]
-            if #available(OSX 13.0, *) {
-                languages.append(contentsOf: [.Korean, .Japanese, .Ukranian, .Russian])
-            }
-            return languages
-        }()
-
-        case English = "🇺🇸 English"
-        case French = "🇫🇷 French"
-        case Italian = "🇮🇹 Italian"
-        case German = "🇩🇪 German"
-        case Spanish = "🇪🇸 Spanish"
-        case Portuguese = "🇵🇹 Portuguese"
-        case Chinese = "🇨🇳 Chinese (Simplified)"
-        case ChineseTraditional = "🇨🇳 Chinese (Traditional)"
-        @available(macOS 13.0, *)
-        case Korean = "🇰🇷 Korean"
-        @available(macOS 13.0, *)
-        case Japanese = "🇯🇵 Japanese"
-        @available(macOS 13.0, *)
-        case Ukranian = "🇺🇦 Ukranian"
-        @available(macOS 13.0, *)
-        case Russian = "🇷🇺 Russian"
-
-        func languageCode() -> String {
-            switch self {
-            case .English:
-                return "en_US"
-            case .French:
-                return "fr-FR"
-            case .Italian:
-                return "it-IT"
-            case .German:
-                return "de-DE"
-            case .Spanish:
-                return "es-ES"
-            case .Portuguese:
-                return "pt-BR"
-            case .Chinese:
-                return "zh-Hans"
-            case .ChineseTraditional:
-                return "zh-Hant"
-            case .Korean:
-                return "ko-KR"
-            case .Japanese:
-                return "ja-JP"
-            case .Ukranian:
-                return "uk-UA"
-            case .Russian:
-                return "ru-RU"
-            }
-        }
-    }
 
     @Published public var needsOnboarding: Bool {
         didSet {
@@ -178,9 +123,9 @@ public class Preferences: ObservableObject {
         }
     }
 
-    @Published public var recongitionLanguage: RecongitionLanguage {
+    @Published public var recognitionLanguageCode: String {
         didSet {
-            Preferences.setValue(value: recongitionLanguage.rawValue, key: .RecongitionLanguage)
+            Preferences.setValue(value: recognitionLanguageCode, key: .RecongitionLanguage)
         }
     }
 
@@ -248,11 +193,43 @@ public class Preferences: ObservableObject {
         autoOpenProvidedURLAddNewLine = Preferences.getValue(key: .AutoOpenProvidedURLAddNewLine) as? Bool ?? true
         autoRunShortcut = Preferences.getValue(key: .AutoRunShortcut) as? String ?? ""
         customWords = Preferences.getValue(key: .CustomWords) as? String ?? ""
-        recongitionLanguage = .English
-        automaticLanguageDetection = Preferences.getValue(key: .AutomaticLanguageDetection) as? Bool ?? false
-        if let lang = Preferences.getValue(key: .RecongitionLanguage) as? String {
-            recongitionLanguage = RecongitionLanguage(rawValue: lang) ?? .English
+        
+        // Handle language preference - support both old enum rawValue and new language codes
+        if let savedLanguage = Preferences.getValue(key: .RecongitionLanguage) as? String {
+            // Check if it's an old enum rawValue (contains emoji)
+            if savedLanguage.contains("🇺🇸") {
+                recognitionLanguageCode = "en-US"
+            } else if savedLanguage.contains("🇫🇷") {
+                recognitionLanguageCode = "fr-FR"
+            } else if savedLanguage.contains("🇮🇹") {
+                recognitionLanguageCode = "it-IT"
+            } else if savedLanguage.contains("🇩🇪") {
+                recognitionLanguageCode = "de-DE"
+            } else if savedLanguage.contains("🇪🇸") {
+                recognitionLanguageCode = "es-ES"
+            } else if savedLanguage.contains("🇵🇹") || savedLanguage.contains("Portuguese") {
+                recognitionLanguageCode = "pt-BR"
+            } else if savedLanguage.contains("🇨🇳") && savedLanguage.contains("Traditional") {
+                recognitionLanguageCode = "zh-Hant"
+            } else if savedLanguage.contains("🇨🇳") {
+                recognitionLanguageCode = "zh-Hans"
+            } else if savedLanguage.contains("🇰🇷") {
+                recognitionLanguageCode = "ko-KR"
+            } else if savedLanguage.contains("🇯🇵") {
+                recognitionLanguageCode = "ja-JP"
+            } else if savedLanguage.contains("🇺🇦") {
+                recognitionLanguageCode = "uk-UA"
+            } else if savedLanguage.contains("🇷🇺") {
+                recognitionLanguageCode = "ru-RU"
+            } else {
+                // Already a proper language code
+                recognitionLanguageCode = savedLanguage
+            }
+        } else {
+            recognitionLanguageCode = "en-US"
         }
+        
+        automaticLanguageDetection = Preferences.getValue(key: .AutomaticLanguageDetection) as? Bool ?? false
         menuBarIcon = .Option1
         if let mbitem = Preferences.getValue(key: .MenuBarIcon) as? String {
             menuBarIcon = MenuBarIcon(rawValue: mbitem) ?? .Option1

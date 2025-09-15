@@ -135,7 +135,7 @@ public class TRex: NSObject {
         // Use OCRManager to select appropriate engine
         let languages = preferences.tesseractEnabled && !preferences.tesseractLanguages.isEmpty
             ? preferences.tesseractLanguages.map { LanguageCodeMapper.fromTesseract($0) }
-            : [preferences.recongitionLanguage.languageCode()]
+            : [preferences.recognitionLanguageCode]
         
         print("[TRex] Requested languages: \(languages)")
         
@@ -277,7 +277,7 @@ public class TRex: NSObject {
         if preferences.automaticLanguageDetection, #available(macOS 13.0, *) {
             request.automaticallyDetectsLanguage = true
         } else {
-            request.recognitionLanguages = [preferences.recongitionLanguage.languageCode()]
+            request.recognitionLanguages = [preferences.recognitionLanguageCode]
         }
         request.usesLanguageCorrection = true
         request.recognitionLevel = .accurate

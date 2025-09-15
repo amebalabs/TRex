@@ -66,15 +66,66 @@ public class VisionOCREngine: OCREngine {
     public var identifier: String { "vision" }
     public var priority: Int { 50 } // Lower priority than Tesseract
     
-    // Languages supported by Vision framework
-    private let supportedLanguages = Set([
-        "en-US", "fr-FR", "de-DE", "es-ES", "it-IT",
-        "pt-BR", "zh-Hans", "zh-Hant", "ja-JP", "ko-KR",
-        "ru-RU", "uk-UA", "th-TH", "vi-VN"
-    ])
+    // Cached languages supported by Vision framework
+    private lazy var supportedLanguages: Set<String> = {
+        fetchSupportedLanguages()
+    }()
+    
+    // Dynamically fetch supported languages from Vision framework
+    private func fetchSupportedLanguages() -> Set<String> {
+        // Fallback for older macOS versions that don't support the API
+        guard #available(macOS 10.15, *) else {
+            // Return hardcoded set for older OS versions
+            return Set([
+                "en-US", "fr-FR", "de-DE", "es-ES", "it-IT",
+                "pt-BR", "zh-Hans", "zh-Hant", "ja-JP", "ko-KR",
+                "ru-RU", "uk-UA", "th-TH", "vi-VN"
+            ])
+        }
+        
+        do {
+            let request = VNRecognizeTextRequest()
+            let languages = try request.supportedRecognitionLanguages()
+            
+            // Map Vision language codes to standard format
+            var standardLanguages = Set<String>()
+            for language in languages {
+                // Vision returns codes like "en-US", "zh-Hans", etc.
+                // Map duplicates to a single standard code
+                let standardCode = mapVisionLanguageCode(language)
+                standardLanguages.insert(standardCode)
+            }
+            
+            return standardLanguages
+        } catch {
+            print("Failed to fetch Vision supported languages: \(error)")
+            // Fallback to known set if query fails
+            return Set([
+                "en-US", "fr-FR", "de-DE", "es-ES", "it-IT",
+                "pt-BR", "zh-Hans", "zh-Hant", "ja-JP", "ko-KR",
+                "ru-RU", "uk-UA", "th-TH", "vi-VN"
+            ])
+        }
+    }
+    
+    // Map Vision language codes to our standard format
+    private func mapVisionLanguageCode(_ visionCode: String) -> String {
+        // Most codes are already in the right format
+        // Special cases:
+        switch visionCode {
+        case "vi-VT": return "vi-VN"  // Vietnamese
+        case "ars-SA": return "ar-SA"  // Arabic (secondary variant maps to primary)
+        default: return visionCode
+        }
+    }
     
     public func supportsLanguage(_ language: String) -> Bool {
         return supportedLanguages.contains(language)
+    }
+    
+    // Get all supported languages (for external use)
+    public func availableLanguages() -> [String] {
+        return Array(supportedLanguages).sorted()
     }
     
     public func recognizeText(in image: CGImage, languages: [String], recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult {

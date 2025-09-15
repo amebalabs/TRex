@@ -4,8 +4,10 @@ import TRexCore
 struct GeneralSettingsView: View {
     @EnvironmentObject var preferences: Preferences
     @ObservedObject private var launchAtLogin = LaunchAtLogin.observable
+    @State private var visionLanguages: [LanguageManager.Language] = []
 
     let width: CGFloat = 90
+    
     var body: some View {
         Form {
             ToggleView(label: "Startup", secondLabel: "Start at Login",
@@ -48,8 +50,13 @@ struct GeneralSettingsView: View {
                                    width: width)
                     }
                     HStack {
-                        EnumPicker(selected: $preferences.recongitionLanguage, title: "")
-                            .disabled(preferences.automaticLanguageDetection)
+                        Picker(selection: $preferences.recognitionLanguageCode, label: Text("")) {
+                            ForEach(visionLanguages, id: \.code) { language in
+                                Text(language.displayNameWithFlag)
+                                    .tag(language.code)
+                            }
+                        }
+                        .disabled(preferences.automaticLanguageDetection)
                     }
                     Text("More languages are available in the Tesseract menu")
                         .font(.caption)
@@ -86,6 +93,18 @@ struct GeneralSettingsView: View {
         #else
         .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 280 : 340) : (preferences.tesseractEnabled ? 200 : 260))
         #endif
+        .onAppear {
+            loadVisionLanguages()
+        }
+    }
+    
+    private func loadVisionLanguages() {
+        let manager = LanguageManager.shared
+        let allLanguages = manager.availableLanguages()
+        // Filter to only Vision-supported languages
+        visionLanguages = allLanguages
+            .filter { $0.source == .vision || $0.source == .both }
+            .sorted { $0.displayName < $1.displayName }
     }
     
     #if !MAC_APP_STORE

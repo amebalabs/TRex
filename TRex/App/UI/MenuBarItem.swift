@@ -16,6 +16,9 @@ class MenubarItem: NSObject {
     let preferencesItem = NSMenuItem(title: "Settings...", action: #selector(showPreferences), keyEquivalent: ",")
     let quitItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
     let aboutItem = NSMenuItem(title: "About TRex", action: #selector(showAbout), keyEquivalent: "")
+    #if !MAC_APP_STORE
+    let checkForUpdatesItem = NSMenuItem(title: "Check for Updates...", action: #selector(checkForUpdates), keyEquivalent: "")
+    #endif
 
     var cancellable: AnyCancellable?
     private lazy var workQueue: OperationQueue = {
@@ -44,7 +47,12 @@ class MenubarItem: NSObject {
     }
 
     private func buildMenu() {
-        [captureTextItem, captureTextAndTriggerAutomationItem, captureFromClipboard, ignoreLineBreaksItem, preferencesItem, aboutItem, quitItem].forEach { $0.target = self }
+        var menuItems = [captureTextItem, captureTextAndTriggerAutomationItem, captureFromClipboard, ignoreLineBreaksItem, preferencesItem, aboutItem, quitItem]
+        #if !MAC_APP_STORE
+        menuItems.append(checkForUpdatesItem)
+        #endif
+        menuItems.forEach { $0.target = self }
+        
         statusBarmenu.addItem(captureTextItem)
         statusBarmenu.addItem(captureTextAndTriggerAutomationItem)
         statusBarmenu.addItem(captureFromClipboard)
@@ -52,6 +60,9 @@ class MenubarItem: NSObject {
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(preferencesItem)
         statusBarmenu.addItem(aboutItem)
+        #if !MAC_APP_STORE
+        statusBarmenu.addItem(checkForUpdatesItem)
+        #endif
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(quitItem)
 
@@ -92,6 +103,14 @@ class MenubarItem: NSObject {
         NSApp.openSettings()
         return
     }
+    
+    #if !MAC_APP_STORE
+    @objc func checkForUpdates() {
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            appDelegate.softwareUpdater.checkForUpdates()
+        }
+    }
+    #endif
 }
 
 extension MenubarItem: NSMenuDelegate {
