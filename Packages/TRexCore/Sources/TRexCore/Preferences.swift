@@ -4,7 +4,8 @@ import SwiftUI
 
 public class Preferences: ObservableObject {
     public static let shared = Preferences()
-    static let userDefaults = UserDefaults(suiteName: "X93LWC49WV.TRex.preferences")!
+    static let suiteName = "X93LWC49WV.TRex.preferences"
+    static let userDefaults = UserDefaults(suiteName: suiteName)!
 
     enum PreferencesKeys: String {
         case CaptureSound
@@ -137,12 +138,15 @@ public class Preferences: ObservableObject {
 
     @Published public var customWords: String {
         didSet {
-            Preferences.setValue(value: customWords.components(separatedBy: ","), key: .CustomWords)
+            Preferences.setValue(value: customWords, key: .CustomWords)
         }
     }
 
     public var customWordsList: [String] {
-        customWords.components(separatedBy: ",")
+        customWords
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
     }
 
     @Published public var automaticLanguageDetection: Bool {
@@ -192,7 +196,11 @@ public class Preferences: ObservableObject {
         autoOpenProvidedURL = Preferences.getValue(key: .AutoOpenProvidedURL) as? String ?? ""
         autoOpenProvidedURLAddNewLine = Preferences.getValue(key: .AutoOpenProvidedURLAddNewLine) as? Bool ?? true
         autoRunShortcut = Preferences.getValue(key: .AutoRunShortcut) as? String ?? ""
-        customWords = Preferences.getValue(key: .CustomWords) as? String ?? ""
+        if let storedArray = Preferences.getValue(key: .CustomWords) as? [String] {
+            customWords = storedArray.joined(separator: ",")
+        } else {
+            customWords = Preferences.getValue(key: .CustomWords) as? String ?? ""
+        }
         
         // Handle language preference - support both old enum rawValue and new language codes
         if let savedLanguage = Preferences.getValue(key: .RecongitionLanguage) as? String {
@@ -245,14 +253,11 @@ public class Preferences: ObservableObject {
     }
 
     static func removeAll() {
-        let domain = Bundle.main.bundleIdentifier!
-        userDefaults.removePersistentDomain(forName: domain)
-        userDefaults.synchronize()
+        userDefaults.removePersistentDomain(forName: suiteName)
     }
 
     private static func setValue(value: Any?, key: PreferencesKeys) {
         userDefaults.setValue(value, forKey: key.rawValue)
-        userDefaults.synchronize()
     }
 
     private static func getValue(key: PreferencesKeys) -> Any? {

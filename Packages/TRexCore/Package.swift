@@ -23,5 +23,9 @@ let package = Package(
             name: "TRexCore",
             dependencies: ["TesseractSwift"]
         ),
+        .testTarget(
+            name: "TRexCoreTests",
+            dependencies: ["TRexCore"]
+        ),
     ]
 )

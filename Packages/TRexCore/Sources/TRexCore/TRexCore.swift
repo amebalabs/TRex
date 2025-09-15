@@ -1,3 +1,4 @@
+import OSLog
 import SwiftUI
 import UserNotifications
 import Vision
@@ -29,6 +30,7 @@ public class TRex: NSObject {
     public static let shared = TRex()
     let preferences = Preferences.shared
     private var currentInvocationMode: InvocationMode = .captureScreen
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.ameba.TRex", category: "TRexCore")
 
     var task: Process?
     let sceenCaptureURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
@@ -79,7 +81,7 @@ public class TRex: NSObject {
             do {
                 try task?.run()
             } catch {
-                print("Failed to capture")
+                logger.error("Screen capture command failed")
                 task = nil
                 return nil
             }
@@ -115,35 +117,35 @@ public class TRex: NSObject {
         }
         
         guard let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            print("[TRex] Failed to convert NSImage to CGImage")
+            logger.error("Failed to convert NSImage to CGImage")
             return nil
         }
 
         // Always check for QR codes first
         let text = parseQR(image: cgImage)
         guard text.isEmpty else {
-            print("[TRex] QR code detected: \(text)")
+            logger.info("QR code detected, result length: \(text.count, privacy: .public)")
             if preferences.autoOpenQRCodeURL {
                 detectAndOpenURL(text: text)
             }
             return text
         }
 
-        print("[TRex] No QR code detected, proceeding with text recognition")
-        print("[TRex] Tesseract enabled: \(preferences.tesseractEnabled)")
+        logger.debug("No QR code detected, proceeding with text recognition")
+        logger.debug("Tesseract enabled: \(self.preferences.tesseractEnabled, privacy: .public)")
         
         // Use OCRManager to select appropriate engine
         let languages = preferences.tesseractEnabled && !preferences.tesseractLanguages.isEmpty
             ? preferences.tesseractLanguages.map { LanguageCodeMapper.fromTesseract($0) }
             : [preferences.recognitionLanguageCode]
         
-        print("[TRex] Requested languages: \(languages)")
+        logger.debug("Requested languages: \(languages.joined(separator: ","), privacy: .public)")
         
         if let engine = OCRManager.shared.findEngine(for: languages) {
-            print("[TRex] Using \(engine.name) engine")
+            logger.info("Using \(engine.name, privacy: .public) engine")
             return await performOCR(with: engine, cgImage: cgImage, languages: languages)
         } else {
-            print("[TRex] No suitable engine found, falling back to Vision")
+            logger.info("No suitable OCR engine found, falling back to Vision")
             return await performVisionOCR(cgImage: cgImage)
         }
     }
@@ -160,7 +162,7 @@ public class TRex: NSObject {
                 )
             }
             
-            print("[TRex] \(engine.name) OCR successful, result length: \(result.text.count)")
+            logger.info("\(engine.name, privacy: .public) OCR successful, result length: \(result.text.count, privacy: .public)")
             
             // Handle URL opening if needed
             if preferences.autoOpenCapturedURL {
@@ -169,10 +171,10 @@ public class TRex: NSObject {
             
             return result.text
         } catch TimeoutError.timedOut {
-            print("[TRex] OCR timed out after 5 seconds, falling back to Vision")
+            logger.error("OCR timed out after 5 seconds, falling back to Vision")
             return await performVisionOCR(cgImage: cgImage)
         } catch {
-            print("[TRex] \(engine.name) failed: \(error), falling back to Vision")
+            logger.error("\(engine.name, privacy: .public) failed with error: \(error.localizedDescription, privacy: .public). Falling back to Vision")
             return await performVisionOCR(cgImage: cgImage)
         }
     }
@@ -181,9 +183,9 @@ public class TRex: NSObject {
         await withCheckedContinuation { continuation in
             detectText(in: cgImage) { result in
                 if let result = result {
-                    print("[TRex] Vision OCR successful, result length: \(result.count)")
+                    self.logger.info("Vision OCR successful, result length: \(result.count, privacy: .public)")
                 } else {
-                    print("[TRex] Vision OCR returned nil")
+                    self.logger.info("Vision OCR returned no text")
                 }
                 continuation.resume(returning: result)
             }
@@ -264,15 +266,20 @@ public class TRex: NSObject {
     func detectText(in image: CGImage, completionHandler: @escaping (String?) -> Void) {
         let request = VNRecognizeTextRequest { request, error in
             if let error = error {
-                print("Error detecting text: \(error)")
-            } else {
-                if let result = self.handleDetectionResults(results: request.results) {
-                    if self.preferences.autoOpenCapturedURL {
-                        self.detectAndOpenURL(text: result)
-                    }
-                    completionHandler(result)
-                }
+                self.logger.error("Vision text detection failed: \(error.localizedDescription, privacy: .public)")
+                completionHandler(nil)
+                return
             }
+
+            guard let result = self.handleDetectionResults(results: request.results) else {
+                completionHandler(nil)
+                return
+            }
+
+            if self.preferences.autoOpenCapturedURL {
+                self.detectAndOpenURL(text: result)
+            }
+            completionHandler(result)
         }
         if preferences.automaticLanguageDetection, #available(macOS 13.0, *) {
             request.automaticallyDetectsLanguage = true
@@ -294,7 +301,7 @@ public class TRex: NSObject {
         do {
             try handler.perform(requests)
         } catch {
-            print("Error: \(error)")
+            logger.error("Vision handler failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -366,7 +373,7 @@ extension TRex {
             
             notificationCenter.add(request) { error in
                 if let error = error {
-                    print("Error showing notification: \(error.localizedDescription)")
+                    self.logger.error("Failed to show notification: \(error.localizedDescription, privacy: .public)")
                 }
             }
         }

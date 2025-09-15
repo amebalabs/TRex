@@ -39,31 +39,31 @@ public class TesseractOCREngine: OCREngine {
     }
     
     public func supportsLanguage(_ language: String) -> Bool {
-        // Convert language code to Tesseract format
         let tesseractLang = LanguageCodeMapper.toTesseract(language)
-        
-        // Check if the language file exists
-        let languageFile = tessdataPath.appendingPathComponent("\(tesseractLang).traineddata")
-        return FileManager.default.fileExists(atPath: languageFile.path)
+        if FileManager.default.fileExists(atPath: languageFileURL(forTesseractCode: tesseractLang).path) {
+            return true
+        }
+        return LanguageDownloader.allAvailableLanguages().contains(where: { $0.code == tesseractLang })
     }
     
     public func recognizeText(in image: CGImage, languages: [String], recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult {
-        // Languages should be in standard format (e.g., "en-US"), convert to Tesseract format
-        let tesseractLangs = languages.map { LanguageCodeMapper.toTesseract($0) }
-        let primaryLang = tesseractLangs.first ?? "eng"
-        
-        // Ensure the language is downloaded
-        if !supportsLanguage(languages.first ?? "en-US") {
-            // Try to download the language
-            if let langInfo = LanguageDownloader.allAvailableLanguages().first(where: { $0.code == primaryLang }) {
+        // Convert requested languages to Tesseract codes. Default to English if none provided.
+        let requestedLanguages = languages.isEmpty ? ["en-US"] : languages
+        let tesseractCodes = requestedLanguages.map { LanguageCodeMapper.toTesseract($0) }
+
+        // Ensure every language is available locally, download if needed.
+        for code in Set(tesseractCodes) {
+            if !FileManager.default.fileExists(atPath: languageFileURL(forTesseractCode: code).path) {
+                guard let langInfo = LanguageDownloader.allAvailableLanguages().first(where: { $0.code == code }) else {
+                    throw OCRError.initializationFailed("Language not available: \(code)")
+                }
                 try await languageDownloader.downloadLanguage(langInfo, to: tessdataPath)
-            } else {
-                throw OCRError.initializationFailed("Language not available: \(primaryLang)")
             }
         }
-        
-        // Initialize Tesseract with the language
-        try tesseractEngine.initialize(language: primaryLang)
+
+        // Initialize Tesseract with combined language codes (e.g. "eng+spa")
+        let initializationCode = tesseractCodes.joined(separator: "+")
+        try tesseractEngine.initialize(language: initializationCode)
         
         // Set page segmentation mode based on recognition level
         if recognitionLevel == .accurate {
@@ -83,7 +83,7 @@ public class TesseractOCREngine: OCREngine {
         return OCRResult(
             text: text,
             confidence: confidence,
-            recognizedLanguages: languages
+            recognizedLanguages: requestedLanguages
         )
     }
     
@@ -118,6 +118,12 @@ public class TesseractOCREngine: OCREngine {
         return LanguageDownloader.allAvailableLanguages().map { 
             (code: $0.code, name: $0.name)
         }
+    }
+}
+
+private extension TesseractOCREngine {
+    func languageFileURL(forTesseractCode code: String) -> URL {
+        tessdataPath.appendingPathComponent("\(code).traineddata")
     }
 }
 

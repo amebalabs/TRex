@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import Vision
 
 // Protocol for OCR engines
@@ -65,14 +66,18 @@ public class VisionOCREngine: OCREngine {
     public var name: String { "Apple Vision" }
     public var identifier: String { "vision" }
     public var priority: Int { 50 } // Lower priority than Tesseract
-    
-    // Cached languages supported by Vision framework
-    private lazy var supportedLanguages: Set<String> = {
-        fetchSupportedLanguages()
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.ameba.TRex", category: "VisionOCREngine")
+    private static let cachedSupportedLanguages: Set<String> = {
+        return fetchSupportedLanguages()
     }()
-    
+    private let supportedLanguages: Set<String>
+
+    public init() {
+        self.supportedLanguages = Self.cachedSupportedLanguages
+    }
+
     // Dynamically fetch supported languages from Vision framework
-    private func fetchSupportedLanguages() -> Set<String> {
+    private static func fetchSupportedLanguages() -> Set<String> {
         // Fallback for older macOS versions that don't support the API
         guard #available(macOS 10.15, *) else {
             // Return hardcoded set for older OS versions
@@ -98,7 +103,7 @@ public class VisionOCREngine: OCREngine {
             
             return standardLanguages
         } catch {
-            print("Failed to fetch Vision supported languages: \(error)")
+            logger.error("Failed to fetch Vision supported languages: \(error.localizedDescription, privacy: .public)")
             // Fallback to known set if query fails
             return Set([
                 "en-US", "fr-FR", "de-DE", "es-ES", "it-IT",
@@ -109,7 +114,7 @@ public class VisionOCREngine: OCREngine {
     }
     
     // Map Vision language codes to our standard format
-    private func mapVisionLanguageCode(_ visionCode: String) -> String {
+    private static func mapVisionLanguageCode(_ visionCode: String) -> String {
         // Most codes are already in the right format
         // Special cases:
         switch visionCode {

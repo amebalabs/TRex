@@ -1,24 +1,9 @@
 import AppKit
 import Foundation
-import ScriptingBridge
-
-@objc protocol ShortcutsEvents {
-    @objc optional var shortcuts: SBElementArray { get }
-}
-
-@objc protocol Shortcut {
-    @objc optional var name: String { get }
-    @objc optional func run(withInput: Any?) -> Any?
-}
-
-extension SBApplication: ShortcutsEvents {}
-extension SBObject: Shortcut {}
 
 public class ShortcutsManager: ObservableObject {
     static let shared = ShortcutsManager()
-    var task: Process?
     var shortcutsURL = URL(fileURLWithPath: "/usr/bin/shortcuts")
-    var shellURL = URL(fileURLWithPath: "/bin/zsh")
 
     @Published public var shortcuts: [String] = []
     var currentShortcut: String {
@@ -36,39 +21,81 @@ public class ShortcutsManager: ObservableObject {
         }
     }
 
+    private func isShortcutsAvailable() -> Bool {
+        FileManager.default.isExecutableFile(atPath: shortcutsURL.path)
+    }
+
     public func getShortcuts() {
-        task = Process()
-        task?.executableURL = shortcutsURL
-        task?.arguments = ["list"]
+        guard isShortcutsAvailable() else {
+            Task { @MainActor [weak self] in
+                self?.shortcuts = []
+            }
+            return
+        }
 
-        let pipe = Pipe()
-        task?.standardOutput = pipe
-        task?.launch()
-        task?.waitUntilExit()
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(data: data, encoding: .utf8) ?? ""
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self = self else { return }
 
-        shortcuts = output.components(separatedBy: .newlines).sorted()
+            let process = Process()
+            process.executableURL = self.shortcutsURL
+            process.arguments = ["list"]
+
+            let pipe = Pipe()
+            process.standardOutput = pipe
+
+            do {
+                try process.run()
+            } catch {
+                await MainActor.run {
+                    self.shortcuts = []
+                }
+                return
+            }
+
+            process.waitUntilExit()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+
+            let entries = output
+                .split(whereSeparator: { $0.isNewline })
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+                .sorted()
+
+            await MainActor.run {
+                self.shortcuts = entries
+            }
+        }
     }
 
     public func runShortcut(inputText: String) {
         guard !currentShortcut.isEmpty else { return }
-        try? inputText.write(toFile: shortcutInputPath.path, atomically: true, encoding: .utf8)
-        task = Process()
-        task?.executableURL = shortcutsURL
-        task?.arguments = ["run", "\(currentShortcut)", "-i", "\(shortcutInputPath.path)"]
+        guard isShortcutsAvailable() else { return }
 
-        task?.launch()
-        task?.waitUntilExit()
-//        guard let app: ShortcutsEvents? = SBApplication(bundleIdentifier: "com.apple.shortcuts.events") else {
-//            print("Can't access Shortcuts app")
-//            return
-//        }
-//        guard let shortcut = app?.shortcuts?.object(withName: currentShortcut) as? Shortcut else {
-//            print("Shortcut doesn't exist")
-//            return
-//        }
-//        _ = shortcut.run?(withInput: inputText)
+        Task.detached(priority: .utility) { [weak self] in
+            guard let self = self else { return }
+
+            do {
+                try inputText.write(toFile: self.shortcutInputPath.path, atomically: true, encoding: .utf8)
+            } catch {
+                return
+            }
+
+            let process = Process()
+            process.executableURL = self.shortcutsURL
+            process.arguments = ["run", "\(self.currentShortcut)", "-i", "\(self.shortcutInputPath.path)"]
+
+            do {
+                try process.run()
+            } catch {
+                try? FileManager.default.removeItem(at: self.shortcutInputPath)
+                return
+            }
+
+            process.waitUntilExit()
+            try? FileManager.default.removeItem(at: self.shortcutInputPath)
+        }
     }
 
     public func viewCurrentShortcut() {
