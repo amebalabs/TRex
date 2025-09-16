@@ -137,9 +137,18 @@ public class TRex: NSObject {
         // Use OCRManager to select appropriate engine
         let languages = preferences.tesseractEnabled && !preferences.tesseractLanguages.isEmpty
             ? preferences.tesseractLanguages.map { LanguageCodeMapper.fromTesseract($0) }
-            : [preferences.recognitionLanguageCode]
+            : (preferences.automaticLanguageDetection && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 13 
+                ? [] // Empty array means automatic detection for Vision
+                : [preferences.recognitionLanguageCode])
         
         logger.debug("Requested languages: \(languages.joined(separator: ","), privacy: .public)")
+        logger.debug("Automatic detection: \(self.preferences.automaticLanguageDetection, privacy: .public)")
+        
+        // If automatic detection is enabled and we're not using Tesseract, use Vision directly
+        if preferences.automaticLanguageDetection && !preferences.tesseractEnabled && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 13 {
+            logger.info("Using Vision with automatic language detection")
+            return await performVisionOCR(cgImage: cgImage)
+        }
         
         if let engine = OCRManager.shared.findEngine(for: languages) {
             logger.info("Using \(engine.name, privacy: .public) engine")
@@ -281,11 +290,18 @@ public class TRex: NSObject {
             }
             completionHandler(result)
         }
+        
+        // Configure language detection
         if preferences.automaticLanguageDetection, #available(macOS 13.0, *) {
+            logger.debug("Vision: Automatic language detection ENABLED")
             request.automaticallyDetectsLanguage = true
+            // Don't set recognitionLanguages when using automatic detection
         } else {
+            logger.debug("Vision: Using specific language: \(self.preferences.recognitionLanguageCode, privacy: .public)")
+            request.automaticallyDetectsLanguage = false
             request.recognitionLanguages = [preferences.recognitionLanguageCode]
         }
+        
         request.usesLanguageCorrection = true
         request.recognitionLevel = .accurate
         request.customWords = preferences.customWordsList

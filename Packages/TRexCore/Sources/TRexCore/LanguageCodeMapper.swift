@@ -2,6 +2,21 @@ import Foundation
 
 /// Centralized utility for language code mapping between different formats
 public enum LanguageCodeMapper {
+    /// Normalizes identifiers to a consistent "lang[-Script][-REGION]" format
+    public static func standardize(_ identifier: String) -> String {
+        var components = Locale.components(fromIdentifier: identifier.replacingOccurrences(of: "_", with: "-"))
+        if let language = components[NSLocale.Key.languageCode.rawValue] {
+            components[NSLocale.Key.languageCode.rawValue] = language.lowercased()
+        }
+        if let script = components[NSLocale.Key.scriptCode.rawValue] {
+            components[NSLocale.Key.scriptCode.rawValue] = script.capitalized
+        }
+        if let region = components[NSLocale.Key.countryCode.rawValue] {
+            components[NSLocale.Key.countryCode.rawValue] = region.uppercased()
+        }
+        return Locale.identifier(fromComponents: components)
+    }
+
     /// Maps standard language codes (e.g., "en-US") to Tesseract language codes (e.g., "eng")
     public static func toTesseract(_ code: String) -> String {
         let mapping: [String: String] = [

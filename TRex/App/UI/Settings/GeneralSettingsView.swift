@@ -45,18 +45,40 @@ struct GeneralSettingsView: View {
             if !preferences.tesseractEnabled {
                 Section(header: Text("Recognition Language")) {
                     if #available(OSX 13.0, *) {
-                        ToggleView(label: "Detection", secondLabel: "Automatic",
-                                   state: $preferences.automaticLanguageDetection,
-                                   width: width)
-                    }
-                    HStack {
+                        HStack {
+                            ToggleView(label: "", secondLabel: "Automatic",
+                                       state: $preferences.automaticLanguageDetection,
+                                       width: 0)
+                            Picker(selection: $preferences.recognitionLanguageCode, label: Text("")) {
+                                ForEach(visionLanguages, id: \.code) { language in
+                                    Text(language.displayNameWithFlag)
+                                        .tag(language.code)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .labelsHidden()
+                            .disabled(preferences.automaticLanguageDetection)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color(NSColor.separatorColor.withAlphaComponent(0.3)), lineWidth: 0.5)
+                            )
+                            Spacer()
+                        }
+                    } else {
                         Picker(selection: $preferences.recognitionLanguageCode, label: Text("")) {
                             ForEach(visionLanguages, id: \.code) { language in
                                 Text(language.displayNameWithFlag)
                                     .tag(language.code)
                             }
                         }
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .labelsHidden()
                         .disabled(preferences.automaticLanguageDetection)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color(NSColor.separatorColor.withAlphaComponent(0.3)), lineWidth: 0.5)
+                        )
                     }
                     Text("More languages are available in the Tesseract menu")
                         .font(.caption)
