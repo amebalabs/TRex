@@ -170,9 +170,9 @@ extension AppDelegate: SPUUpdaterDelegate, SPUStandardUserDriverDelegate {
     
     func feedURLString(for updater: SPUUpdater) -> String? {
         if preferences.includeBetaUpdates {
-            return "https://ameba.github.io/TRex/appcast_beta.xml"
+            return "https://amebalabs.github.io/TRex/appcast_beta.xml"
         }
-        return "https://ameba.github.io/TRex/appcast.xml"
+        return "https://amebalabs.github.io/TRex/appcast.xml"
     }
 }
 #endif

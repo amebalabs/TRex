@@ -19,8 +19,8 @@ env:
   XCODE_VERSION: "16.2.0"
   BUNDLE_ID: "com.ameba.TRex"
   APP_NAME: "TRex"
-  BETA_FEED_URL: "https://ameba.github.io/TRex/appcast_beta.xml"
-  PROD_FEED_URL: "https://ameba.github.io/TRex/appcast.xml"
+  BETA_FEED_URL: "https://amebalabs.github.io/TRex/appcast_beta.xml"
+  PROD_FEED_URL: "https://amebalabs.github.io/TRex/appcast.xml"
 
 jobs:
   verify-release-notes:
@@ -348,11 +348,7 @@ jobs:
             git add Formula/trex.rb
           fi
           git commit -m "docs: update CHANGELOG.md, appcast and Homebrew formula for ${TAG}" || echo "Nothing to commit"
-          # Instead of pushing directly to protected main, create a branch and push for a PR
-          BRANCH="release-docs-${TAG}"
-          git checkout -b "$BRANCH"
-          git push origin "$BRANCH"
-          echo "Created branch $BRANCH. Please open a PR manually if required."
+          git push origin HEAD:main
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -365,13 +361,6 @@ jobs:
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
-          keep_files: true
 
   notify:
     needs: [build, sign, notarize]

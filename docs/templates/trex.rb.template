@@ -2,10 +2,10 @@ cask "trex" do
   version "{{VERSION}}"
   sha256 "{{SHA256}}"
 
-  url "https://github.com/ameba/TRex/releases/download/v#{version}/TRex-#{version}.zip"
+  url "https://github.com/amebalabs/TRex/releases/download/v#{version}/TRex-#{version}.zip"
   name "TRex"
   desc "Text Recognition for macOS"
-  homepage "https://github.com/ameba/TRex"
+  homepage "https://github.com/amebalabs/TRex"
 
   livecheck do
     url :url
