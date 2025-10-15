@@ -1,3 +1,41 @@
+# v1.9.1-BETA-1 (2025-10-15)
+
+# TRex v1.9.1-BETA-1 Release Notes
+
+## 🐛 Bug Fixes
+
+### Czech Language OCR Fix
+- **Fixed language code normalization**: Resolved issues with Czech (and potentially other) language recognition where language codes with underscores (`cs_CZ`) weren't being properly converted to the hyphen format (`cs-CZ`) required by Apple Vision OCR
+- **Fixed engine selection**: Corrected issue where Tesseract engine was being selected even when disabled in preferences, causing fallback to incorrect engines with poor results
+- **Language identifier handling**: Improved `LanguageCodeMapper.standardize()` to properly handle locale-based language codes
+
+### Image Preprocessing
+- **Enhanced text recognition accuracy**: Added automatic image preprocessing with:
+  - +30% contrast enhancement
+  - +10% brightness adjustment
+  - +10% saturation boost
+- These improvements help recognize low-contrast and light-colored text more reliably
+
+### OCR Engine Management
+- **Better engine routing**: Made `OCRManager.engines` publicly readable to allow proper engine filtering based on user preferences
+- **Explicit Vision engine selection**: Ensures Apple Vision is used when Tesseract is disabled
+
+## 🔧 Improvements
+
+### Developer Experience
+- **Enhanced logging**: Added comprehensive debug logging throughout the OCR pipeline, including:
+  - Language selection decisions
+  - Engine routing information
+  - Recognition results with confidence scores
+  - Alternate recognition candidates for debugging
+
+### Code Quality
+- **Removed unnecessary entitlements**: Cleaned up app entitlements file by removing unneeded permissions
+
+## 📝 Technical Details
+
+This release primarily addresses language recognition issues that could affect users working with Czech and potentially other languages where locale-based language codes (containing underscores or region identifiers) weren't being properly standardized for the Vision framework.
+
 # v1.9.0 (2025-10-15)
 
 # TRex v1.9.0 Release Notes
