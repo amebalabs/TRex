@@ -2,9 +2,13 @@ import Foundation
 
 /// Centralized utility for language code mapping between different formats
 public enum LanguageCodeMapper {
-    /// Normalizes identifiers to a consistent "lang[-Script][-REGION]" format
+    /// Normalizes identifiers to a consistent "lang[-Script][-REGION]" format with hyphens
     public static func standardize(_ identifier: String) -> String {
-        var components = Locale.components(fromIdentifier: identifier.replacingOccurrences(of: "_", with: "-"))
+        // First, replace underscores with hyphens
+        let normalized = identifier.replacingOccurrences(of: "_", with: "-")
+
+        // Parse components
+        var components = Locale.components(fromIdentifier: normalized)
         if let language = components[NSLocale.Key.languageCode.rawValue] {
             components[NSLocale.Key.languageCode.rawValue] = language.lowercased()
         }
@@ -14,7 +18,20 @@ public enum LanguageCodeMapper {
         if let region = components[NSLocale.Key.countryCode.rawValue] {
             components[NSLocale.Key.countryCode.rawValue] = region.uppercased()
         }
-        return Locale.identifier(fromComponents: components)
+
+        // Build the identifier manually to ensure hyphen format
+        var parts: [String] = []
+        if let language = components[NSLocale.Key.languageCode.rawValue] {
+            parts.append(language.lowercased())
+        }
+        if let script = components[NSLocale.Key.scriptCode.rawValue] {
+            parts.append(script.capitalized)
+        }
+        if let region = components[NSLocale.Key.countryCode.rawValue] {
+            parts.append(region.uppercased())
+        }
+
+        return parts.isEmpty ? identifier : parts.joined(separator: "-")
     }
 
     /// Maps standard language codes (e.g., "en-US") to Tesseract language codes (e.g., "eng")

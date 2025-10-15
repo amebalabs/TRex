@@ -110,57 +110,86 @@ public class TRex: NSObject {
     }
 
     private func getText(_ imagePath: String? = nil) async -> String? {
-        guard task == nil else { return nil }
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        logger.info("🚀 getText called - starting OCR process")
+        logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+        guard task == nil else {
+            logger.warning("⚠️ Task is not nil, returning early")
+            return nil
+        }
 
         guard let nsImage = getImage(imagePath) else {
+            logger.error("❌ Failed to get image")
             return nil
         }
-        
+
         guard let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            logger.error("Failed to convert NSImage to CGImage")
+            logger.error("❌ Failed to convert NSImage to CGImage")
             return nil
         }
+
+        logger.info("📐 Image loaded: \(cgImage.width, privacy: .public)x\(cgImage.height, privacy: .public)")
 
         // Always check for QR codes first
         let text = parseQR(image: cgImage)
         guard text.isEmpty else {
-            logger.info("QR code detected, result length: \(text.count, privacy: .public)")
+            logger.info("📱 QR code detected, result length: \(text.count, privacy: .public)")
             if preferences.autoOpenQRCodeURL {
                 detectAndOpenURL(text: text)
             }
             return text
         }
 
-        logger.debug("No QR code detected, proceeding with text recognition")
-        logger.debug("Tesseract enabled: \(self.preferences.tesseractEnabled, privacy: .public)")
-        
+        logger.info("📝 No QR code detected, proceeding with text recognition")
+        logger.info("⚙️ Current settings:")
+        logger.info("  → Tesseract enabled: \(self.preferences.tesseractEnabled, privacy: .public)")
+        logger.info("  → Automatic language detection: \(self.preferences.automaticLanguageDetection, privacy: .public)")
+        logger.info("  → Selected language code: \(self.preferences.recognitionLanguageCode, privacy: .public)")
+        logger.info("  → macOS version: \(ProcessInfo.processInfo.operatingSystemVersion.majorVersion, privacy: .public)")
+
         // Use OCRManager to select appropriate engine
         let languages = preferences.tesseractEnabled && !preferences.tesseractLanguages.isEmpty
             ? preferences.tesseractLanguages.map { LanguageCodeMapper.fromTesseract($0) }
-            : (preferences.automaticLanguageDetection && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 13 
+            : (preferences.automaticLanguageDetection && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 13
                 ? [] // Empty array means automatic detection for Vision
-                : [preferences.recognitionLanguageCode])
-        
-        logger.debug("Requested languages: \(languages.joined(separator: ","), privacy: .public)")
-        logger.debug("Automatic detection: \(self.preferences.automaticLanguageDetection, privacy: .public)")
-        
+                : [LanguageCodeMapper.standardize(preferences.recognitionLanguageCode)])
+
+        if languages.isEmpty {
+            logger.info("🌍 Languages array is EMPTY - will use automatic detection")
+        } else {
+            logger.info("🔤 Languages array: [\(languages.joined(separator: ", "), privacy: .public)]")
+        }
+
         // If automatic detection is enabled and we're not using Tesseract, use Vision directly
         if preferences.automaticLanguageDetection && !preferences.tesseractEnabled && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 13 {
-            logger.info("Using Vision with automatic language detection")
+            logger.info("🛤️ OCR Path: Vision with AUTOMATIC language detection")
             return await performVisionOCR(cgImage: cgImage)
         }
-        
+
+        // If Tesseract is disabled, only use Vision
+        if !preferences.tesseractEnabled {
+            logger.info("🛤️ OCR Path: Using Apple Vision (Tesseract disabled)")
+            if let visionEngine = OCRManager.shared.engines.first(where: { $0.identifier == "vision" }) {
+                return await performOCR(with: visionEngine, cgImage: cgImage, languages: languages)
+            } else {
+                logger.warning("⚠️ Vision engine not found, falling back to legacy path")
+                return await performVisionOCR(cgImage: cgImage)
+            }
+        }
+
         if let engine = OCRManager.shared.findEngine(for: languages) {
-            logger.info("Using \(engine.name, privacy: .public) engine")
+            logger.info("🛤️ OCR Path: Using \(engine.name, privacy: .public) engine with explicit languages")
             return await performOCR(with: engine, cgImage: cgImage, languages: languages)
         } else {
-            logger.info("No suitable OCR engine found, falling back to Vision")
+            logger.warning("🛤️ OCR Path: No suitable OCR engine found for languages, falling back to Vision")
             return await performVisionOCR(cgImage: cgImage)
         }
     }
     
     
     private func performOCR(with engine: OCREngine, cgImage: CGImage, languages: [String]) async -> String? {
+        logger.info("🔧 performOCR called with engine: \(engine.name, privacy: .public)")
         do {
             // Use timeout utility for 5 second timeout
             let result = try await withTimeout(seconds: 5.0) {
@@ -170,31 +199,36 @@ public class TRex: NSObject {
                     recognitionLevel: .accurate
                 )
             }
-            
-            logger.info("\(engine.name, privacy: .public) OCR successful, result length: \(result.text.count, privacy: .public)")
-            
+
+            logger.info("✅ \(engine.name, privacy: .public) OCR successful!")
+            logger.info("  → Result length: \(result.text.count, privacy: .public) characters")
+            logger.info("  → Confidence: \(String(format: "%.2f", result.confidence), privacy: .public)")
+            logger.info("  → Recognized languages: \(result.recognizedLanguages.joined(separator: ", "), privacy: .public)")
+
             // Handle URL opening if needed
             if preferences.autoOpenCapturedURL {
                 detectAndOpenURL(text: result.text)
             }
-            
+
             return result.text
         } catch TimeoutError.timedOut {
-            logger.error("OCR timed out after 5 seconds, falling back to Vision")
+            logger.error("⏱️ OCR timed out after 5 seconds, falling back to Vision")
             return await performVisionOCR(cgImage: cgImage)
         } catch {
-            logger.error("\(engine.name, privacy: .public) failed with error: \(error.localizedDescription, privacy: .public). Falling back to Vision")
+            logger.error("❌ \(engine.name, privacy: .public) failed with error: \(error.localizedDescription, privacy: .public)")
+            logger.error("  → Falling back to Vision")
             return await performVisionOCR(cgImage: cgImage)
         }
     }
-    
+
     private func performVisionOCR(cgImage: CGImage) async -> String? {
-        await withCheckedContinuation { continuation in
+        logger.info("🔧 performVisionOCR (legacy path) called")
+        return await withCheckedContinuation { continuation in
             detectText(in: cgImage) { result in
                 if let result = result {
-                    self.logger.info("Vision OCR successful, result length: \(result.count, privacy: .public)")
+                    self.logger.info("✅ Legacy Vision OCR successful, result length: \(result.count, privacy: .public)")
                 } else {
-                    self.logger.info("Vision OCR returned no text")
+                    self.logger.warning("⚠️ Legacy Vision OCR returned no text")
                 }
                 continuation.resume(returning: result)
             }
@@ -273,38 +307,50 @@ public class TRex: NSObject {
     }
 
     func detectText(in image: CGImage, completionHandler: @escaping (String?) -> Void) {
+        logger.info("🔍 detectText (legacy Vision path) called")
+        logger.info("  → Image size: \(image.width, privacy: .public)x\(image.height, privacy: .public)")
+
         let request = VNRecognizeTextRequest { request, error in
             if let error = error {
-                self.logger.error("Vision text detection failed: \(error.localizedDescription, privacy: .public)")
+                self.logger.error("❌ Vision text detection failed: \(error.localizedDescription, privacy: .public)")
                 completionHandler(nil)
                 return
             }
 
             guard let result = self.handleDetectionResults(results: request.results) else {
+                self.logger.warning("⚠️ No results from handleDetectionResults")
                 completionHandler(nil)
                 return
             }
+
+            self.logger.info("✅ Legacy Vision path succeeded: \(result.count, privacy: .public) characters")
 
             if self.preferences.autoOpenCapturedURL {
                 self.detectAndOpenURL(text: result)
             }
             completionHandler(result)
         }
-        
+
         // Configure language detection
         if preferences.automaticLanguageDetection, #available(macOS 13.0, *) {
-            logger.debug("Vision: Automatic language detection ENABLED")
+            logger.info("🌍 Vision: Automatic language detection ENABLED")
             request.automaticallyDetectsLanguage = true
             // Don't set recognitionLanguages when using automatic detection
         } else {
-            logger.debug("Vision: Using specific language: \(self.preferences.recognitionLanguageCode, privacy: .public)")
+            let normalizedLanguage = LanguageCodeMapper.standardize(preferences.recognitionLanguageCode)
+            logger.info("🔤 Vision: Using specific language: \(self.preferences.recognitionLanguageCode, privacy: .public) → normalized to: \(normalizedLanguage, privacy: .public)")
             request.automaticallyDetectsLanguage = false
-            request.recognitionLanguages = [preferences.recognitionLanguageCode]
+            request.recognitionLanguages = [normalizedLanguage]
         }
-        
+
         request.usesLanguageCorrection = true
         request.recognitionLevel = .accurate
         request.customWords = preferences.customWordsList
+
+        logger.debug("🔧 Vision request configuration:")
+        logger.debug("  → recognitionLevel: accurate")
+        logger.debug("  → usesLanguageCorrection: true")
+        logger.debug("  → customWords count: \(self.preferences.customWordsList.count, privacy: .public)")
 
         performDetection(request: request, image: image)
     }

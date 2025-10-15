@@ -1,6 +1,7 @@
 import Foundation
 import OSLog
 import Vision
+import CoreImage
 
 // Protocol for OCR engines
 public protocol OCREngine {
@@ -29,8 +30,8 @@ public struct OCRResult {
 // Manager to handle multiple OCR engines
 public class OCRManager {
     public static let shared = OCRManager()
-    
-    private var engines: [OCREngine] = []
+
+    public private(set) var engines: [OCREngine] = []
     
     private init() {
         // Register engines
@@ -134,50 +135,87 @@ public class VisionOCREngine: OCREngine {
     }
     
     public func recognizeText(in image: CGImage, languages: [String], recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult {
+        Self.logger.info("🔍 VisionOCREngine.recognizeText called")
+        Self.logger.info("  → Languages: \(languages.joined(separator: ", "), privacy: .public)")
+        Self.logger.info("  → Recognition level: \(recognitionLevel == .accurate ? "accurate" : "fast", privacy: .public)")
+        Self.logger.info("  → Image size: \(image.width, privacy: .public)x\(image.height, privacy: .public)")
+
+        // Enhance image contrast for better recognition
+        let enhancedImage = enhanceImageContrast(image)
+        Self.logger.debug("🎨 Image contrast enhanced")
+
         return try await withCheckedThrowingContinuation { continuation in
             let request = VNRecognizeTextRequest { request, error in
                 if let error = error {
+                    Self.logger.error("❌ Vision request failed: \(error.localizedDescription, privacy: .public)")
                     continuation.resume(throwing: error)
                     return
                 }
-                
+
                 guard let observations = request.results as? [VNRecognizedTextObservation] else {
+                    Self.logger.warning("⚠️ No observations returned from Vision")
                     continuation.resume(returning: OCRResult(text: "", confidence: 0, recognizedLanguages: languages))
                     return
                 }
-                
+
+                Self.logger.info("📊 Vision returned \(observations.count, privacy: .public) text observations")
+
                 var text = ""
                 var totalConfidence: Float = 0
                 var count = 0
-                
-                for observation in observations {
-                    if let candidate = observation.topCandidates(1).first {
+
+                for (index, observation) in observations.enumerated() {
+                    let candidates = observation.topCandidates(3)
+                    if let topCandidate = candidates.first {
                         if !text.isEmpty {
                             text.append("\n")
                         }
-                        text.append(candidate.string)
-                        totalConfidence += candidate.confidence
+                        text.append(topCandidate.string)
+                        totalConfidence += topCandidate.confidence
                         count += 1
+
+                        // Log first 5 observations with their top candidates
+                        if index < 5 {
+                            Self.logger.debug("  Line \(index, privacy: .public): '\(topCandidate.string, privacy: .public)' (confidence: \(String(format: "%.2f", topCandidate.confidence), privacy: .public))")
+                            if candidates.count > 1 {
+                                let alternates = candidates.dropFirst().map { "'\($0.string)' (\(String(format: "%.2f", $0.confidence)))" }.joined(separator: ", ")
+                                Self.logger.debug("    Alternates: \(alternates, privacy: .public)")
+                            }
+                        }
                     }
                 }
-                
+
                 let avgConfidence = count > 0 ? totalConfidence / Float(count) : 0
+                Self.logger.info("✅ Recognition complete: \(count, privacy: .public) lines, avg confidence: \(String(format: "%.2f", avgConfidence), privacy: .public)")
+                Self.logger.info("  → Total text length: \(text.count, privacy: .public) characters")
+
                 continuation.resume(returning: OCRResult(
                     text: text,
                     confidence: avgConfidence,
                     recognizedLanguages: languages
                 ))
             }
-            
+
             request.recognitionLanguages = languages
             request.recognitionLevel = recognitionLevel
             request.usesLanguageCorrection = true
-            
-            let handler = VNImageRequestHandler(cgImage: image, orientation: .up)
-            
+
+            // Improve recognition of individual characters and symbols
+            if #available(macOS 13.0, *) {
+                request.minimumTextHeight = 0.0  // Recognize even small text
+            }
+
+            Self.logger.debug("🔧 Vision request configured:")
+            Self.logger.debug("  → recognitionLanguages: \(request.recognitionLanguages.joined(separator: ", "), privacy: .public)")
+            Self.logger.debug("  → usesLanguageCorrection: \(request.usesLanguageCorrection, privacy: .public)")
+            Self.logger.debug("  → minimumTextHeight: 0.0 (recognize small text)")
+
+            let handler = VNImageRequestHandler(cgImage: enhancedImage, orientation: .up)
+
             do {
                 try handler.perform([request])
             } catch {
+                Self.logger.error("❌ Vision handler.perform failed: \(error.localizedDescription, privacy: .public)")
                 continuation.resume(throwing: error)
             }
         }
@@ -185,5 +223,32 @@ public class VisionOCREngine: OCREngine {
     
     public func recognizeText(in image: CGImage, recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult {
         return try await recognizeText(in: image, languages: ["en-US"], recognitionLevel: recognitionLevel)
+    }
+
+    // MARK: - Image Enhancement
+
+    private func enhanceImageContrast(_ image: CGImage) -> CGImage {
+        let ciImage = CIImage(cgImage: image)
+
+        // Apply contrast and brightness adjustments
+        let filter = CIFilter(name: "CIColorControls")
+        filter?.setValue(ciImage, forKey: kCIInputImageKey)
+        filter?.setValue(1.3, forKey: kCIInputContrastKey)        // Increase contrast by 30%
+        filter?.setValue(0.1, forKey: kCIInputBrightnessKey)      // Slightly increase brightness
+        filter?.setValue(1.1, forKey: kCIInputSaturationKey)      // Slightly increase saturation
+
+        guard let outputImage = filter?.outputImage else {
+            Self.logger.warning("⚠️ Filter failed, using original")
+            return image
+        }
+
+        // Convert back to CGImage
+        let context = CIContext(options: nil)
+        guard let enhancedCGImage = context.createCGImage(outputImage, from: outputImage.extent) else {
+            Self.logger.warning("⚠️ Failed to create enhanced CGImage, using original")
+            return image
+        }
+
+        return enhancedCGImage
     }
 }
