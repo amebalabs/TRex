@@ -1,0 +1,67 @@
+name: "Codesign"
+description: "A GitHub Action to codesign macOS applications."
+inputs:
+  certificate:
+    description: "The certificate for signing."
+    required: true
+  certificate-password:
+    description: "The password for the certificate."
+    required: true
+  apple-team-id:
+    description: "The Apple Team ID to use for signing."
+    required: true
+  app-path:
+    description: "The path to the application to sign."
+    required: true
+  entitlements-path:
+    description: "The path to the entitlements file to use for signing."
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check that we are on macOS
+      if: ${{ runner.os != 'macos' }}
+      shell: bash
+      run: |
+        echo "This action only works on macOS."
+        exit 1
+
+    - name: Import signing keychain
+      uses: apple-actions/import-codesign-certs@v3
+      with:
+        keychain: signing_temp
+        p12-file-base64: ${{ inputs.certificate }}
+        p12-password: ${{ inputs.certificate-password }}
+
+    - name: Set Entitlements Argument
+      if: ${{ inputs.entitlements-path != '' }}
+      shell: bash
+      run: |
+        echo "entitlements_arg=--entitlements \"${{ inputs.entitlements-path }}\"" >> $GITHUB_ENV
+
+    - name: Code sign
+      shell: bash
+      run: |
+        security find-identity -v signing_temp.keychain | grep "${{ inputs.apple-team-id }}" | grep "Developer ID Application"
+        codesign --keychain signing_temp.keychain --force --deep --sign "${{ inputs.apple-team-id }}" ${{ env.entitlements_arg }} --options=runtime "${{ inputs.app-path }}"
+
+    - name: Validate code signature
+      shell: bash
+      run: |
+        echo "Validating signature for ${{ inputs.app-path }}"
+        echo "Basic signature verification..."
+        codesign --verify --verbose=4 "${{ inputs.app-path }}"
+        echo "Deep signature verification..."
+        codesign --verify --verbose=4 --deep "${{ inputs.app-path }}"
+        echo "Strict requirement verification..."
+        codesign --verify --verbose=4 --strict "${{ inputs.app-path }}"
+        echo "Signature details..."
+        codesign --display --verbose=4 "${{ inputs.app-path }}"
+
+    - name: Cleanup keychain
+      if: always()
+      shell: bash
+      run: |
+        security delete-keychain signing_temp.keychain || true

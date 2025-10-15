@@ -4,7 +4,7 @@ import TRexCore
 
 let _trex = TRex()
 
-struct trex: ParsableCommand {
+struct trex: AsyncParsableCommand {
     static let configuration = CommandConfiguration(abstract: "Magic OCR for macOS")
 
     @Flag(name: .shortAndLong, help: "Run automation with extracted text as input. Automations are configured in TRex app")
@@ -16,19 +16,19 @@ struct trex: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Read file from standard input")
     var input = false
 
-    func run() throws {
+    func run() async throws {
         if clipboard {
-            _trex.capture(automation ? .captureClipboardAndTriggerAutomation : .captureClipboard)
+            await _trex.capture(automation ? .captureClipboardAndTriggerAutomation : .captureClipboard)
             return
         }
 
         if input, let data = try? FileHandle.standardInput.readToEnd() {
             try? data.write(to: URL(fileURLWithPath: _trex.screenShotFilePath))
-            _trex.capture(automation ? .captureFromFileAndTriggerAutomation : .captureFromFile, imagePath: _trex.screenShotFilePath)
+            await _trex.capture(automation ? .captureFromFileAndTriggerAutomation : .captureFromFile, imagePath: _trex.screenShotFilePath)
             return
         }
 
-        _trex.capture(automation ? .captureScreenAndTriggerAutomation : .captureScreen)
+        await _trex.capture(automation ? .captureScreenAndTriggerAutomation : .captureScreen)
     }
 }
 

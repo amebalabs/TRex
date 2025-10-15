@@ -1,0 +1,374 @@
+name: Build and Release
+on:
+  push:
+    branches-ignore:
+      - main
+    tags:
+      - "v*.*.*"
+      - "v*.*.*-beta.*"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+env:
+  XCODE_VERSION: "16.2.0"
+  BUNDLE_ID: "com.ameba.TRex"
+  APP_NAME: "TRex"
+  BETA_FEED_URL: "https://amebalabs.github.io/TRex/appcast_beta.xml"
+  PROD_FEED_URL: "https://amebalabs.github.io/TRex/appcast.xml"
+
+jobs:
+  verify-release-notes:
+    if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      release_notes: ${{ steps.read_notes.outputs.content }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Check release notes exist
+        id: check_notes
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          NOTES_PATH="docs/release-notes/${VERSION}.md"
+          if [ ! -f "$NOTES_PATH" ]; then
+            echo "Error: Release notes not found for version ${VERSION}"
+            echo "Expected path: ${NOTES_PATH}"
+            exit 1
+          fi
+      - name: Read release notes
+        id: read_notes
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          NOTES_PATH="docs/release-notes/${VERSION}.md"
+          CONTENT=$(cat "$NOTES_PATH" | perl -p -e 's/%/%25/g' | perl -p -e 's/\n/%0A/g' | perl -p -e 's/\r/%0D/g')
+          echo "content=$CONTENT" >> $GITHUB_OUTPUT
+
+  build:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: macos-latest
+    timeout-minutes: 30
+    outputs:
+      build_number: ${{ steps.get_versions.outputs.BUILD_NUMBER }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get Version Numbers
+        id: get_versions
+        run: |
+          # Get build number from commit count
+          BUILD_NUMBER=$(git rev-list --count HEAD)
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+          # Initialize version variables
+          VERSION="0.0.0"
+          IS_RELEASE=false
+
+          # Determine if this is a release tag
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [[ "${GITHUB_REF_NAME}" == v* ]]; then
+            VERSION=${GITHUB_REF_NAME#v}
+            IS_RELEASE=true
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "IS_RELEASE=$IS_RELEASE" >> $GITHUB_OUTPUT
+
+          # Debug logging
+          echo "Debug information:"
+          echo "GITHUB_REF_TYPE: ${GITHUB_REF_TYPE}"
+          echo "GITHUB_REF_NAME: ${GITHUB_REF_NAME}"
+          echo "GITHUB_REF: ${GITHUB_REF}"
+          echo "BUILD_NUMBER: ${BUILD_NUMBER}"
+          echo "VERSION: ${VERSION}"
+          echo "IS_RELEASE: ${IS_RELEASE}"
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Build Application
+        env:
+          MARKETING_VERSION: ${{ steps.get_versions.outputs.VERSION }}
+          CURRENT_PROJECT_VERSION: ${{ steps.get_versions.outputs.BUILD_NUMBER }}
+        run: |
+          xcodebuild \
+            -scheme "${{ env.APP_NAME }}" \
+            -configuration Release \
+            -derivedDataPath build \
+            -arch arm64 -arch x86_64 \
+            ONLY_ACTIVE_ARCH=NO \
+            MARKETING_VERSION="$MARKETING_VERSION" \
+            CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
+            build
+
+      - name: Verify Universal Binary
+        run: |
+          echo "Checking binary architectures..."
+          lipo -archs "build/Build/Products/Release/${{ env.APP_NAME }}.app/Contents/MacOS/${{ env.APP_NAME }}"
+      - name: Package App Bundle
+        run: |
+          cd build/Build/Products/Release
+          ditto -c -k --keepParent "${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}.app.zip"
+      - name: Upload App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-Unsigned
+          path: build/Build/Products/Release/${{ env.APP_NAME }}.app.zip
+          retention-days: 5
+
+  sign:
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download Unsigned App
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-Unsigned
+          path: .
+      - name: Unpack App Bundle
+        run: |
+          ditto -x -k "${{ env.APP_NAME }}.app.zip" .
+      - name: Normalize Embedded Frameworks
+        run: Scripts/flatten-frameworks.sh "${{ env.APP_NAME }}.app"
+      - name: Sign Application
+        uses: ./.github/actions/sign
+        with:
+          certificate: ${{ secrets.CERTIFICATES_P12 }}
+          certificate-password: ${{ secrets.CERTIFICATES_P12_PASSWORD }}
+          apple-team-id: ${{ secrets.TEAM_ID }}
+          app-path: "${{ env.APP_NAME }}.app"
+          entitlements-path: "TRex/Resources/TRex.entitlements"
+      - name: Package Signed App Bundle
+        run: |
+          ditto -c -k --keepParent "${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}.app.zip"
+      - name: Upload Signed App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-Signed
+          path: ${{ env.APP_NAME }}.app.zip
+          retention-days: 5
+
+  notarize:
+    needs: sign
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download Signed App
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-Signed
+          path: .
+      - name: Unpack App Bundle
+        run: |
+          ditto -x -k "${{ env.APP_NAME }}.app.zip" .
+      - name: Notarize Application
+        uses: ./.github/actions/notarize
+        with:
+          username: ${{ secrets.APPLE_ID }}
+          password: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          apple-team-id: ${{ secrets.TEAM_ID }}
+          app-path: "${{ env.APP_NAME }}.app"
+      - name: Package Notarized App Bundle
+        run: |
+          ditto -c -k --keepParent "${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}.app.zip"
+      - name: Upload Notarized App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-Notarized
+          path: ${{ env.APP_NAME }}.app.zip
+          retention-days: 5
+
+  release:
+    needs: [notarize, verify-release-notes]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set version and beta variables
+        run: |
+          # Extract version and determine if beta
+          VERSION=$(echo "${{ github.ref_name }}" | sed 's/v//')
+          if echo "${{ github.ref_name }}" | grep -qi 'beta'; then
+            IS_BETA=true
+          else
+            IS_BETA=false
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "IS_BETA=$IS_BETA" >> $GITHUB_ENV
+          echo "TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "Debug: VERSION=$VERSION, IS_BETA=$IS_BETA, TAG=${{ github.ref_name }}"
+
+      - name: Download Notarized App
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-Notarized
+          path: .
+
+      - name: Unpack App Bundle
+        run: |
+          ditto -x -k "${{ env.APP_NAME }}.app.zip" .
+
+      - name: Create Release Archive
+        run: |
+          ditto -c -k --keepParent "${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}-${{ env.VERSION }}.zip"
+
+      - name: Calculate SHA256
+        run: |
+          SHA=$(shasum -a 256 "${{ env.APP_NAME }}-${{ env.VERSION }}.zip" | cut -d' ' -f1)
+          echo "ZIP_SHA=$SHA" >> $GITHUB_ENV
+          echo "Debug: Calculated ZIP_SHA=$SHA"
+
+      - name: Read Release Notes
+        id: release_notes
+        run: |
+          NOTES_PATH="docs/release-notes/${{ env.TAG }}.md"
+          if [ ! -f "$NOTES_PATH" ]; then
+            echo "Error: Release notes not found at $NOTES_PATH"
+            exit 1
+          fi
+          # Prepare escaped version for XML
+          CONTENT=$(cat "$NOTES_PATH" | perl -p -e 's/%/%25/g' | perl -p -e 's/\n/%0A/g' | perl -p -e 's/\r/%0D/g')
+          echo "CONTENT=$CONTENT" >> $GITHUB_OUTPUT
+          # Also store raw notes for release body and changelog
+          RELEASE_NOTES=$(cat "$NOTES_PATH" | awk '{printf "%s\\n", $0}')
+          echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
+
+          # Verify the content was set
+          if [ -z "$RELEASE_NOTES" ]; then
+            echo "Error: RELEASE_NOTES is empty"
+            exit 1
+          fi
+
+      - name: Generate Sparkle Signature
+        id: generate_signature
+        uses: ./.github/actions/sparkle-sign
+        with:
+          private-key: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          file-path: ${{ env.APP_NAME }}-${{ env.VERSION }}.zip
+
+      - name: Update Appcast
+        run: |
+          # Determine appcast file based on beta flag
+          APPCAST_NAME="appcast"
+          if [ "${IS_BETA}" = "true" ]; then
+            APPCAST_NAME="appcast_beta.xml"
+          else
+            APPCAST_NAME="appcast.xml"
+          fi
+          APPCAST_FILE="docs/${APPCAST_NAME}"
+
+          # Debug logs
+          echo "Updating appcast: $APPCAST_FILE"
+          echo "Using URL:" $( [ "${IS_BETA}" = "true" ] && echo "${BETA_FEED_URL}" || echo "${PROD_FEED_URL}" )
+          echo "Using signature: ${{ steps.generate_signature.outputs.signature }}"
+          echo "ZIP_SHA: ${ZIP_SHA}"
+
+          # Use unindented heredoc for proper XML formatting
+          cat > "$APPCAST_FILE" <<-EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+            <channel>
+              <title>${APP_NAME} $([ "${IS_BETA}" = "true" ] && echo "Beta " )Appcast</title>
+              <link>$([ "${IS_BETA}" = "true" ] && echo "${BETA_FEED_URL}" || echo "${PROD_FEED_URL}")</link>
+              <description>${APP_NAME} $([ "${IS_BETA}" = "true" ] && echo "Beta " )Updates</description>
+              <language>en</language>
+              <item>
+                <title>${APP_NAME} ${VERSION}</title>
+                <sparkle:version>${VERSION}</sparkle:version>
+                <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+                <description><![CDATA[${CONTENT}]]></description>
+                <pubDate>$(date -R)</pubDate>
+                <enclosure
+                  url="https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/${APP_NAME}-${VERSION}.zip"
+                  sparkle:version="${VERSION}"
+                  sparkle:shortVersionString="${VERSION}"
+                  type="application/octet-stream"
+                  ${{ steps.generate_signature.outputs.signature }}
+                  sparkle:sha256="${ZIP_SHA}"
+                />
+              </item>
+            </channel>
+          </rss>
+          EOF
+
+          # Validate the XML
+          xmllint --noout "$APPCAST_FILE" || { echo "Error: Invalid XML format in appcast"; exit 1; }
+
+      - name: Update CHANGELOG.md
+        run: |
+          TEMP_FILE=$(mktemp)
+          echo "# ${TAG} ($(date +'%Y-%m-%d'))" > "$TEMP_FILE"
+          echo "" >> "$TEMP_FILE"
+          cat "docs/release-notes/${TAG}.md" >> "$TEMP_FILE"
+          echo "" >> "$TEMP_FILE"
+          if [ -f "CHANGELOG.md" ]; then
+            cat "CHANGELOG.md" >> "$TEMP_FILE"
+          fi
+          mv "$TEMP_FILE" "CHANGELOG.md"
+
+      - name: Generate Homebrew Formula
+        if: ${{ env.IS_BETA != 'true' }}
+        run: |
+          # Only generate formula for non-beta releases
+          echo "Generating Homebrew formula for version $VERSION"
+
+          # Ensure Formula directory exists
+          mkdir -p Formula
+
+          # Create the formula from template
+          FORMULA_FILE="Formula/trex.rb"
+          cp docs/templates/trex.rb.template "$FORMULA_FILE"
+
+          # Replace template variables
+          sed -i '' "s/{{VERSION}}/$VERSION/g" "$FORMULA_FILE"
+          sed -i '' "s/{{SHA256}}/$ZIP_SHA/g" "$FORMULA_FILE"
+
+          echo "Generated Homebrew formula at $FORMULA_FILE"
+
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add CHANGELOG.md docs/appcast*.xml
+          if [ "$IS_BETA" != "true" ] && [ -f "Formula/trex.rb" ]; then
+            git add Formula/trex.rb
+          fi
+          git commit -m "docs: update CHANGELOG.md, appcast and Homebrew formula for ${TAG}" || echo "Nothing to commit"
+          git push origin HEAD:main
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ env.APP_NAME }}-${{ env.VERSION }}.zip
+          body_path: docs/release-notes/${{ env.TAG }}.md
+          prerelease: ${{ env.IS_BETA == 'true' }}
+          draft: false
+          fail_on_unmatched_files: true
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    needs: [build, sign, notarize]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Status
+        run: |
+          echo "Build status: ${{ needs.build.result }}"
+          echo "Sign status: ${{ needs.sign.result }}"
+          echo "Notarize status: ${{ needs.notarize.result }}"

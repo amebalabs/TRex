@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+  <channel>
+    <title>TRex Beta</title>
+    <link>https://github.com/amebalabs/TRex/releases</link>
+    <description>Text Recognition for macOS - Beta Channel</description>
+    <language>en</language>
+    <!-- New beta releases will be automatically added here by CI -->
+  </channel>
+</rss>

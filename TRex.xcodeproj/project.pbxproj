@@ -8,12 +8,38 @@
 
 /* Begin PBXBuildFile section */
 		3957B9C52646DAEF00A62506 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 3957B9C42646DAEF00A62506 /* README.md */; };
+		FA04A09F2E16C70900C6FCA2 /* TesseractSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */; };
+		FA1EE61D2E1F264A009D86D8 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE61B2E1F264A009D86D8 /* WelcomeView.swift */; };
+		FA1EE61E2E1F264A009D86D8 /* SetupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6022E1F264A009D86D8 /* SetupSection.swift */; };
+		FA1EE61F2E1F264A009D86D8 /* LanguageSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6132E1F264A009D86D8 /* LanguageSection.swift */; };
+		FA1EE6212E1F264A009D86D8 /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6082E1F264A009D86D8 /* OnboardingViewModel.swift */; };
+		FA1EE6222E1F264A009D86D8 /* Feature.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6002E1F264A009D86D8 /* Feature.swift */; };
+		FA1EE6232E1F264A009D86D8 /* SettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6152E1F264A009D86D8 /* SettingsSection.swift */; };
+		FA1EE6242E1F264A009D86D8 /* ModernTextFieldStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE60E2E1F264A009D86D8 /* ModernTextFieldStyle.swift */; };
+		FA1EE6252E1F264A009D86D8 /* Color+Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE5FD2E1F264A009D86D8 /* Color+Brand.swift */; };
+		FA1EE6262E1F264A009D86D8 /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6182E1F264A009D86D8 /* SetupView.swift */; };
+		FA1EE6292E1F264A009D86D8 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6172E1F264A009D86D8 /* OnboardingView.swift */; };
+		FA1EE62A2E1F264A009D86D8 /* BrandBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE60C2E1F264A009D86D8 /* BrandBackground.swift */; };
+		FA1EE62B2E1F264A009D86D8 /* TutorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE61A2E1F264A009D86D8 /* TutorialView.swift */; };
+		FA1EE62C2E1F264A009D86D8 /* PreferenceKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6062E1F264A009D86D8 /* PreferenceKeys.swift */; };
+		FA1EE62D2E1F264A009D86D8 /* Animation+App.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE5FB2E1F264A009D86D8 /* Animation+App.swift */; };
+		FA1EE62F2E1F264A009D86D8 /* SetupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6092E1F264A009D86D8 /* SetupViewModel.swift */; };
+		FA1EE6302E1F264A009D86D8 /* PermissionsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6142E1F264A009D86D8 /* PermissionsSection.swift */; };
+		FA1EE6312E1F264A009D86D8 /* NavigationFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6102E1F264A009D86D8 /* NavigationFooter.swift */; };
+		FA1EE6322E1F264A009D86D8 /* OnboardingPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6012E1F264A009D86D8 /* OnboardingPage.swift */; };
+		FA1EE6332E1F264A009D86D8 /* FeatureCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE60D2E1F264A009D86D8 /* FeatureCard.swift */; };
+		FA1EE6342E1F264A009D86D8 /* AnyTransition+SlideFade.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE5FC2E1F264A009D86D8 /* AnyTransition+SlideFade.swift */; };
+		FA1EE6352E1F264A009D86D8 /* SetupTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6112E1F264A009D86D8 /* SetupTab.swift */; };
+		FA1EE6362E1F264A009D86D8 /* ModernToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE60F2E1F264A009D86D8 /* ModernToggleStyle.swift */; };
+		FA1EE6372E1F264A009D86D8 /* View+OnboardingStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE5FE2E1F264A009D86D8 /* View+OnboardingStyle.swift */; };
+		FA1EE63D2E1F2F5F009D86D8 /* QLImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE63C2E1F2F5F009D86D8 /* QLImage.swift */; };
+		FA1EE6412E1F32C0009D86D8 /* step2.gif in Resources */ = {isa = PBXBuildFile; fileRef = FA1EE63E2E1F32C0009D86D8 /* step2.gif */; };
+		FA1EE6422E1F32C0009D86D8 /* step3.gif in Resources */ = {isa = PBXBuildFile; fileRef = FA1EE63F2E1F32C0009D86D8 /* step3.gif */; };
+		FA1EE6452E254E54009D86D8 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = FA1EE6442E254E54009D86D8 /* Sparkle */; };
 		FA2B835B25DEBF8200B23F25 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = FA2B835A25DEBF8200B23F25 /* Credits.rtf */; };
-		FA2B836125DEC31400B23F25 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2B836025DEC31400B23F25 /* OnboardingView.swift */; };
 		FA3AEAA82C9B85710096CCA5 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA3AEAA72C9B85710096CCA5 /* TRexCore */; };
 		FA3AEAAA2C9B85790096CCA5 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA3AEAA92C9B85790096CCA5 /* TRexCore */; };
 		FA3AEAAF2C9B8BCB0096CCA5 /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA3AEAAE2C9B8BCB0096CCA5 /* LaunchAtLogin.swift */; };
-		FA3AEAB12C9B8CBC0096CCA5 /* trex in Embed TRex CLI */ = {isa = PBXBuildFile; fileRef = FA58E39F27AE1CFA0034837F /* trex */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		FA48BA3025DDEBCE00E98F77 /* EnumPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA48BA2F25DDEBCE00E98F77 /* EnumPicker.swift */; };
 		FA58E39527AB74530034837F /* CustomWordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39427AB74530034837F /* CustomWordsView.swift */; };
 		FA58E39727AC7F630034837F /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39627AC7F630034837F /* Utils.swift */; };
@@ -29,6 +55,7 @@
 		FA5F876225DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F876125DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift */; };
 		FA66345C25DEFD500087CCEA /* NSImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */; };
 		FA66345F25DF05950087CCEA /* PagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345E25DF05950087CCEA /* PagerView.swift */; };
+		FA6648712E18469400EF497A /* TesseractSwift in Frameworks */ = {isa = PBXBuildFile; productRef = FA6648702E18469400EF497A /* TesseractSwift */; };
 		FA8A957C2B67CA41008C0B7B /* UniversalShowSettingsHack.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA8A957B2B67CA41008C0B7B /* UniversalShowSettingsHack.swift */; };
 		FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */; };
 		FAFAC6F5272C4CAE00011ED6 /* AboutSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */; };
@@ -55,7 +82,6 @@
 			dstPath = cli;
 			dstSubfolderSpec = 6;
 			files = (
-				FA3AEAB12C9B8CBC0096CCA5 /* trex in Embed TRex CLI */,
 			);
 			name = "Embed TRex CLI";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -74,8 +100,34 @@
 
 /* Begin PBXFileReference section */
 		3957B9C42646DAEF00A62506 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesseractSettingsView.swift; sourceTree = "<group>"; };
+		FA1EE5FB2E1F264A009D86D8 /* Animation+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Animation+App.swift"; sourceTree = "<group>"; };
+		FA1EE5FC2E1F264A009D86D8 /* AnyTransition+SlideFade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AnyTransition+SlideFade.swift"; sourceTree = "<group>"; };
+		FA1EE5FD2E1F264A009D86D8 /* Color+Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Brand.swift"; sourceTree = "<group>"; };
+		FA1EE5FE2E1F264A009D86D8 /* View+OnboardingStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+OnboardingStyle.swift"; sourceTree = "<group>"; };
+		FA1EE6002E1F264A009D86D8 /* Feature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Feature.swift; sourceTree = "<group>"; };
+		FA1EE6012E1F264A009D86D8 /* OnboardingPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPage.swift; sourceTree = "<group>"; };
+		FA1EE6022E1F264A009D86D8 /* SetupSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupSection.swift; sourceTree = "<group>"; };
+		FA1EE6062E1F264A009D86D8 /* PreferenceKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferenceKeys.swift; sourceTree = "<group>"; };
+		FA1EE6082E1F264A009D86D8 /* OnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewModel.swift; sourceTree = "<group>"; };
+		FA1EE6092E1F264A009D86D8 /* SetupViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupViewModel.swift; sourceTree = "<group>"; };
+		FA1EE60C2E1F264A009D86D8 /* BrandBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandBackground.swift; sourceTree = "<group>"; };
+		FA1EE60D2E1F264A009D86D8 /* FeatureCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureCard.swift; sourceTree = "<group>"; };
+		FA1EE60E2E1F264A009D86D8 /* ModernTextFieldStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernTextFieldStyle.swift; sourceTree = "<group>"; };
+		FA1EE60F2E1F264A009D86D8 /* ModernToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModernToggleStyle.swift; sourceTree = "<group>"; };
+		FA1EE6102E1F264A009D86D8 /* NavigationFooter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationFooter.swift; sourceTree = "<group>"; };
+		FA1EE6112E1F264A009D86D8 /* SetupTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupTab.swift; sourceTree = "<group>"; };
+		FA1EE6132E1F264A009D86D8 /* LanguageSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageSection.swift; sourceTree = "<group>"; };
+		FA1EE6142E1F264A009D86D8 /* PermissionsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsSection.swift; sourceTree = "<group>"; };
+		FA1EE6152E1F264A009D86D8 /* SettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSection.swift; sourceTree = "<group>"; };
+		FA1EE6172E1F264A009D86D8 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		FA1EE6182E1F264A009D86D8 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
+		FA1EE61A2E1F264A009D86D8 /* TutorialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TutorialView.swift; sourceTree = "<group>"; };
+		FA1EE61B2E1F264A009D86D8 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
+		FA1EE63C2E1F2F5F009D86D8 /* QLImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QLImage.swift; sourceTree = "<group>"; };
+		FA1EE63E2E1F32C0009D86D8 /* step2.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = step2.gif; sourceTree = "<group>"; };
+		FA1EE63F2E1F32C0009D86D8 /* step3.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = step3.gif; sourceTree = "<group>"; };
 		FA2B835A25DEBF8200B23F25 /* Credits.rtf */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; path = Credits.rtf; sourceTree = "<group>"; };
-		FA2B836025DEC31400B23F25 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		FA3AEAA62C9B85230096CCA5 /* TRexCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = TRexCore; sourceTree = "<group>"; };
 		FA3AEAAE2C9B8BCB0096CCA5 /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
 		FA48BA2F25DDEBCE00E98F77 /* EnumPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnumPicker.swift; sourceTree = "<group>"; };
@@ -121,17 +173,107 @@
 			buildActionMask = 2147483647;
 			files = (
 				FA3AEAA82C9B85710096CCA5 /* TRexCore in Frameworks */,
+				FA1EE6452E254E54009D86D8 /* Sparkle in Frameworks */,
 				FA5F875F25DD637300B1AF77 /* KeyboardShortcuts in Frameworks */,
+				FA6648712E18469400EF497A /* TesseractSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		FA1EE5FF2E1F264A009D86D8 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				FA1EE5FB2E1F264A009D86D8 /* Animation+App.swift */,
+				FA1EE5FC2E1F264A009D86D8 /* AnyTransition+SlideFade.swift */,
+				FA1EE5FD2E1F264A009D86D8 /* Color+Brand.swift */,
+				FA1EE5FE2E1F264A009D86D8 /* View+OnboardingStyle.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		FA1EE6042E1F264A009D86D8 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FA1EE6002E1F264A009D86D8 /* Feature.swift */,
+				FA1EE6012E1F264A009D86D8 /* OnboardingPage.swift */,
+				FA1EE6022E1F264A009D86D8 /* SetupSection.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		FA1EE6072E1F264A009D86D8 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				FA1EE6062E1F264A009D86D8 /* PreferenceKeys.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		FA1EE60B2E1F264A009D86D8 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				FA1EE6082E1F264A009D86D8 /* OnboardingViewModel.swift */,
+				FA1EE6092E1F264A009D86D8 /* SetupViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		FA1EE6122E1F264A009D86D8 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FA1EE63C2E1F2F5F009D86D8 /* QLImage.swift */,
+				FA1EE60C2E1F264A009D86D8 /* BrandBackground.swift */,
+				FA1EE60D2E1F264A009D86D8 /* FeatureCard.swift */,
+				FA1EE60E2E1F264A009D86D8 /* ModernTextFieldStyle.swift */,
+				FA1EE60F2E1F264A009D86D8 /* ModernToggleStyle.swift */,
+				FA1EE6102E1F264A009D86D8 /* NavigationFooter.swift */,
+				FA1EE6112E1F264A009D86D8 /* SetupTab.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		FA1EE6162E1F264A009D86D8 /* SetupSections */ = {
+			isa = PBXGroup;
+			children = (
+				FA1EE6132E1F264A009D86D8 /* LanguageSection.swift */,
+				FA1EE6142E1F264A009D86D8 /* PermissionsSection.swift */,
+				FA1EE6152E1F264A009D86D8 /* SettingsSection.swift */,
+			);
+			path = SetupSections;
+			sourceTree = "<group>";
+		};
+		FA1EE61C2E1F264A009D86D8 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				FA1EE6122E1F264A009D86D8 /* Components */,
+				FA1EE6162E1F264A009D86D8 /* SetupSections */,
+				FA1EE6172E1F264A009D86D8 /* OnboardingView.swift */,
+				FA1EE6182E1F264A009D86D8 /* SetupView.swift */,
+				FA1EE61A2E1F264A009D86D8 /* TutorialView.swift */,
+				FA1EE61B2E1F264A009D86D8 /* WelcomeView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		FA1EE6402E1F32C0009D86D8 /* Gifs */ = {
+			isa = PBXGroup;
+			children = (
+				FA1EE63E2E1F32C0009D86D8 /* step2.gif */,
+				FA1EE63F2E1F32C0009D86D8 /* step3.gif */,
+			);
+			path = Gifs;
+			sourceTree = "<group>";
+		};
 		FA2B835E25DEC2EE00B23F25 /* Onboarding */ = {
 			isa = PBXGroup;
 			children = (
-				FA2B836025DEC31400B23F25 /* OnboardingView.swift */,
+				FA1EE5FF2E1F264A009D86D8 /* Extensions */,
+				FA1EE6042E1F264A009D86D8 /* Models */,
+				FA1EE6072E1F264A009D86D8 /* Services */,
+				FA1EE60B2E1F264A009D86D8 /* ViewModels */,
+				FA1EE61C2E1F264A009D86D8 /* Views */,
 				FA66345E25DF05950087CCEA /* PagerView.swift */,
 			);
 			path = Onboarding;
@@ -140,6 +282,7 @@
 		FA2B835F25DEC2FD00B23F25 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */,
 				FA5F874A25DCB50A00B1AF77 /* SettingsView.swift */,
 				FAFAC6F8272C4CEA00011ED6 /* GeneralSettingsView.swift */,
 				FAFAC6FA272C4D3E00011ED6 /* ShortcutsSettingsView.swift */,
@@ -230,6 +373,7 @@
 		FA5F876425DDE12A00B1AF77 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				FA1EE6402E1F32C0009D86D8 /* Gifs */,
 				FAFF12CF2739E23900B3993B /* Localization */,
 				FA5F873B25DC243400B1AF77 /* TRex.entitlements */,
 				FA5F873525DC243400B1AF77 /* Assets.xcassets */,
@@ -314,6 +458,8 @@
 			packageProductDependencies = (
 				FA5F875E25DD637300B1AF77 /* KeyboardShortcuts */,
 				FA3AEAA72C9B85710096CCA5 /* TRexCore */,
+				FA6648702E18469400EF497A /* TesseractSwift */,
+				FA1EE6442E254E54009D86D8 /* Sparkle */,
 			);
 			productName = TRex;
 			productReference = FA5F872E25DC243200B1AF77 /* TRex.app */;
@@ -334,6 +480,7 @@
 					};
 					FA5F872D25DC243200B1AF77 = {
 						CreatedOnToolsVersion = 12.4;
+						LastSwiftMigration = 1630;
 					};
 				};
 			};
@@ -349,6 +496,7 @@
 			packageReferences = (
 				FA5F875D25DD637300B1AF77 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 				FA58E3DF27AE31DF0034837F /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
+				FA1EE6432E254E54009D86D8 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			productRefGroup = FA5F872F25DC243200B1AF77 /* Products */;
 			projectDirPath = "";
@@ -365,6 +513,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA1EE6412E1F32C0009D86D8 /* step2.gif in Resources */,
+				FA1EE6422E1F32C0009D86D8 /* step3.gif in Resources */,
 				FA2B835B25DEBF8200B23F25 /* Credits.rtf in Resources */,
 				FA5F873925DC243400B1AF77 /* Preview Assets.xcassets in Resources */,
 				3957B9C52646DAEF00A62506 /* README.md in Resources */,
@@ -448,9 +598,33 @@
 			buildActionMask = 2147483647;
 			files = (
 				FA3AEAAF2C9B8BCB0096CCA5 /* LaunchAtLogin.swift in Sources */,
-				FA2B836125DEC31400B23F25 /* OnboardingView.swift in Sources */,
+				FA1EE61D2E1F264A009D86D8 /* WelcomeView.swift in Sources */,
+				FA1EE61E2E1F264A009D86D8 /* SetupSection.swift in Sources */,
+				FA1EE61F2E1F264A009D86D8 /* LanguageSection.swift in Sources */,
+				FA1EE6212E1F264A009D86D8 /* OnboardingViewModel.swift in Sources */,
+				FA1EE6222E1F264A009D86D8 /* Feature.swift in Sources */,
+				FA1EE6232E1F264A009D86D8 /* SettingsSection.swift in Sources */,
+				FA1EE6242E1F264A009D86D8 /* ModernTextFieldStyle.swift in Sources */,
+				FA1EE6252E1F264A009D86D8 /* Color+Brand.swift in Sources */,
+				FA1EE6262E1F264A009D86D8 /* SetupView.swift in Sources */,
+				FA1EE6292E1F264A009D86D8 /* OnboardingView.swift in Sources */,
+				FA1EE62A2E1F264A009D86D8 /* BrandBackground.swift in Sources */,
+				FA1EE62B2E1F264A009D86D8 /* TutorialView.swift in Sources */,
+				FA1EE62C2E1F264A009D86D8 /* PreferenceKeys.swift in Sources */,
+				FA1EE63D2E1F2F5F009D86D8 /* QLImage.swift in Sources */,
+				FA1EE62D2E1F264A009D86D8 /* Animation+App.swift in Sources */,
+				FA1EE62F2E1F264A009D86D8 /* SetupViewModel.swift in Sources */,
+				FA1EE6302E1F264A009D86D8 /* PermissionsSection.swift in Sources */,
+				FA1EE6312E1F264A009D86D8 /* NavigationFooter.swift in Sources */,
+				FA1EE6322E1F264A009D86D8 /* OnboardingPage.swift in Sources */,
+				FA1EE6332E1F264A009D86D8 /* FeatureCard.swift in Sources */,
+				FA1EE6342E1F264A009D86D8 /* AnyTransition+SlideFade.swift in Sources */,
+				FA1EE6352E1F264A009D86D8 /* SetupTab.swift in Sources */,
+				FA1EE6362E1F264A009D86D8 /* ModernToggleStyle.swift in Sources */,
+				FA1EE6372E1F264A009D86D8 /* View+OnboardingStyle.swift in Sources */,
 				FAFAC6FB272C4D3E00011ED6 /* ShortcutsSettingsView.swift in Sources */,
 				FA66345F25DF05950087CCEA /* PagerView.swift in Sources */,
+				FA04A09F2E16C70900C6FCA2 /* TesseractSettingsView.swift in Sources */,
 				FAFAC6F5272C4CAE00011ED6 /* AboutSettingsView.swift in Sources */,
 				FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */,
 				FAFF12D12739E24600B3993B /* Localizable.swift in Sources */,
@@ -485,6 +659,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
+				"EXCLUDED_ARCHS[sdk=*]" = x86_64;
 				INFOPLIST_FILE = "$(SRCROOT)/TRex CMD/Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				MARKETING_VERSION = 1.8.0;
@@ -644,12 +819,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = TRex/Resources/TRex.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 120;
+				CURRENT_PROJECT_VERSION = 133;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
 				DEVELOPMENT_TEAM = X93LWC49WV;
@@ -662,9 +839,13 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				MARKETING_VERSION = 1.8.1;
+				MAC_APP_STORE = NO;
+				MARKETING_VERSION = 1.9.0;
+				MTL_ENABLE_DEBUG_INFO = "";
+				OTHER_LDFLAGS = "-lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -674,17 +855,20 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = TRex/Resources/TRex.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 120;
+				CURRENT_PROJECT_VERSION = 133;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				EXCLUDED_ARCHS = x86_64;
 				INFOPLIST_FILE = TRex/Resources/info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -692,7 +876,9 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				MARKETING_VERSION = 1.8.1;
+				MAC_APP_STORE = NO;
+				MARKETING_VERSION = 1.9.0;
+				OTHER_LDFLAGS = "-lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -732,6 +918,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		FA1EE6432E254E54009D86D8 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.1;
+			};
+		};
 		FA58E3DF27AE31DF0034837F /* XCRemoteSwiftPackageReference "swift-argument-parser" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-argument-parser.git";
@@ -751,6 +945,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		FA1EE6442E254E54009D86D8 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA1EE6432E254E54009D86D8 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
 		FA3AEAA72C9B85710096CCA5 /* TRexCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = TRexCore;
@@ -768,6 +967,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA5F875D25DD637300B1AF77 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
 			productName = KeyboardShortcuts;
+		};
+		FA6648702E18469400EF497A /* TesseractSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TesseractSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

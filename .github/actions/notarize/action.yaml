@@ -1,0 +1,67 @@
+name: "Notarize"
+description: "A GitHub Action to notarize macOS applications."
+inputs:
+  username:
+    description: "The Apple ID username to use for notarization."
+    required: true
+  password:
+    description: "The Apple ID password to use for notarization."
+    required: true
+  apple-team-id:
+    description: "The Apple Team ID to use for notarization."
+    required: true
+  app-path:
+    description: "The path to the application to notarize."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check that we are on macOS
+      if: ${{ runner.os != 'macos' }}
+      shell: bash
+      run: |
+        echo "This action only works on macOS."
+        exit 1
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        brew install zip
+
+    - name: Create temporary directory
+      id: tmp
+      shell: bash
+      run: |
+        echo "path=$(mktemp -d -t notarize.XXXXXXXXXX)" >> $GITHUB_OUTPUT
+
+    - name: Create ZIP for notarization
+      id: zip
+      shell: bash
+      run: |
+        ZIP_PATH="${{ steps.tmp.outputs.path }}/app.zip"
+        ditto -c -k --keepParent "${{ inputs.app-path }}" "$ZIP_PATH"
+        echo "zip_path=$ZIP_PATH" >> $GITHUB_OUTPUT
+
+    - name: Submit for notarization
+      shell: bash
+      run: |
+        xcrun notarytool submit \
+          "${{ steps.zip.outputs.zip_path }}" \
+          --wait \
+          --apple-id "${{ inputs.username }}" \
+          --password "${{ inputs.password }}" \
+          --team-id "${{ inputs.apple-team-id }}" \
+          --output-format json \
+          | tee "${{ steps.tmp.outputs.path }}/notarization_output.json"
+
+        if ! grep -q "Accepted" "${{ steps.tmp.outputs.path }}/notarization_output.json"; then
+          echo "Notarization failed"
+          exit 1
+        fi
+
+    - name: Staple notarization ticket
+      shell: bash
+      run: |
+        xcrun stapler staple "${{ inputs.app-path }}"
+        xcrun stapler validate "${{ inputs.app-path }}"

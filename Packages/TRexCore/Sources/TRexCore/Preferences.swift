@@ -4,7 +4,8 @@ import SwiftUI
 
 public class Preferences: ObservableObject {
     public static let shared = Preferences()
-    static let userDefaults = UserDefaults(suiteName: "X93LWC49WV.TRex.preferences")!
+    static let suiteName = "X93LWC49WV.TRex.preferences"
+    static let userDefaults = UserDefaults(suiteName: suiteName)!
 
     enum PreferencesKeys: String {
         case CaptureSound
@@ -22,6 +23,10 @@ public class Preferences: ObservableObject {
         case CustomWords
         case AutomaticLanguageDetection
         case OptionQuickAction
+        case TesseractEnabled
+        case TesseractLanguages
+        case TesseractPath
+        case IncludeBetaUpdates
     }
 
     public enum MenuBarIcon: String, CaseIterable {
@@ -58,61 +63,6 @@ public class Preferences: ObservableObject {
         }
     }
 
-    public enum RecongitionLanguage: String, CaseIterable {
-        public static var allCases: [Preferences.RecongitionLanguage] = {
-            var languages: [RecongitionLanguage] = [.English, .French, .Italian, .German, .Spanish, .Portuguese, .Chinese, .ChineseTraditional]
-            if #available(OSX 13.0, *) {
-                languages.append(contentsOf: [.Korean, .Japanese, .Ukranian, .Russian])
-            }
-            return languages
-        }()
-
-        case English = "🇺🇸 English"
-        case French = "🇫🇷 French"
-        case Italian = "🇮🇹 Italian"
-        case German = "🇩🇪 German"
-        case Spanish = "🇪🇸 Spanish"
-        case Portuguese = "🇵🇹 Portuguese"
-        case Chinese = "🇨🇳 Chinese (Simplified)"
-        case ChineseTraditional = "🇨🇳 Chinese (Traditional)"
-        @available(macOS 13.0, *)
-        case Korean = "🇰🇷 Korean"
-        @available(macOS 13.0, *)
-        case Japanese = "🇯🇵 Japanese"
-        @available(macOS 13.0, *)
-        case Ukranian = "🇺🇦 Ukranian"
-        @available(macOS 13.0, *)
-        case Russian = "🇷🇺 Russian"
-
-        func languageCode() -> String {
-            switch self {
-            case .English:
-                return "en_US"
-            case .French:
-                return "fr-FR"
-            case .Italian:
-                return "it-IT"
-            case .German:
-                return "de-DE"
-            case .Spanish:
-                return "es-ES"
-            case .Portuguese:
-                return "pt-BR"
-            case .Chinese:
-                return "zh-Hans"
-            case .ChineseTraditional:
-                return "zh-Hant"
-            case .Korean:
-                return "ko-KR"
-            case .Japanese:
-                return "ja-JP"
-            case .Ukranian:
-                return "uk-UA"
-            case .Russian:
-                return "ru-RU"
-            }
-        }
-    }
 
     @Published public var needsOnboarding: Bool {
         didSet {
@@ -174,9 +124,9 @@ public class Preferences: ObservableObject {
         }
     }
 
-    @Published public var recongitionLanguage: RecongitionLanguage {
+    @Published public var recognitionLanguageCode: String {
         didSet {
-            Preferences.setValue(value: recongitionLanguage.rawValue, key: .RecongitionLanguage)
+            Preferences.setValue(value: recognitionLanguageCode, key: .RecongitionLanguage)
         }
     }
 
@@ -188,12 +138,15 @@ public class Preferences: ObservableObject {
 
     @Published public var customWords: String {
         didSet {
-            Preferences.setValue(value: customWords.components(separatedBy: ","), key: .CustomWords)
+            Preferences.setValue(value: customWords, key: .CustomWords)
         }
     }
 
     public var customWordsList: [String] {
-        customWords.components(separatedBy: ",")
+        customWords
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
     }
 
     @Published public var automaticLanguageDetection: Bool {
@@ -205,6 +158,30 @@ public class Preferences: ObservableObject {
     @Published public var optionQuickAction: InvocationMode {
         didSet {
             Preferences.setValue(value: optionQuickAction.rawValue, key: .OptionQuickAction)
+        }
+    }
+    
+    @Published public var tesseractEnabled: Bool {
+        didSet {
+            Preferences.setValue(value: tesseractEnabled, key: .TesseractEnabled)
+        }
+    }
+    
+    @Published public var tesseractLanguages: [String] {
+        didSet {
+            Preferences.setValue(value: tesseractLanguages, key: .TesseractLanguages)
+        }
+    }
+    
+    @Published public var tesseractPath: String {
+        didSet {
+            Preferences.setValue(value: tesseractPath, key: .TesseractPath)
+        }
+    }
+    
+    @Published public var includeBetaUpdates: Bool {
+        didSet {
+            Preferences.setValue(value: includeBetaUpdates, key: .IncludeBetaUpdates)
         }
     }
 
@@ -219,12 +196,48 @@ public class Preferences: ObservableObject {
         autoOpenProvidedURL = Preferences.getValue(key: .AutoOpenProvidedURL) as? String ?? ""
         autoOpenProvidedURLAddNewLine = Preferences.getValue(key: .AutoOpenProvidedURLAddNewLine) as? Bool ?? true
         autoRunShortcut = Preferences.getValue(key: .AutoRunShortcut) as? String ?? ""
-        customWords = Preferences.getValue(key: .CustomWords) as? String ?? ""
-        recongitionLanguage = .English
-        automaticLanguageDetection = Preferences.getValue(key: .AutomaticLanguageDetection) as? Bool ?? false
-        if let lang = Preferences.getValue(key: .RecongitionLanguage) as? String {
-            recongitionLanguage = RecongitionLanguage(rawValue: lang) ?? .English
+        if let storedArray = Preferences.getValue(key: .CustomWords) as? [String] {
+            customWords = storedArray.joined(separator: ",")
+        } else {
+            customWords = Preferences.getValue(key: .CustomWords) as? String ?? ""
         }
+        
+        // Handle language preference - support both old enum rawValue and new language codes
+        if let savedLanguage = Preferences.getValue(key: .RecongitionLanguage) as? String {
+            // Check if it's an old enum rawValue (contains emoji)
+            if savedLanguage.contains("🇺🇸") {
+                recognitionLanguageCode = "en-US"
+            } else if savedLanguage.contains("🇫🇷") {
+                recognitionLanguageCode = "fr-FR"
+            } else if savedLanguage.contains("🇮🇹") {
+                recognitionLanguageCode = "it-IT"
+            } else if savedLanguage.contains("🇩🇪") {
+                recognitionLanguageCode = "de-DE"
+            } else if savedLanguage.contains("🇪🇸") {
+                recognitionLanguageCode = "es-ES"
+            } else if savedLanguage.contains("🇵🇹") || savedLanguage.contains("Portuguese") {
+                recognitionLanguageCode = "pt-BR"
+            } else if savedLanguage.contains("🇨🇳") && savedLanguage.contains("Traditional") {
+                recognitionLanguageCode = "zh-Hant"
+            } else if savedLanguage.contains("🇨🇳") {
+                recognitionLanguageCode = "zh-Hans"
+            } else if savedLanguage.contains("🇰🇷") {
+                recognitionLanguageCode = "ko-KR"
+            } else if savedLanguage.contains("🇯🇵") {
+                recognitionLanguageCode = "ja-JP"
+            } else if savedLanguage.contains("🇺🇦") {
+                recognitionLanguageCode = "uk-UA"
+            } else if savedLanguage.contains("🇷🇺") {
+                recognitionLanguageCode = "ru-RU"
+            } else {
+                // Already a proper language code
+                recognitionLanguageCode = savedLanguage
+            }
+        } else {
+            recognitionLanguageCode = "en-US"
+        }
+        
+        automaticLanguageDetection = Preferences.getValue(key: .AutomaticLanguageDetection) as? Bool ?? false
         menuBarIcon = .Option1
         if let mbitem = Preferences.getValue(key: .MenuBarIcon) as? String {
             menuBarIcon = MenuBarIcon(rawValue: mbitem) ?? .Option1
@@ -233,17 +246,18 @@ public class Preferences: ObservableObject {
         if let optionQA = Preferences.getValue(key: .OptionQuickAction) as? String {
             optionQuickAction = InvocationMode(rawValue: optionQA) ?? .captureScreen
         }
+        tesseractEnabled = Preferences.getValue(key: .TesseractEnabled) as? Bool ?? false
+        tesseractLanguages = Preferences.getValue(key: .TesseractLanguages) as? [String] ?? ["eng"]
+        tesseractPath = Preferences.getValue(key: .TesseractPath) as? String ?? ""
+        includeBetaUpdates = Preferences.getValue(key: .IncludeBetaUpdates) as? Bool ?? false
     }
 
     static func removeAll() {
-        let domain = Bundle.main.bundleIdentifier!
-        userDefaults.removePersistentDomain(forName: domain)
-        userDefaults.synchronize()
+        userDefaults.removePersistentDomain(forName: suiteName)
     }
 
     private static func setValue(value: Any?, key: PreferencesKeys) {
         userDefaults.setValue(value, forKey: key.rawValue)
-        userDefaults.synchronize()
     }
 
     private static func getValue(key: PreferencesKeys) -> Any? {
