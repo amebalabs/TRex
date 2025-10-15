@@ -7,7 +7,9 @@ struct TRexApp: App {
 
     var body: some Scene {
         Settings {
-            SettingsView().environmentObject(Preferences.shared)
+            SettingsView()
+                .environmentObject(Preferences.shared)
+                .environmentObject(appDelegate)
         }
     }
 }

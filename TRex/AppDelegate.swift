@@ -8,7 +8,7 @@ import Sparkle
 
 // TesseractWrapper bridge removed - now using TesseractSwift directly in TRexCore
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var menuBarItem: MenubarItem?
     var trex = TRex.shared
     let preferences = Preferences.shared
@@ -160,14 +160,14 @@ extension AppDelegate: SPUUpdaterDelegate, SPUStandardUserDriverDelegate {
         let hostBundle = Bundle.main
         let updateDriver = SPUStandardUserDriver(hostBundle: hostBundle, delegate: self)
         softwareUpdater = SPUUpdater(hostBundle: hostBundle, applicationBundle: hostBundle, userDriver: updateDriver, delegate: self)
-        
+
         do {
             try softwareUpdater.start()
         } catch {
             print("Failed to start software updater with error: \(error)")
         }
     }
-    
+
     func feedURLString(for updater: SPUUpdater) -> String? {
         if preferences.includeBetaUpdates {
             return "https://amebalabs.github.io/TRex/appcast_beta.xml"

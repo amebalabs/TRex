@@ -3,6 +3,7 @@ import TRexCore
 
 struct GeneralSettingsView: View {
     @EnvironmentObject var preferences: Preferences
+    @EnvironmentObject var appDelegate: AppDelegate
     @ObservedObject private var launchAtLogin = LaunchAtLogin.observable
     @State private var visionLanguages: [LanguageManager.Language] = []
 
@@ -131,9 +132,10 @@ struct GeneralSettingsView: View {
     
     #if !MAC_APP_STORE
     func checkForUpdates() {
-        if let appDelegate = NSApp.delegate as? AppDelegate {
-            appDelegate.softwareUpdater.checkForUpdates()
+        guard let updater = appDelegate.softwareUpdater else {
+            return
         }
+        updater.checkForUpdates()
     }
     #endif
 }

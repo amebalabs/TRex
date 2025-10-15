@@ -222,6 +222,12 @@ jobs:
         run: |
           ditto -x -k "${{ env.APP_NAME }}.app.zip" .
 
+      - name: Get Build Number
+        run: |
+          BUILD_NUMBER=$(defaults read "$(pwd)/${{ env.APP_NAME }}.app/Contents/Info" CFBundleVersion)
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+          echo "Debug: Retrieved BUILD_NUMBER=$BUILD_NUMBER from app bundle"
+
       - name: Create Release Archive
         run: |
           ditto -c -k --keepParent "${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}-${{ env.VERSION }}.zip"
@@ -276,6 +282,8 @@ jobs:
           echo "Using URL:" $( [ "${IS_BETA}" = "true" ] && echo "${BETA_FEED_URL}" || echo "${PROD_FEED_URL}" )
           echo "Using signature: ${{ steps.generate_signature.outputs.signature }}"
           echo "ZIP_SHA: ${ZIP_SHA}"
+          echo "BUILD_NUMBER: ${BUILD_NUMBER}"
+          echo "VERSION: ${VERSION}"
 
           # Use unindented heredoc for proper XML formatting
           cat > "$APPCAST_FILE" <<-EOF
@@ -288,13 +296,13 @@ jobs:
               <language>en</language>
               <item>
                 <title>${APP_NAME} ${VERSION}</title>
-                <sparkle:version>${VERSION}</sparkle:version>
+                <sparkle:version>${BUILD_NUMBER}</sparkle:version>
                 <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
                 <description><![CDATA[${CONTENT}]]></description>
                 <pubDate>$(date -R)</pubDate>
                 <enclosure
                   url="https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/${APP_NAME}-${VERSION}.zip"
-                  sparkle:version="${VERSION}"
+                  sparkle:version="${BUILD_NUMBER}"
                   sparkle:shortVersionString="${VERSION}"
                   type="application/octet-stream"
                   ${{ steps.generate_signature.outputs.signature }}
