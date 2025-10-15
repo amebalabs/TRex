@@ -37,6 +37,8 @@
 	<string>c1vnuzkyrl2y6GNfNk/N91wC0S2w0PYxfbBonj+QrT0=</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSUIElement</key>

@@ -9,7 +9,23 @@
       <title>TRex 1.9.1-BETA-1</title>
       <sparkle:version>137</sparkle:version>
       <sparkle:shortVersionString>1.9.1-BETA-1</sparkle:shortVersionString>
-      <description><![CDATA[]]></description>
+      <description><![CDATA[
+        <h2>🐛 Bug Fixes</h2>
+        <h3>Czech Language OCR Fix</h3>
+        <ul>
+          <li><strong>Fixed language code normalization</strong>: Resolved issues with Czech and other language recognition</li>
+          <li><strong>Fixed engine selection</strong>: Corrected issue where Tesseract was selected even when disabled</li>
+        </ul>
+        <h3>Image Preprocessing</h3>
+        <ul>
+          <li><strong>Enhanced text recognition accuracy</strong>: Added automatic image preprocessing with contrast, brightness, and saturation adjustments</li>
+        </ul>
+        <h2>🔧 Improvements</h2>
+        <ul>
+          <li><strong>Enhanced logging</strong>: Comprehensive debug logging throughout the OCR pipeline</li>
+          <li><strong>Sparkle updates</strong>: Fixed auto-update support for sandboxed app</li>
+        </ul>
+      ]]></description>
       <pubDate>Wed, 15 Oct 2025 21:26:42 +0000</pubDate>
       <enclosure
         url="https://github.com/amebalabs/TRex/releases/download/v1.9.1-BETA-1/TRex-1.9.1-BETA-1.zip"
