@@ -13,7 +13,7 @@
       <pubDate>Wed, 15 Oct 2025 00:40:17 +0000</pubDate>
       <enclosure
         url="https://github.com/amebalabs/TRex/releases/download/v1.9.0-BETA-5/TRex-1.9.0-BETA-5.zip"
-        sparkle:version="1.9.0-BETA-5"
+        sparkle:version="135"
         sparkle:shortVersionString="1.9.0-BETA-5"
         type="application/octet-stream"
         sparkle:edSignature="GoPqDkMdtCyrlBQFDfytT6haqFBge7y4PVl2SZcBQAcyUc2t+I6zM13SurjGjlYC8toARA3XX6nhELjQQhEtBw==" length="4160894"
