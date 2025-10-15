@@ -9,7 +9,7 @@
       <title>TRex 1.9.0-BETA-5</title>
       <sparkle:version>1.9.0-BETA-5</sparkle:version>
       <sparkle:shortVersionString>1.9.0-BETA-5</sparkle:shortVersionString>
-      <description><![CDATA[]]></description>
+      <description>This is a test description, debugging auto-updates.</description>
       <pubDate>Wed, 15 Oct 2025 00:40:17 +0000</pubDate>
       <enclosure
         url="https://github.com/amebalabs/TRex/releases/download/v1.9.0-BETA-5/TRex-1.9.0-BETA-5.zip"
