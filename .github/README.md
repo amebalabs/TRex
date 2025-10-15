@@ -1,129 +1,106 @@
-# TRex CI/CD Setup
+[![GitHub license](https://img.shields.io/github/license/amebalabs/TRex.svg)](https://github.com/amebalabs/TRex/blob/master/LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/amebalabs/TRex)](https://github.com/amebalabs/TRex/releases/latest)
+[![Github all releases](https://img.shields.io/github/downloads/amebalabs/TRex/total.svg)](https://github.com/amebalabs/TRex/releases/)
 
-This directory contains the GitHub Actions workflow and custom actions for building, signing, notarizing, and releasing TRex.
 
-## Overview
+<p align="center">
+ <img width="155" height="150" alt="TRex Logo" src="Resources/logo.png">
+</p>
 
-The CI/CD pipeline automates the entire release process:
-1. Building universal binaries for TRex and TRex CMD
-2. Code signing with Developer ID certificate
-3. Notarization with Apple
-4. Sparkle signature generation for auto-updates
-5. Creating GitHub releases
-6. Updating Sparkle appcast files
-7. Generating Homebrew formula
-8. Deploying to GitHub Pages
+# TRex 🦖
 
-## Workflow Triggers
+TRex captures any text right into your Clipboard with magic of OCR. 
 
-The workflow runs on:
-- **Release builds**: Tags matching `v*.*.*` or `v*.*.*-beta.*`
-- **Test builds**: Pull requests to main branch
-- **CI builds**: Pushes to non-main branches
+But what is OCR anyway? Imagine you have a PDF file or a Web page where you can't select the text, image with text on it, or even a YouTube video. Forget retyping it manually; with TRex, you can extract text from anywhere, and it is as easy as taking a screenshot.
 
-## Required Secrets
+TRex lives in the menu bar and available right where you need it the most:
 
-Before using this workflow, configure these secrets in your GitHub repository:
+![TRex](Resources/screenshot.png)
 
-### Code Signing
-- `CERTIFICATE_P12`: Base64 encoded Developer ID Application certificate
-  ```bash
-  base64 -i certificate.p12 | pbcopy
-  ```
-- `CERTIFICATE_PASSWORD`: Password for the P12 certificate
+To use TRex:
+1. Invoke "Capture" either through the menu bar or with a global configurable shortcut
+2. Select an area of the screen you want to extract text from, just like taking a screenshot
+3. There is no third step - **extracted text is in your clipboard**
 
-### Notarization
-- `APPLE_ID`: Apple ID email for notarization
-- `NOTARIZATION_PASSWORD`: App-specific password (create at appleid.apple.com)
-- `TEAM_ID`: Your Apple Developer Team ID
+Demo:
 
-### Sparkle Updates
-- `SPARKLE_PRIVATE_KEY`: EdDSA private key for Sparkle signatures
-  ```bash
-  # Generate key pair if needed
-  ./generate_keys
-  ```
+![Demo](Resources/demo.gif)
 
-## Release Process
+Please note, text editing application on the right is not part of TRex, this is [Tot](https://tot.rocks). 
+TRex is designed to be invisible and doesn't have any UI beyond the menu bar app and preferences. 
 
-1. **Create release notes**: Add a file to `docs/release-notes/VERSION.md`
-2. **Tag the release**: 
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-3. **Automatic steps**:
-   - Workflow builds and signs the app
-   - Submits for notarization
-   - Creates GitHub release with ZIP archive
-   - Updates appcast.xml (or appcast_beta.xml for beta)
-   - Updates CHANGELOG.md
-   - Generates Homebrew formula (stable releases only)
-   - Deploys docs to GitHub Pages
+## Use cases
+TRex can help you to copy text from:
+- A PDF with non-selectable text
+- A screenshot
+- YouTube video
+- Zoom call screen sharing
+- ... and more!
 
-## File Structure
+If you can see it on your screen - TRex can copy it.
+
+## How to get TRex
+### App Store
+Buy TRex from the [App Store](https://apps.apple.com/us/app/trex-easy-ocr/id1554515538)
+
+### GitHub
+Download from [GitHub Releases](https://github.com/amebalabs/TRex/releases/latest)
+
+### Homebrew
+Install from Homebrew
 
 ```
-.github/
-├── workflows/
-│   └── release.yml          # Main workflow file
-├── actions/
-│   ├── sign/               # Code signing action
-│   │   └── action.yaml
-│   ├── notarize/           # Notarization action
-│   │   └── action.yaml
-│   └── sparkle-sign/       # Sparkle signature action
-│       └── action.yaml
-└── README.md               # This file
-
-docs/
-├── release-notes/          # Release notes for each version
-│   ├── README.md
-│   └── VERSION.md
-├── appcast.xml            # Sparkle update feed (stable)
-├── appcast_beta.xml       # Sparkle update feed (beta)
-└── homebrew/              # Homebrew formula
-    └── trex.rb
+brew install --cask trex
 ```
 
-## Beta vs Stable Releases
+Runs on macOS Big Sur (11.0) and up.
 
-- **Stable**: Tag as `v1.0.0`
-  - Updates `appcast.xml`
-  - Generates Homebrew formula
-  - Creates standard GitHub release
+## Features
 
-- **Beta**: Tag as `v1.0.0-beta.1`
-  - Updates `appcast_beta.xml`
-  - No Homebrew formula
-  - Creates pre-release on GitHub
+Every feature in TRex works offline, no internet is needed.
 
-## Troubleshooting
+- Text recognition (OCR)
+- Read QR Codes and barcodes
+- Handy macOS menu bar app, with option to hide it
+- Configurable global shortcuts
+- Configurable recognition language
+- Custom words list
+- CLI tool `/Applications/TRex.app/Contents/MacOS/cli/trex`
+- Automation actions
+  - Run a Shortcut from Shortcuts.app
+  - Open URLs found in QR codes
+  - Detect and open URLs found in captured text
+  - Trigger a user defined URL scheme (for integration with other apps)
+- URL scheme support 
+  - `trex://capture` trigger capture from screen
+  - `trex://captureclipboard` trigger capture from clipboard
+  - `trex://captureautomation` trigger screen capture and run automation
+  - `trex://captureclipboardautomation` trigger capture from clipboard and run automation
+  - `trex://shortcut?name=` set Shortcut assigned to "Run Shortcut" automation action
+  - `trex://showPreferences` open app preferences
 
-### Certificate Issues
-- Ensure certificate is "Developer ID Application" type
-- Certificate must not be expired
-- Password must be correct
+## Integrations
 
-### Notarization Failures
-- Check that all frameworks and libraries are signed
-- Ensure proper entitlements are set
-- Verify bundle ID matches certificate
+### Alfred
 
-### Sparkle Signature Issues
-- Private key must be in correct format
-- Use the matching public key in your app
+[Download official workflow](https://github.com/amebalabs/TRex/raw/main/Resources/TRex.alfredworkflow)
 
-## Local Testing
+![Alfred](Resources/alfred.png)
 
-Test the build process locally:
-```bash
-# Build release version
-xcodebuild -scheme TRex -configuration Release build
+### Raycast
 
-# Test signing (requires certificate)
-codesign --force --deep --sign "Developer ID Application: Your Name" TRex.app
+[Download official Raycast Commands](https://github.com/amebalabs/TRex/tree/main/Resources/Raycast/TRex%20Commands)
 
-# Test notarization (requires credentials)
-xcrun notarytool submit TRex.zip --apple-id your@email.com --password app-password --team-id TEAMID
-```
+![Raycast](Resources/raycast.png)
+
+## Acknowledgements 
+
+Portions of this software utilize the following copyrighted material, the use of which is hereby acknowledged:
+ - LaunchAtLogin - Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+ - KeyboardShortcuts  - Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+## More Apps
+
+If you enjoy TRex you may like these as well:
+* [SwiftBar](https://github.com/swiftbar/SwiftBar) - Powerful macOS menu bar customization tool
+* [Esse](https://github.com/amebalabs/Esse) - Swiss army knife of text transformation for iOS and macOS
