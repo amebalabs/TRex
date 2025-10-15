@@ -7,33 +7,17 @@
     <language>en</language>
     <item>
       <title>TRex 1.9.1-BETA-1</title>
-      <sparkle:version>137</sparkle:version>
+      <sparkle:version>139</sparkle:version>
       <sparkle:shortVersionString>1.9.1-BETA-1</sparkle:shortVersionString>
-      <description><![CDATA[
-        <h2>🐛 Bug Fixes</h2>
-        <h3>Czech Language OCR Fix</h3>
-        <ul>
-          <li><strong>Fixed language code normalization</strong>: Resolved issues with Czech and other language recognition</li>
-          <li><strong>Fixed engine selection</strong>: Corrected issue where Tesseract was selected even when disabled</li>
-        </ul>
-        <h3>Image Preprocessing</h3>
-        <ul>
-          <li><strong>Enhanced text recognition accuracy</strong>: Added automatic image preprocessing with contrast, brightness, and saturation adjustments</li>
-        </ul>
-        <h2>🔧 Improvements</h2>
-        <ul>
-          <li><strong>Enhanced logging</strong>: Comprehensive debug logging throughout the OCR pipeline</li>
-          <li><strong>Sparkle updates</strong>: Fixed auto-update support for sandboxed app</li>
-        </ul>
-      ]]></description>
-      <pubDate>Wed, 15 Oct 2025 21:26:42 +0000</pubDate>
+      <description><![CDATA[]]></description>
+      <pubDate>Wed, 15 Oct 2025 21:48:47 +0000</pubDate>
       <enclosure
         url="https://github.com/amebalabs/TRex/releases/download/v1.9.1-BETA-1/TRex-1.9.1-BETA-1.zip"
-        sparkle:version="137"
+        sparkle:version="139"
         sparkle:shortVersionString="1.9.1-BETA-1"
         type="application/octet-stream"
-        sparkle:edSignature="0iX2SE1q447d9cnr8S2arkv4HQc7UKM5jLG0R6ljF7Vj7BeFYbDHrcPctfqNMzLtkgFZmF/4ucY6U/cU0ICwCA==" length="4171106"
-        sparkle:sha256="24a8d3486a17fa27c7efab01f2412e90404d4892ace59a2a07ffa079b5f89717"
+        sparkle:edSignature="kpp3B242V1CHkwmc2QlNj97fgUrNQ+v1CJCH0vhtW878Tbxd6gaThbvNky14hluzCogiQxLCXPnEQggXvRX8Bw==" length="4170635"
+        sparkle:sha256="567020ff7bde3e917e0b267126838852b3381f83949db9fdbfd8c7c35ffdebbc"
       />
     </item>
   </channel>
