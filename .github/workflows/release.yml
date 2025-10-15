@@ -351,12 +351,17 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+
+          # Fetch latest main to avoid conflicts
+          git fetch origin main
+          git checkout -B release-docs-${TAG} origin/main
+
           git add CHANGELOG.md docs/appcast*.xml
           if [ "$IS_BETA" != "true" ] && [ -f "Formula/trex.rb" ]; then
             git add Formula/trex.rb
           fi
           git commit -m "docs: update CHANGELOG.md, appcast and Homebrew formula for ${TAG}" || echo "Nothing to commit"
-          git push origin HEAD:main
+          git push origin release-docs-${TAG}:main
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
