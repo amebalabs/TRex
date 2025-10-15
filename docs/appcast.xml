@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
-    <title>TRex</title>
-    <link>https://github.com/amebalabs/TRex/releases</link>
-    <description>Text Recognition for macOS</description>
+    <title>TRex Appcast</title>
+    <link>https://amebalabs.github.io/TRex/appcast.xml</link>
+    <description>TRex Updates</description>
     <language>en</language>
-    <!-- New releases will be automatically added here by CI -->
+    <item>
+      <title>TRex 1.9.0</title>
+      <sparkle:version>132</sparkle:version>
+      <sparkle:shortVersionString>1.9.0</sparkle:shortVersionString>
+      <description><![CDATA[]]></description>
+      <pubDate>Wed, 15 Oct 2025 15:22:03 +0000</pubDate>
+      <enclosure
+        url="https://github.com/amebalabs/TRex/releases/download/v1.9.0/TRex-1.9.0.zip"
+        sparkle:version="132"
+        sparkle:shortVersionString="1.9.0"
+        type="application/octet-stream"
+        sparkle:edSignature="Kl1/VFqeAv/etp2mk4FWdwKUVsbOrY0lPoKCYgMMi9VLKvcf5nEo0L7h+rkJDWaFeZMjm3+iKJ7qVgI/glygBA==" length="4161618"
+        sparkle:sha256="d8ff68dfee2f193ea253cd0bbaaefae958d9ddb64ebdc297002a4ac3e1373db7"
+      />
+    </item>
   </channel>
 </rss>
