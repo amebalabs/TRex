@@ -116,11 +116,13 @@ jobs:
           MARKETING_VERSION: ${{ steps.get_versions.outputs.VERSION }}
           CURRENT_PROJECT_VERSION: ${{ steps.get_versions.outputs.BUILD_NUMBER }}
         run: |
+          # Build CLI as arm64-only due to TesseractSwift dependency lacking x86_64 support
+          # Intel Macs can run arm64 CLI via Rosetta 2
           xcodebuild \
             -scheme "TRex CLI" \
             -configuration Release \
             -derivedDataPath build-cli \
-            -arch arm64 -arch x86_64 \
+            -arch arm64 \
             ONLY_ACTIVE_ARCH=NO \
             MARKETING_VERSION="$MARKETING_VERSION" \
             CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
@@ -159,17 +161,13 @@ jobs:
           ARCHS=$(lipo -archs trex)
           echo "Found architectures: $ARCHS"
 
-          # Verify both arm64 and x86_64 are present
+          # Verify arm64 is present (CLI is arm64-only due to TesseractSwift)
           if ! echo "$ARCHS" | grep -q "arm64"; then
             echo "❌ Error: arm64 architecture missing from CLI binary"
             exit 1
           fi
-          if ! echo "$ARCHS" | grep -q "x86_64"; then
-            echo "❌ Error: x86_64 architecture missing from CLI binary"
-            exit 1
-          fi
 
-          echo "✅ CLI binary is universal (arm64 + x86_64)"
+          echo "✅ CLI binary is arm64 (Intel Macs can run via Rosetta 2)"
           file trex
 
       - name: Package App Bundle
