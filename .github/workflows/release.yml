@@ -111,19 +111,84 @@ jobs:
             CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
             build
 
+      - name: Build CLI
+        env:
+          MARKETING_VERSION: ${{ steps.get_versions.outputs.VERSION }}
+          CURRENT_PROJECT_VERSION: ${{ steps.get_versions.outputs.BUILD_NUMBER }}
+        run: |
+          xcodebuild \
+            -scheme "TRex CLI" \
+            -configuration Release \
+            -derivedDataPath build-cli \
+            -arch arm64 -arch x86_64 \
+            ONLY_ACTIVE_ARCH=NO \
+            MARKETING_VERSION="$MARKETING_VERSION" \
+            CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
+            build
+
       - name: Verify Universal Binary
         run: |
-          echo "Checking binary architectures..."
-          lipo -archs "build/Build/Products/Release/${{ env.APP_NAME }}.app/Contents/MacOS/${{ env.APP_NAME }}"
+          echo "Checking app binary architectures..."
+          APP_BINARY="build/Build/Products/Release/${{ env.APP_NAME }}.app/Contents/MacOS/${{ env.APP_NAME }}"
+          ARCHS=$(lipo -archs "$APP_BINARY")
+          echo "Found architectures: $ARCHS"
+
+          # Verify both arm64 and x86_64 are present
+          if ! echo "$ARCHS" | grep -q "arm64"; then
+            echo "❌ Error: arm64 architecture missing from app binary"
+            exit 1
+          fi
+          if ! echo "$ARCHS" | grep -q "x86_64"; then
+            echo "❌ Error: x86_64 architecture missing from app binary"
+            exit 1
+          fi
+          echo "✅ App binary is universal (arm64 + x86_64)"
+
+      - name: Prepare CLI Binary
+        run: |
+          # The CLI binary is named 'trex' and located in the Release directory
+          CLI_PATH="build-cli/Build/Products/Release/trex"
+          if [ ! -f "$CLI_PATH" ]; then
+            echo "❌ Error: CLI binary not found at $CLI_PATH"
+            exit 1
+          fi
+          cp "$CLI_PATH" trex
+          chmod +x trex
+
+          echo "Checking CLI binary architectures..."
+          ARCHS=$(lipo -archs trex)
+          echo "Found architectures: $ARCHS"
+
+          # Verify both arm64 and x86_64 are present
+          if ! echo "$ARCHS" | grep -q "arm64"; then
+            echo "❌ Error: arm64 architecture missing from CLI binary"
+            exit 1
+          fi
+          if ! echo "$ARCHS" | grep -q "x86_64"; then
+            echo "❌ Error: x86_64 architecture missing from CLI binary"
+            exit 1
+          fi
+
+          echo "✅ CLI binary is universal (arm64 + x86_64)"
+          file trex
+
       - name: Package App Bundle
         run: |
           cd build/Build/Products/Release
           ditto -c -k --keepParent "${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}.app.zip"
+
       - name: Upload App Bundle
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-Unsigned
           path: build/Build/Products/Release/${{ env.APP_NAME }}.app.zip
+          retention-days: 5
+
+      - name: Upload CLI Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: trex-cli
+          path: trex
           retention-days: 5
 
   sign:
@@ -136,6 +201,13 @@ jobs:
         with:
           name: ${{ env.APP_NAME }}-Unsigned
           path: .
+      - name: Download CLI Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: trex-cli
+          path: .
+      - name: Restore CLI Executable Permissions
+        run: chmod +x trex
       - name: Unpack App Bundle
         run: |
           ditto -x -k "${{ env.APP_NAME }}.app.zip" .
@@ -149,6 +221,14 @@ jobs:
           apple-team-id: ${{ secrets.TEAM_ID }}
           app-path: "${{ env.APP_NAME }}.app"
           entitlements-path: "TRex/Resources/TRex.entitlements"
+      - name: Sign CLI Binary
+        uses: ./.github/actions/sign
+        with:
+          certificate: ${{ secrets.CERTIFICATES_P12 }}
+          certificate-password: ${{ secrets.CERTIFICATES_P12_PASSWORD }}
+          apple-team-id: ${{ secrets.TEAM_ID }}
+          app-path: "trex"
+          entitlements-path: ""
       - name: Package Signed App Bundle
         run: |
           ditto -c -k --keepParent "${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}.app.zip"
@@ -157,6 +237,12 @@ jobs:
         with:
           name: ${{ env.APP_NAME }}-Signed
           path: ${{ env.APP_NAME }}.app.zip
+          retention-days: 5
+      - name: Upload Signed CLI Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: trex-cli-signed
+          path: trex
           retention-days: 5
 
   notarize:
@@ -169,6 +255,13 @@ jobs:
         with:
           name: ${{ env.APP_NAME }}-Signed
           path: .
+      - name: Download Signed CLI Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: trex-cli-signed
+          path: .
+      - name: Restore CLI Executable Permissions
+        run: chmod +x trex
       - name: Unpack App Bundle
         run: |
           ditto -x -k "${{ env.APP_NAME }}.app.zip" .
@@ -179,6 +272,51 @@ jobs:
           password: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           apple-team-id: ${{ secrets.TEAM_ID }}
           app-path: "${{ env.APP_NAME }}.app"
+      - name: Notarize CLI Binary
+        run: |
+          # Create ZIP for notarization
+          ditto -c -k --keepParent trex trex.zip
+
+          # Submit for notarization and capture output
+          set +e  # Don't exit on error, we'll handle it
+          xcrun notarytool submit \
+            trex.zip \
+            --wait \
+            --apple-id "${{ secrets.APPLE_ID }}" \
+            --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
+            --team-id "${{ secrets.TEAM_ID }}" \
+            --output-format json \
+            > notarization_output.json
+          NOTARIZE_EXIT_CODE=$?
+          set -e
+
+          # Display the output
+          cat notarization_output.json
+
+          # Check result using exit code and JSON parsing
+          if [ $NOTARIZE_EXIT_CODE -ne 0 ]; then
+            echo "❌ Notarization submission failed with exit code $NOTARIZE_EXIT_CODE"
+            # Try to get the submission ID for logs
+            SUBMISSION_ID=$(jq -r '.id // empty' notarization_output.json)
+            if [ -n "$SUBMISSION_ID" ]; then
+              echo "Fetching notarization logs for submission $SUBMISSION_ID..."
+              xcrun notarytool log "$SUBMISSION_ID" \
+                --apple-id "${{ secrets.APPLE_ID }}" \
+                --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
+                --team-id "${{ secrets.TEAM_ID }}" || true
+            fi
+            exit 1
+          fi
+
+          # Verify the status is "Accepted"
+          STATUS=$(jq -r '.status // empty' notarization_output.json)
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "❌ Notarization failed with status: $STATUS"
+            exit 1
+          fi
+
+          echo "✅ CLI binary notarized successfully"
+          # Note: Stapling is not needed for command-line tools distributed via download
       - name: Package Notarized App Bundle
         run: |
           ditto -c -k --keepParent "${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}.app.zip"
@@ -187,6 +325,12 @@ jobs:
         with:
           name: ${{ env.APP_NAME }}-Notarized
           path: ${{ env.APP_NAME }}.app.zip
+          retention-days: 5
+      - name: Upload Notarized CLI Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: trex-cli-notarized
+          path: trex
           retention-days: 5
 
   release:
@@ -217,6 +361,23 @@ jobs:
         with:
           name: ${{ env.APP_NAME }}-Notarized
           path: .
+
+      - name: Download Notarized CLI Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: trex-cli-notarized
+          path: .
+
+      - name: Restore CLI Executable Permissions
+        run: |
+          chmod +x trex
+          echo "Restored executable permissions for CLI binary"
+
+      - name: Generate CLI Checksum
+        run: |
+          shasum -a 256 trex > trex.sha256
+          echo "Generated SHA-256 checksum for CLI binary"
+          cat trex.sha256
 
       - name: Unpack App Bundle
         run: |
@@ -366,7 +527,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{ env.APP_NAME }}-${{ env.VERSION }}.zip
+          files: |
+            ${{ env.APP_NAME }}-${{ env.VERSION }}.zip
+            trex
+            trex.sha256
           body_path: docs/release-notes/${{ env.TAG }}.md
           prerelease: ${{ env.IS_BETA == 'true' }}
           draft: false
