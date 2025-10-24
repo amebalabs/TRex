@@ -105,7 +105,7 @@ jobs:
             -scheme "${{ env.APP_NAME }}" \
             -configuration Release \
             -derivedDataPath build \
-            -arch arm64 -arch x86_64 \
+            -arch arm64 \
             ONLY_ACTIVE_ARCH=NO \
             MARKETING_VERSION="$MARKETING_VERSION" \
             CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
@@ -128,23 +128,20 @@ jobs:
             CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
             build
 
-      - name: Verify Universal Binary
+      - name: Verify App Binary
         run: |
           echo "Checking app binary architectures..."
           APP_BINARY="build/Build/Products/Release/${{ env.APP_NAME }}.app/Contents/MacOS/${{ env.APP_NAME }}"
           ARCHS=$(lipo -archs "$APP_BINARY")
           echo "Found architectures: $ARCHS"
 
-          # Verify both arm64 and x86_64 are present
+          # Verify arm64 is present
           if ! echo "$ARCHS" | grep -q "arm64"; then
             echo "❌ Error: arm64 architecture missing from app binary"
             exit 1
           fi
-          if ! echo "$ARCHS" | grep -q "x86_64"; then
-            echo "❌ Error: x86_64 architecture missing from app binary"
-            exit 1
-          fi
-          echo "✅ App binary is universal (arm64 + x86_64)"
+          echo "✅ App binary built successfully"
+          file "$APP_BINARY"
 
       - name: Prepare CLI Binary
         run: |
