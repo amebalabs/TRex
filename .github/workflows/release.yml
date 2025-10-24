@@ -147,12 +147,26 @@ jobs:
         run: |
           # The CLI binary is named 'trex' and located in the Release directory
           CLI_PATH="build-cli/Build/Products/Release/trex"
+
+          echo "Looking for CLI binary at: $CLI_PATH"
+          ls -lh "build-cli/Build/Products/Release/" || echo "Directory listing failed"
+
           if [ ! -f "$CLI_PATH" ]; then
             echo "❌ Error: CLI binary not found at $CLI_PATH"
+            echo "Contents of build-cli/Build/Products/Release/:"
+            ls -la "build-cli/Build/Products/Release/" || true
             exit 1
           fi
+
+          echo "Found CLI binary, size: $(ls -lh "$CLI_PATH" | awk '{print $5}')"
+          file "$CLI_PATH"
+
           cp "$CLI_PATH" trex
           chmod +x trex
+
+          echo "Copied binary info:"
+          ls -lh trex
+          file trex
 
           echo "Checking CLI binary architectures..."
           ARCHS=$(lipo -archs trex)
@@ -165,7 +179,6 @@ jobs:
           fi
 
           echo "✅ CLI binary is arm64 (Intel Macs can run via Rosetta 2)"
-          file trex
 
       - name: Package App Bundle
         run: |
