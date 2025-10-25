@@ -76,16 +76,6 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FA3AEAB02C9B8CB20096CCA5 /* Embed TRex CLI */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = cli;
-			dstSubfolderSpec = 6;
-			files = (
-			);
-			name = "Embed TRex CLI";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		FA58E3BD27AE1DD00034837F /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -448,7 +438,6 @@
 				FA5F872C25DC243200B1AF77 /* Resources */,
 				FA58E3BD27AE1DD00034837F /* Embed Frameworks */,
 				39CBA9AC25E160E800FDE12E /* Version */,
-				FA3AEAB02C9B8CB20096CCA5 /* Embed TRex CLI */,
 			);
 			buildRules = (
 			);
