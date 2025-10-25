@@ -194,12 +194,11 @@ jobs:
           path: build/Build/Products/Release/${{ env.APP_NAME }}.app.zip
           retention-days: 5
 
-      - name: Upload CLI Binary
-        uses: actions/upload-artifact@v4
+      - name: Cache CLI Binary
+        uses: actions/cache/save@v4
         with:
-          name: trex-cli
           path: trex
-          retention-days: 5
+          key: trex-cli-${{ github.run_id }}-${{ github.run_attempt }}
 
   sign:
     needs: build
@@ -211,11 +210,12 @@ jobs:
         with:
           name: ${{ env.APP_NAME }}-Unsigned
           path: .
-      - name: Download CLI Binary
-        uses: actions/download-artifact@v4
+      - name: Restore CLI Binary from Cache
+        uses: actions/cache/restore@v4
         with:
-          name: trex-cli
-          path: .
+          path: trex
+          key: trex-cli-${{ github.run_id }}-${{ github.run_attempt }}
+          fail-on-cache-miss: true
       - name: Restore CLI Executable Permissions
         run: chmod +x trex
       - name: Unpack App Bundle
@@ -248,12 +248,11 @@ jobs:
           name: ${{ env.APP_NAME }}-Signed
           path: ${{ env.APP_NAME }}.app.zip
           retention-days: 5
-      - name: Upload Signed CLI Binary
-        uses: actions/upload-artifact@v4
+      - name: Cache Signed CLI Binary
+        uses: actions/cache/save@v4
         with:
-          name: trex-cli-signed
           path: trex
-          retention-days: 5
+          key: trex-cli-signed-${{ github.run_id }}-${{ github.run_attempt }}
 
   notarize:
     needs: sign
@@ -265,11 +264,12 @@ jobs:
         with:
           name: ${{ env.APP_NAME }}-Signed
           path: .
-      - name: Download Signed CLI Binary
-        uses: actions/download-artifact@v4
+      - name: Restore Signed CLI Binary from Cache
+        uses: actions/cache/restore@v4
         with:
-          name: trex-cli-signed
-          path: .
+          path: trex
+          key: trex-cli-signed-${{ github.run_id }}-${{ github.run_attempt }}
+          fail-on-cache-miss: true
       - name: Restore CLI Executable Permissions
         run: chmod +x trex
       - name: Unpack App Bundle
@@ -336,12 +336,11 @@ jobs:
           name: ${{ env.APP_NAME }}-Notarized
           path: ${{ env.APP_NAME }}.app.zip
           retention-days: 5
-      - name: Upload Notarized CLI Binary
-        uses: actions/upload-artifact@v4
+      - name: Cache Notarized CLI Binary
+        uses: actions/cache/save@v4
         with:
-          name: trex-cli-notarized
           path: trex
-          retention-days: 5
+          key: trex-cli-notarized-${{ github.run_id }}-${{ github.run_attempt }}
 
   release:
     needs: [notarize, verify-release-notes]
@@ -372,11 +371,12 @@ jobs:
           name: ${{ env.APP_NAME }}-Notarized
           path: .
 
-      - name: Download Notarized CLI Binary
-        uses: actions/download-artifact@v4
+      - name: Restore Notarized CLI Binary from Cache
+        uses: actions/cache/restore@v4
         with:
-          name: trex-cli-notarized
-          path: .
+          path: trex
+          key: trex-cli-notarized-${{ github.run_id }}-${{ github.run_attempt }}
+          fail-on-cache-miss: true
 
       - name: Restore CLI Executable Permissions
         run: |
