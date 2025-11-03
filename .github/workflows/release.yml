@@ -158,20 +158,20 @@ jobs:
           echo "Found CLI binary, size: $(ls -lh "$CLI_PATH" | awk '{print $5}')"
           file "$CLI_PATH"
 
-          # Remove any existing 'trex' file/directory in current directory
-          # to avoid conflicts with the source tree's trex directory
-          rm -rf trex
+          CLI_CACHE_DIR=".cli-cache"
+          mkdir -p "$CLI_CACHE_DIR"
+          CACHE_CLI_PATH="$CLI_CACHE_DIR/trex"
 
-          # Copy the binary
-          cp "$CLI_PATH" trex
-          chmod +x trex
+          # Copy the binary into the cache directory
+          cp "$CLI_PATH" "$CACHE_CLI_PATH"
+          chmod +x "$CACHE_CLI_PATH"
 
-          echo "Copied binary info:"
-          ls -lh trex
-          file trex
+          echo "Cached binary info:"
+          ls -lh "$CACHE_CLI_PATH"
+          file "$CACHE_CLI_PATH"
 
           echo "Checking CLI binary architectures..."
-          ARCHS=$(lipo -archs trex)
+          ARCHS=$(lipo -archs "$CACHE_CLI_PATH")
           echo "Found architectures: $ARCHS"
 
           # Verify arm64 is present (CLI is arm64-only due to TesseractSwift)
@@ -197,7 +197,7 @@ jobs:
       - name: Cache CLI Binary
         uses: actions/cache/save@v4
         with:
-          path: trex
+          path: .cli-cache
           key: trex-cli-${{ github.run_id }}-${{ github.run_attempt }}
 
   sign:
@@ -213,11 +213,19 @@ jobs:
       - name: Restore CLI Binary from Cache
         uses: actions/cache/restore@v4
         with:
-          path: trex
+          path: .cli-cache
           key: trex-cli-${{ github.run_id }}-${{ github.run_attempt }}
           fail-on-cache-miss: true
-      - name: Restore CLI Executable Permissions
-        run: chmod +x trex
+      - name: Stage CLI Binary
+        run: |
+          CACHE_CLI_PATH=".cli-cache/trex"
+          if [ ! -f "$CACHE_CLI_PATH" ]; then
+            echo "Error: Cached CLI binary not found at $CACHE_CLI_PATH"
+            exit 1
+          fi
+          rm -rf trex
+          cp "$CACHE_CLI_PATH" trex
+          chmod +x trex
       - name: Unpack App Bundle
         run: |
           ditto -x -k "${{ env.APP_NAME }}.app.zip" .
@@ -248,10 +256,14 @@ jobs:
           name: ${{ env.APP_NAME }}-Signed
           path: ${{ env.APP_NAME }}.app.zip
           retention-days: 5
+      - name: Update Cached CLI Binary
+        run: |
+          mkdir -p .cli-cache
+          cp trex .cli-cache/trex
       - name: Cache Signed CLI Binary
         uses: actions/cache/save@v4
         with:
-          path: trex
+          path: .cli-cache
           key: trex-cli-signed-${{ github.run_id }}-${{ github.run_attempt }}
 
   notarize:
@@ -267,11 +279,19 @@ jobs:
       - name: Restore Signed CLI Binary from Cache
         uses: actions/cache/restore@v4
         with:
-          path: trex
+          path: .cli-cache
           key: trex-cli-signed-${{ github.run_id }}-${{ github.run_attempt }}
           fail-on-cache-miss: true
-      - name: Restore CLI Executable Permissions
-        run: chmod +x trex
+      - name: Stage CLI Binary
+        run: |
+          CACHE_CLI_PATH=".cli-cache/trex"
+          if [ ! -f "$CACHE_CLI_PATH" ]; then
+            echo "Error: Cached CLI binary not found at $CACHE_CLI_PATH"
+            exit 1
+          fi
+          rm -rf trex
+          cp "$CACHE_CLI_PATH" trex
+          chmod +x trex
       - name: Unpack App Bundle
         run: |
           ditto -x -k "${{ env.APP_NAME }}.app.zip" .
@@ -336,10 +356,14 @@ jobs:
           name: ${{ env.APP_NAME }}-Notarized
           path: ${{ env.APP_NAME }}.app.zip
           retention-days: 5
+      - name: Update Cached CLI Binary
+        run: |
+          mkdir -p .cli-cache
+          cp trex .cli-cache/trex
       - name: Cache Notarized CLI Binary
         uses: actions/cache/save@v4
         with:
-          path: trex
+          path: .cli-cache
           key: trex-cli-notarized-${{ github.run_id }}-${{ github.run_attempt }}
 
   release:
@@ -374,12 +398,18 @@ jobs:
       - name: Restore Notarized CLI Binary from Cache
         uses: actions/cache/restore@v4
         with:
-          path: trex
+          path: .cli-cache
           key: trex-cli-notarized-${{ github.run_id }}-${{ github.run_attempt }}
           fail-on-cache-miss: true
-
-      - name: Restore CLI Executable Permissions
+      - name: Stage CLI Binary
         run: |
+          CACHE_CLI_PATH=".cli-cache/trex"
+          if [ ! -f "$CACHE_CLI_PATH" ]; then
+            echo "Error: Cached CLI binary not found at $CACHE_CLI_PATH"
+            exit 1
+          fi
+          rm -rf trex
+          cp "$CACHE_CLI_PATH" trex
           chmod +x trex
           echo "Restored executable permissions for CLI binary"
 
