@@ -223,9 +223,7 @@ jobs:
             echo "Error: Cached CLI binary not found at $CACHE_CLI_PATH"
             exit 1
           fi
-          rm -rf trex
-          cp "$CACHE_CLI_PATH" trex
-          chmod +x trex
+          chmod +x "$CACHE_CLI_PATH"
       - name: Unpack App Bundle
         run: |
           ditto -x -k "${{ env.APP_NAME }}.app.zip" .
@@ -245,7 +243,7 @@ jobs:
           certificate: ${{ secrets.CERTIFICATES_P12 }}
           certificate-password: ${{ secrets.CERTIFICATES_P12_PASSWORD }}
           apple-team-id: ${{ secrets.TEAM_ID }}
-          app-path: "trex"
+          app-path: ".cli-cache/trex"
           entitlements-path: ""
       - name: Package Signed App Bundle
         run: |
@@ -256,10 +254,6 @@ jobs:
           name: ${{ env.APP_NAME }}-Signed
           path: ${{ env.APP_NAME }}.app.zip
           retention-days: 5
-      - name: Update Cached CLI Binary
-        run: |
-          mkdir -p .cli-cache
-          cp trex .cli-cache/trex
       - name: Cache Signed CLI Binary
         uses: actions/cache/save@v4
         with:
@@ -289,9 +283,7 @@ jobs:
             echo "Error: Cached CLI binary not found at $CACHE_CLI_PATH"
             exit 1
           fi
-          rm -rf trex
-          cp "$CACHE_CLI_PATH" trex
-          chmod +x trex
+          chmod +x "$CACHE_CLI_PATH"
       - name: Unpack App Bundle
         run: |
           ditto -x -k "${{ env.APP_NAME }}.app.zip" .
@@ -305,7 +297,7 @@ jobs:
       - name: Notarize CLI Binary
         run: |
           # Create ZIP for notarization
-          ditto -c -k --keepParent trex trex.zip
+          ditto -c -k ".cli-cache/trex" trex.zip
 
           # Submit for notarization and capture output
           set +e  # Don't exit on error, we'll handle it
@@ -356,10 +348,6 @@ jobs:
           name: ${{ env.APP_NAME }}-Notarized
           path: ${{ env.APP_NAME }}.app.zip
           retention-days: 5
-      - name: Update Cached CLI Binary
-        run: |
-          mkdir -p .cli-cache
-          cp trex .cli-cache/trex
       - name: Cache Notarized CLI Binary
         uses: actions/cache/save@v4
         with:
@@ -408,14 +396,12 @@ jobs:
             echo "Error: Cached CLI binary not found at $CACHE_CLI_PATH"
             exit 1
           fi
-          rm -rf trex
-          cp "$CACHE_CLI_PATH" trex
-          chmod +x trex
+          chmod +x "$CACHE_CLI_PATH"
           echo "Restored executable permissions for CLI binary"
 
       - name: Generate CLI Checksum
         run: |
-          shasum -a 256 trex > trex.sha256
+          shasum -a 256 .cli-cache/trex > trex.sha256
           echo "Generated SHA-256 checksum for CLI binary"
           cat trex.sha256
 
@@ -569,7 +555,7 @@ jobs:
         with:
           files: |
             ${{ env.APP_NAME }}-${{ env.VERSION }}.zip
-            trex
+            .cli-cache/trex
             trex.sha256
           body_path: docs/release-notes/${{ env.TAG }}.md
           prerelease: ${{ env.IS_BETA == 'true' }}
