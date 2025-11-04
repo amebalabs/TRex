@@ -348,6 +348,12 @@ jobs:
           name: ${{ env.APP_NAME }}-Notarized
           path: ${{ env.APP_NAME }}.app.zip
           retention-days: 5
+      - name: Upload CLI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-CLI
+          path: .cli-cache/trex
+          retention-days: 5
       - name: Cache Notarized CLI Binary
         uses: actions/cache/save@v4
         with:
@@ -544,14 +550,18 @@ jobs:
 
           # Preserve generated artifacts while switching branches
           TMP_DIR=$(mktemp -d)
+          trap 'rm -rf "$TMP_DIR"' EXIT
+
           cp CHANGELOG.md "$TMP_DIR/CHANGELOG.md"
-          cp docs/appcast*.xml "$TMP_DIR/" || true
+          find docs -maxdepth 1 -name 'appcast*.xml' -exec cp {} "$TMP_DIR/" \;
 
           git checkout -B release-docs-${TAG} origin/main
 
           cp "$TMP_DIR/CHANGELOG.md" CHANGELOG.md
-          cp "$TMP_DIR"/appcast*.xml docs/ 2>/dev/null || true
-          rm -rf "$TMP_DIR"
+          for FILE in "$TMP_DIR"/appcast*.xml; do
+            [ -e "$FILE" ] || continue
+            cp "$FILE" docs/
+          done
 
           git add CHANGELOG.md docs/appcast*.xml
           if [ "$IS_BETA" != "true" ] && [ -f "Formula/trex.rb" ]; then
