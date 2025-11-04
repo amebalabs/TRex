@@ -1,3 +1,20 @@
+# v1.9.1-BETA-2 (2025-11-04)
+
+# TRex v1.9.1-BETA-2 Release Notes
+
+## 🛠 Fixes
+
+- **Release pipeline reliability**: Resolved GitHub Actions caching conflicts by moving the CLI binary into an isolated build cache directory, preventing restore failures when staging artifacts for signing and notarization.
+- **Notarization flow guardrails**: Ensured the CLI binary stays signed/notarized in-place, simplifying the notarization submission and reducing chances of entitlement-related errors during packaging.
+
+## 🔧 Improvements
+
+- **CI transparency**: Added targeted logging around staging the CLI artifact during signing and release so troubleshooting future release runs is faster.
+
+## ✅ Deployment Notes
+
+- This build is intended to exercise the full release pipeline end-to-end. Tag the repository with `v1.9.1-BETA-2` to trigger the release workflow once you are ready.
+
 # v1.9.1-BETA-1 (2025-10-15)
 
 # TRex v1.9.1-BETA-1 Release Notes
