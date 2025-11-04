@@ -105,26 +105,100 @@ jobs:
             -scheme "${{ env.APP_NAME }}" \
             -configuration Release \
             -derivedDataPath build \
-            -arch arm64 -arch x86_64 \
+            -arch arm64 \
             ONLY_ACTIVE_ARCH=NO \
             MARKETING_VERSION="$MARKETING_VERSION" \
             CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
             build
 
-      - name: Verify Universal Binary
+      - name: Build CLI
+        env:
+          MARKETING_VERSION: ${{ steps.get_versions.outputs.VERSION }}
+          CURRENT_PROJECT_VERSION: ${{ steps.get_versions.outputs.BUILD_NUMBER }}
         run: |
-          echo "Checking binary architectures..."
-          lipo -archs "build/Build/Products/Release/${{ env.APP_NAME }}.app/Contents/MacOS/${{ env.APP_NAME }}"
+          # Build CLI as arm64-only due to TesseractSwift dependency lacking x86_64 support
+          # Intel Macs can run arm64 CLI via Rosetta 2
+          xcodebuild \
+            -scheme "TRex CLI" \
+            -configuration Release \
+            -derivedDataPath build-cli \
+            -arch arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            MARKETING_VERSION="$MARKETING_VERSION" \
+            CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
+            build
+
+      - name: Verify App Binary
+        run: |
+          echo "Checking app binary architectures..."
+          APP_BINARY="build/Build/Products/Release/${{ env.APP_NAME }}.app/Contents/MacOS/${{ env.APP_NAME }}"
+          ARCHS=$(lipo -archs "$APP_BINARY")
+          echo "Found architectures: $ARCHS"
+
+          # Verify arm64 is present
+          if ! echo "$ARCHS" | grep -q "arm64"; then
+            echo "❌ Error: arm64 architecture missing from app binary"
+            exit 1
+          fi
+          echo "✅ App binary built successfully"
+          file "$APP_BINARY"
+
+      - name: Prepare CLI Binary
+        run: |
+          # The CLI binary is named 'trex' and located in the Release directory
+          CLI_PATH="build-cli/Build/Products/Release/trex"
+
+          if [ ! -f "$CLI_PATH" ]; then
+            echo "❌ Error: CLI binary not found at $CLI_PATH"
+            echo "Contents of build-cli/Build/Products/Release/:"
+            ls -la "build-cli/Build/Products/Release/" || true
+            exit 1
+          fi
+
+          echo "Found CLI binary, size: $(ls -lh "$CLI_PATH" | awk '{print $5}')"
+          file "$CLI_PATH"
+
+          CLI_CACHE_DIR=".cli-cache"
+          mkdir -p "$CLI_CACHE_DIR"
+          CACHE_CLI_PATH="$CLI_CACHE_DIR/trex"
+
+          # Copy the binary into the cache directory
+          cp "$CLI_PATH" "$CACHE_CLI_PATH"
+          chmod +x "$CACHE_CLI_PATH"
+
+          echo "Cached binary info:"
+          ls -lh "$CACHE_CLI_PATH"
+          file "$CACHE_CLI_PATH"
+
+          echo "Checking CLI binary architectures..."
+          ARCHS=$(lipo -archs "$CACHE_CLI_PATH")
+          echo "Found architectures: $ARCHS"
+
+          # Verify arm64 is present (CLI is arm64-only due to TesseractSwift)
+          if ! echo "$ARCHS" | grep -q "arm64"; then
+            echo "❌ Error: arm64 architecture missing from CLI binary"
+            exit 1
+          fi
+
+          echo "✅ CLI binary is arm64 (Intel Macs can run via Rosetta 2)"
+
       - name: Package App Bundle
         run: |
           cd build/Build/Products/Release
           ditto -c -k --keepParent "${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}.app.zip"
+
       - name: Upload App Bundle
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-Unsigned
           path: build/Build/Products/Release/${{ env.APP_NAME }}.app.zip
           retention-days: 5
+
+      - name: Cache CLI Binary
+        uses: actions/cache/save@v4
+        with:
+          path: .cli-cache
+          key: trex-cli-${{ github.run_id }}-${{ github.run_attempt }}
 
   sign:
     needs: build
@@ -136,6 +210,20 @@ jobs:
         with:
           name: ${{ env.APP_NAME }}-Unsigned
           path: .
+      - name: Restore CLI Binary from Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cli-cache
+          key: trex-cli-${{ github.run_id }}-${{ github.run_attempt }}
+          fail-on-cache-miss: true
+      - name: Stage CLI Binary
+        run: |
+          CACHE_CLI_PATH=".cli-cache/trex"
+          if [ ! -f "$CACHE_CLI_PATH" ]; then
+            echo "Error: Cached CLI binary not found at $CACHE_CLI_PATH"
+            exit 1
+          fi
+          chmod +x "$CACHE_CLI_PATH"
       - name: Unpack App Bundle
         run: |
           ditto -x -k "${{ env.APP_NAME }}.app.zip" .
@@ -149,6 +237,14 @@ jobs:
           apple-team-id: ${{ secrets.TEAM_ID }}
           app-path: "${{ env.APP_NAME }}.app"
           entitlements-path: "TRex/Resources/TRex.entitlements"
+      - name: Sign CLI Binary
+        uses: ./.github/actions/sign
+        with:
+          certificate: ${{ secrets.CERTIFICATES_P12 }}
+          certificate-password: ${{ secrets.CERTIFICATES_P12_PASSWORD }}
+          apple-team-id: ${{ secrets.TEAM_ID }}
+          app-path: ".cli-cache/trex"
+          entitlements-path: ""
       - name: Package Signed App Bundle
         run: |
           ditto -c -k --keepParent "${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}.app.zip"
@@ -158,6 +254,11 @@ jobs:
           name: ${{ env.APP_NAME }}-Signed
           path: ${{ env.APP_NAME }}.app.zip
           retention-days: 5
+      - name: Cache Signed CLI Binary
+        uses: actions/cache/save@v4
+        with:
+          path: .cli-cache
+          key: trex-cli-signed-${{ github.run_id }}-${{ github.run_attempt }}
 
   notarize:
     needs: sign
@@ -169,6 +270,20 @@ jobs:
         with:
           name: ${{ env.APP_NAME }}-Signed
           path: .
+      - name: Restore Signed CLI Binary from Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cli-cache
+          key: trex-cli-signed-${{ github.run_id }}-${{ github.run_attempt }}
+          fail-on-cache-miss: true
+      - name: Stage CLI Binary
+        run: |
+          CACHE_CLI_PATH=".cli-cache/trex"
+          if [ ! -f "$CACHE_CLI_PATH" ]; then
+            echo "Error: Cached CLI binary not found at $CACHE_CLI_PATH"
+            exit 1
+          fi
+          chmod +x "$CACHE_CLI_PATH"
       - name: Unpack App Bundle
         run: |
           ditto -x -k "${{ env.APP_NAME }}.app.zip" .
@@ -179,6 +294,51 @@ jobs:
           password: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           apple-team-id: ${{ secrets.TEAM_ID }}
           app-path: "${{ env.APP_NAME }}.app"
+      - name: Notarize CLI Binary
+        run: |
+          # Create ZIP for notarization
+          ditto -c -k ".cli-cache/trex" trex.zip
+
+          # Submit for notarization and capture output
+          set +e  # Don't exit on error, we'll handle it
+          xcrun notarytool submit \
+            trex.zip \
+            --wait \
+            --apple-id "${{ secrets.APPLE_ID }}" \
+            --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
+            --team-id "${{ secrets.TEAM_ID }}" \
+            --output-format json \
+            > notarization_output.json
+          NOTARIZE_EXIT_CODE=$?
+          set -e
+
+          # Display the output
+          cat notarization_output.json
+
+          # Check result using exit code and JSON parsing
+          if [ $NOTARIZE_EXIT_CODE -ne 0 ]; then
+            echo "❌ Notarization submission failed with exit code $NOTARIZE_EXIT_CODE"
+            # Try to get the submission ID for logs
+            SUBMISSION_ID=$(jq -r '.id // empty' notarization_output.json)
+            if [ -n "$SUBMISSION_ID" ]; then
+              echo "Fetching notarization logs for submission $SUBMISSION_ID..."
+              xcrun notarytool log "$SUBMISSION_ID" \
+                --apple-id "${{ secrets.APPLE_ID }}" \
+                --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
+                --team-id "${{ secrets.TEAM_ID }}" || true
+            fi
+            exit 1
+          fi
+
+          # Verify the status is "Accepted"
+          STATUS=$(jq -r '.status // empty' notarization_output.json)
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "❌ Notarization failed with status: $STATUS"
+            exit 1
+          fi
+
+          echo "✅ CLI binary notarized successfully"
+          # Note: Stapling is not needed for command-line tools distributed via download
       - name: Package Notarized App Bundle
         run: |
           ditto -c -k --keepParent "${{ env.APP_NAME }}.app" "${{ env.APP_NAME }}.app.zip"
@@ -188,6 +348,17 @@ jobs:
           name: ${{ env.APP_NAME }}-Notarized
           path: ${{ env.APP_NAME }}.app.zip
           retention-days: 5
+      - name: Upload CLI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-CLI
+          path: .cli-cache/trex
+          retention-days: 5
+      - name: Cache Notarized CLI Binary
+        uses: actions/cache/save@v4
+        with:
+          path: .cli-cache
+          key: trex-cli-notarized-${{ github.run_id }}-${{ github.run_attempt }}
 
   release:
     needs: [notarize, verify-release-notes]
@@ -217,6 +388,28 @@ jobs:
         with:
           name: ${{ env.APP_NAME }}-Notarized
           path: .
+
+      - name: Restore Notarized CLI Binary from Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cli-cache
+          key: trex-cli-notarized-${{ github.run_id }}-${{ github.run_attempt }}
+          fail-on-cache-miss: true
+      - name: Stage CLI Binary
+        run: |
+          CACHE_CLI_PATH=".cli-cache/trex"
+          if [ ! -f "$CACHE_CLI_PATH" ]; then
+            echo "Error: Cached CLI binary not found at $CACHE_CLI_PATH"
+            exit 1
+          fi
+          chmod +x "$CACHE_CLI_PATH"
+          echo "Restored executable permissions for CLI binary"
+
+      - name: Generate CLI Checksum
+        run: |
+          shasum -a 256 .cli-cache/trex > trex.sha256
+          echo "Generated SHA-256 checksum for CLI binary"
+          cat trex.sha256
 
       - name: Unpack App Bundle
         run: |
@@ -354,7 +547,21 @@ jobs:
 
           # Fetch latest main to avoid conflicts
           git fetch origin main
+
+          # Preserve generated artifacts while switching branches
+          TMP_DIR=$(mktemp -d)
+          trap 'rm -rf "$TMP_DIR"' EXIT
+
+          cp CHANGELOG.md "$TMP_DIR/CHANGELOG.md"
+          find docs -maxdepth 1 -name 'appcast*.xml' -exec cp {} "$TMP_DIR/" \;
+
           git checkout -B release-docs-${TAG} origin/main
+
+          cp "$TMP_DIR/CHANGELOG.md" CHANGELOG.md
+          for FILE in "$TMP_DIR"/appcast*.xml; do
+            [ -e "$FILE" ] || continue
+            cp "$FILE" docs/
+          done
 
           git add CHANGELOG.md docs/appcast*.xml
           if [ "$IS_BETA" != "true" ] && [ -f "Formula/trex.rb" ]; then
@@ -366,7 +573,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{ env.APP_NAME }}-${{ env.VERSION }}.zip
+          files: |
+            ${{ env.APP_NAME }}-${{ env.VERSION }}.zip
+            .cli-cache/trex
+            trex.sha256
           body_path: docs/release-notes/${{ env.TAG }}.md
           prerelease: ${{ env.IS_BETA == 'true' }}
           draft: false
