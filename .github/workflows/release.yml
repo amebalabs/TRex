@@ -541,7 +541,20 @@ jobs:
 
           # Fetch latest main to avoid conflicts
           git fetch origin main
+
+          # Preserve generated artifacts while switching branches
+          if [ -n "$(git status --porcelain)" ]; then
+            git stash push --include-untracked --message "release-docs-${TAG}" >/dev/null
+            STASHED=1
+          else
+            STASHED=0
+          fi
+
           git checkout -B release-docs-${TAG} origin/main
+
+          if [ "$STASHED" -eq 1 ]; then
+            git stash pop >/dev/null || { echo "Error: Failed to reapply stashed changes"; exit 1; }
+          fi
 
           git add CHANGELOG.md docs/appcast*.xml
           if [ "$IS_BETA" != "true" ] && [ -f "Formula/trex.rb" ]; then
