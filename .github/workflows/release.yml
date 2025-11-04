@@ -543,18 +543,15 @@ jobs:
           git fetch origin main
 
           # Preserve generated artifacts while switching branches
-          if [ -n "$(git status --porcelain)" ]; then
-            git stash push --include-untracked --message "release-docs-${TAG}" >/dev/null
-            STASHED=1
-          else
-            STASHED=0
-          fi
+          TMP_DIR=$(mktemp -d)
+          cp CHANGELOG.md "$TMP_DIR/CHANGELOG.md"
+          cp docs/appcast*.xml "$TMP_DIR/" || true
 
           git checkout -B release-docs-${TAG} origin/main
 
-          if [ "$STASHED" -eq 1 ]; then
-            git stash pop >/dev/null || { echo "Error: Failed to reapply stashed changes"; exit 1; }
-          fi
+          cp "$TMP_DIR/CHANGELOG.md" CHANGELOG.md
+          cp "$TMP_DIR"/appcast*.xml docs/ 2>/dev/null || true
+          rm -rf "$TMP_DIR"
 
           git add CHANGELOG.md docs/appcast*.xml
           if [ "$IS_BETA" != "true" ] && [ -f "Formula/trex.rb" ]; then
