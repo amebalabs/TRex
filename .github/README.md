@@ -4,7 +4,7 @@
 
 
 <p align="center">
- <img width="155" height="150" alt="TRex Logo" src="Resources/logo.png">
+ <img width="155" height="150" alt="TRex Logo" src="https://github.com/amebalabs/TRex/blob/main/Resources/logo.png">
 </p>
 
 # TRex 🦖
@@ -15,7 +15,7 @@ But what is OCR anyway? Imagine you have a PDF file or a Web page where you can'
 
 TRex lives in the menu bar and available right where you need it the most:
 
-![TRex](Resources/screenshot.png)
+![TRex](https://github.com/amebalabs/TRex/blob/main/Resources/screenshot.png)
 
 To use TRex:
 1. Invoke "Capture" either through the menu bar or with a global configurable shortcut
