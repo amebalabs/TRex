@@ -1,3 +1,11 @@
+# v1.9.1-BETA-3 (2025-11-05)
+
+# TRex v1.9.1-BETA-3 Release Notes
+
+## 🛠 Fixes
+
+- Improving CLI downloader
+
 # v1.9.1-BETA-2 (2025-11-04)
 
 # TRex v1.9.1-BETA-2 Release Notes
