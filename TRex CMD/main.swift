@@ -4,6 +4,7 @@ import TRexCore
 
 let _trex = TRex()
 
+@available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 struct trex: AsyncParsableCommand {
     static let configuration = CommandConfiguration(abstract: "Magic OCR for macOS")
 
@@ -32,4 +33,11 @@ struct trex: AsyncParsableCommand {
     }
 }
 
-trex.main()
+if #available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *) {
+    Task {
+        await trex.main()
+    }
+    dispatchMain()
+} else {
+    fatalError("This tool requires macOS 10.15 or later")
+}

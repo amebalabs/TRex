@@ -202,6 +202,11 @@ struct CLIInstallRow: View {
     @State private var downloadProgress: Double = 0
     @State private var errorMessage: String?
 
+    // Install to user's local bin directory (no admin required)
+    private let installPath = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent(".local/bin/trex")
+        .path
+
     var body: some View {
         HStack {
             if isDownloading {
@@ -213,8 +218,13 @@ struct CLIInstallRow: View {
             } else if isCLIInstalled {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)
-                Text("TRex CLI installed")
-                    .font(.body)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("TRex CLI installed")
+                        .font(.body)
+                    Text(installPath)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             } else {
                 Button("Install TRex CLI") {
                     installCLI()
@@ -236,7 +246,7 @@ struct CLIInstallRow: View {
     }
 
     private func checkCLIInstallation() {
-        isCLIInstalled = FileManager.default.fileExists(atPath: "/usr/local/bin/trex")
+        isCLIInstalled = FileManager.default.fileExists(atPath: installPath)
     }
 
     private func installCLI() {
@@ -252,6 +262,14 @@ struct CLIInstallRow: View {
                     isDownloading = false
                 }
             } catch {
+                // Log full error to console for debugging
+                print("CLI Installation Error: \(error)")
+                if let localizedError = error as? LocalizedError {
+                    print("Error Description: \(localizedError.errorDescription ?? "None")")
+                    print("Failure Reason: \(localizedError.failureReason ?? "None")")
+                    print("Recovery Suggestion: \(localizedError.recoverySuggestion ?? "None")")
+                }
+
                 await MainActor.run {
                     errorMessage = "Failed: \(error.localizedDescription)"
                     isDownloading = false
@@ -260,20 +278,39 @@ struct CLIInstallRow: View {
         }
     }
 
-    private func downloadAndInstallCLI() async throws {
-        let releaseURL = URL(string: "https://api.github.com/repos/amebalabs/TRex/releases/latest")!
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("trex")
-        let checksumURL = FileManager.default.temporaryDirectory.appendingPathComponent("trex.sha256")
-
-        // Ensure cleanup on error
-        defer {
-            try? FileManager.default.removeItem(at: tempURL)
-            try? FileManager.default.removeItem(at: checksumURL)
+    private func findReleaseWithCLI() async throws -> GitHubRelease {
+        // Get current app version
+        guard let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String else {
+            throw CLIInstallError.cannotDetermineAppVersion
         }
 
-        // Download release info
-        let (data, _) = try await URLSession.shared.data(from: releaseURL)
-        let release = try JSONDecoder().decode(GitHubRelease.self, from: data)
+        // Fetch all releases to find matching version
+        let allReleasesURL = URL(string: "https://api.github.com/repos/amebalabs/TRex/releases")!
+        let (allData, _) = try await URLSession.shared.data(from: allReleasesURL)
+        let allReleases = try JSONDecoder().decode([GitHubRelease].self, from: allData)
+
+        // Find release matching current app version
+        guard let matchingRelease = allReleases.first(where: { release in
+            // Tag format is v1.8.0 or v1.9.1-BETA-2
+            let tag = release.tagName
+            // Strip 'v' prefix and compare
+            let versionString = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
+            return versionString == appVersion
+        }) else {
+            throw CLIInstallError.noMatchingRelease(version: appVersion)
+        }
+
+        // Verify the release has CLI assets
+        guard matchingRelease.assets.contains(where: { $0.name == "trex" }) else {
+            throw CLIInstallError.noCliInRelease(version: appVersion)
+        }
+
+        return matchingRelease
+    }
+
+    private func downloadAndInstallCLI() async throws {
+        // Find appropriate release with CLI assets
+        let release = try await findReleaseWithCLI()
 
         // Find CLI asset and checksum
         guard let cliAsset = release.assets.first(where: { $0.name == "trex" }) else {
@@ -312,21 +349,44 @@ struct CLIInstallRow: View {
 
         await MainActor.run { downloadProgress = 0.8 }
 
-        // Save to temporary location
-        try binaryData.write(to: tempURL)
+        // Create a uniquely named temp file to avoid conflicts
+        let tempDir = FileManager.default.temporaryDirectory
+        let uniqueFilename = "trex-\(UUID().uuidString)"
+        let tempURL = tempDir.appendingPathComponent(uniqueFilename)
 
-        // Install using sudo with proper path escaping
-        let escapedPath = tempURL.path.replacingOccurrences(of: "'", with: "'\\''")
-        let script = """
-        do shell script "mkdir -p /usr/local/bin && mv '\(escapedPath)' /usr/local/bin/trex && chmod +x /usr/local/bin/trex" with administrator privileges
-        """
+        // Ensure cleanup
+        defer {
+            try? FileManager.default.removeItem(at: tempURL)
+        }
 
-        var error: NSDictionary?
-        if let scriptObject = NSAppleScript(source: script) {
-            scriptObject.executeAndReturnError(&error)
-            if let error = error {
-                throw CLIInstallError.installationFailed(error.description)
-            }
+        // Write binary to temp location
+        try binaryData.write(to: tempURL, options: .atomic)
+
+        // Verify file exists before trying to install
+        guard FileManager.default.fileExists(atPath: tempURL.path) else {
+            throw CLIInstallError.installationFailed("Failed to write temporary file")
+        }
+
+        // Create ~/.local/bin directory if it doesn't exist
+        let installURL = URL(fileURLWithPath: installPath)
+        let binDir = installURL.deletingLastPathComponent()
+
+        try FileManager.default.createDirectory(at: binDir, withIntermediateDirectories: true, attributes: nil)
+
+        // Copy binary to install location
+        // Remove existing file if present
+        if FileManager.default.fileExists(atPath: installPath) {
+            try FileManager.default.removeItem(atPath: installPath)
+        }
+
+        try FileManager.default.copyItem(at: tempURL, to: installURL)
+
+        // Make executable (chmod +x)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: installPath)
+
+        // Verify installation succeeded
+        guard FileManager.default.fileExists(atPath: installPath) else {
+            throw CLIInstallError.installationFailed("Installation did not complete")
         }
 
         await MainActor.run { downloadProgress = 1.0 }
@@ -339,6 +399,10 @@ enum CLIInstallError: LocalizedError {
     case invalidChecksum
     case checksumMismatch
     case installationFailed(String)
+    case cannotDetermineAppVersion
+    case noMatchingRelease(version: String)
+    case noCliInRelease(version: String)
+    case userCancelled
 
     var errorDescription: String? {
         switch self {
@@ -352,12 +416,26 @@ enum CLIInstallError: LocalizedError {
             return "Security verification failed: Binary checksum mismatch"
         case .installationFailed(let details):
             return "Installation failed: \(details)"
+        case .cannotDetermineAppVersion:
+            return "Cannot determine app version"
+        case .noMatchingRelease(let version):
+            return "No release found for version \(version)"
+        case .noCliInRelease(let version):
+            return "Version \(version) doesn't include CLI. Please check for app updates."
+        case .userCancelled:
+            return "Installation cancelled by user"
         }
     }
 }
 
 struct GitHubRelease: Decodable {
+    let tagName: String
     let assets: [GitHubAsset]
+
+    enum CodingKeys: String, CodingKey {
+        case tagName = "tag_name"
+        case assets
+    }
 }
 
 struct GitHubAsset: Decodable {
