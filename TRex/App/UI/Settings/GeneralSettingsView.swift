@@ -123,7 +123,7 @@ struct GeneralSettingsView: View {
         #if MAC_APP_STORE
         .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 220 : 280) : (preferences.tesseractEnabled ? 140 : 200))
         #else
-        .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 280 : 340) : (preferences.tesseractEnabled ? 200 : 260))
+        .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 300 : 360) : (preferences.tesseractEnabled ? 220 : 280))
         #endif
         .onAppear {
             loadVisionLanguages()
