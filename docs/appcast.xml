@@ -6,18 +6,18 @@
     <description>TRex Updates</description>
     <language>en</language>
     <item>
-      <title>TRex 1.9.0</title>
-      <sparkle:version>132</sparkle:version>
-      <sparkle:shortVersionString>1.9.0</sparkle:shortVersionString>
+      <title>TRex 1.9.1</title>
+      <sparkle:version>148</sparkle:version>
+      <sparkle:shortVersionString>1.9.1</sparkle:shortVersionString>
       <description><![CDATA[]]></description>
-      <pubDate>Wed, 15 Oct 2025 15:22:03 +0000</pubDate>
+      <pubDate>Wed, 05 Nov 2025 18:11:36 +0000</pubDate>
       <enclosure
-        url="https://github.com/amebalabs/TRex/releases/download/v1.9.0/TRex-1.9.0.zip"
-        sparkle:version="132"
-        sparkle:shortVersionString="1.9.0"
+        url="https://github.com/amebalabs/TRex/releases/download/v1.9.1/TRex-1.9.1.zip"
+        sparkle:version="148"
+        sparkle:shortVersionString="1.9.1"
         type="application/octet-stream"
-        sparkle:edSignature="Kl1/VFqeAv/etp2mk4FWdwKUVsbOrY0lPoKCYgMMi9VLKvcf5nEo0L7h+rkJDWaFeZMjm3+iKJ7qVgI/glygBA==" length="4161618"
-        sparkle:sha256="d8ff68dfee2f193ea253cd0bbaaefae958d9ddb64ebdc297002a4ac3e1373db7"
+        sparkle:edSignature="ZxpAo9E5T5lzmcqXn7eOqY8Q1LpaL8X9P+26HpkOxFNstADdpWktUtDj/XWGJJGC1b1P8NX1h0i6Z7bfwcNdCg==" length="4196121"
+        sparkle:sha256="01937c514552f2a377de1c272b8cd5bda28e3f3ce752036e48200adaff457c65"
       />
     </item>
   </channel>

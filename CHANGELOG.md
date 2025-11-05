@@ -1,3 +1,32 @@
+# v1.9.1 (2025-11-05)
+
+# TRex v1.9.1 Release Notes
+
+## ✨ New Features
+
+### Command Line Tool
+- **In-app CLI installer**: Added one-click installation of the TRex command-line tool directly from the app's preferences window
+- **User-local installation**: Installs to `~/.local/bin/trex` with no admin privileges required
+
+## 🐛 Bug Fixes
+
+### Language Recognition
+- **Fixed language code normalization**: Resolved issues with Czech (and potentially other) language recognition where language codes with underscores (`cs_CZ`) weren't being properly converted to the hyphen format (`cs-CZ`) required by Apple Vision OCR
+- **Fixed engine selection**: Corrected issue where Tesseract engine was being selected even when disabled in preferences, causing fallback to incorrect engines with poor results
+- **Language identifier handling**: Improved `LanguageCodeMapper.standardize()` to properly handle locale-based language codes
+
+### Image Preprocessing
+- **Enhanced text recognition accuracy**: Added automatic image preprocessing with:
+  - +30% contrast enhancement
+  - +10% brightness adjustment
+  - +10% saturation boost
+- These improvements help recognize low-contrast and light-colored text more reliably
+
+## 🔗 Links
+
+- [Full Changelog](https://github.com/amebalabs/TRex/compare/v1.9.0...v1.9.1)
+- [GitHub Release](https://github.com/amebalabs/TRex/releases/tag/v1.9.1)
+
 # v1.9.1-BETA-3 (2025-11-05)
 
 # TRex v1.9.1-BETA-3 Release Notes
