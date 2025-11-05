@@ -555,6 +555,13 @@ jobs:
           cp CHANGELOG.md "$TMP_DIR/CHANGELOG.md"
           find docs -maxdepth 1 -name 'appcast*.xml' -exec cp {} "$TMP_DIR/" \;
 
+          # Preserve Formula if it exists (non-beta releases)
+          if [ "$IS_BETA" != "true" ] && [ -f "Formula/trex.rb" ]; then
+            cp Formula/trex.rb "$TMP_DIR/trex.rb"
+          fi
+
+          # Reset any local changes before checking out new branch
+          git reset --hard HEAD
           git checkout -B release-docs-${TAG} origin/main
 
           cp "$TMP_DIR/CHANGELOG.md" CHANGELOG.md
@@ -562,6 +569,12 @@ jobs:
             [ -e "$FILE" ] || continue
             cp "$FILE" docs/
           done
+
+          # Restore Formula if it was backed up
+          if [ -f "$TMP_DIR/trex.rb" ]; then
+            mkdir -p Formula
+            cp "$TMP_DIR/trex.rb" Formula/trex.rb
+          fi
 
           git add CHANGELOG.md docs/appcast*.xml
           if [ "$IS_BETA" != "true" ] && [ -f "Formula/trex.rb" ]; then
