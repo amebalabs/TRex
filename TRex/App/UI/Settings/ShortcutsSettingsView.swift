@@ -39,6 +39,6 @@ struct ShortcutsSettingsView: View {
             
         }
         .padding(20)
-        .frame(width: 410, height: 260)
+        .frame(width: 500, height: 260)
     }
 }

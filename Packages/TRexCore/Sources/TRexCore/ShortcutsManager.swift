@@ -1,21 +1,21 @@
 import AppKit
 import Foundation
 
+@MainActor
 public class ShortcutsManager: ObservableObject {
-    static let shared = ShortcutsManager()
-    var shortcutsURL = URL(fileURLWithPath: "/usr/bin/shortcuts")
+    public static let shared = ShortcutsManager()
+    nonisolated let shortcutsURL = URL(fileURLWithPath: "/usr/bin/shortcuts")
 
     @Published public var shortcuts: [String] = []
-    var currentShortcut: String {
+    nonisolated var currentShortcut: String {
         Preferences.shared.autoRunShortcut
     }
 
-    lazy var shortcutInputPath: URL = {
-        let directory = NSTemporaryDirectory()
-        return NSURL.fileURL(withPathComponents: [directory, "shortcutInput"])!
-    }()
+    nonisolated let shortcutInputPath: URL
 
     public init() {
+        let directory = NSTemporaryDirectory()
+        self.shortcutInputPath = NSURL.fileURL(withPathComponents: [directory, "shortcutInput"])!
         if #available(macOS 12, *) {
             getShortcuts()
         }

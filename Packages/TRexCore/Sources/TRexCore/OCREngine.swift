@@ -4,66 +4,110 @@ import Vision
 import CoreImage
 
 // Protocol for OCR engines
-public protocol OCREngine {
+public protocol OCREngine: Sendable {
     var name: String { get }
     var identifier: String { get }
     var priority: Int { get }
-    
+
     func supportsLanguage(_ language: String) -> Bool
     func recognizeText(in image: CGImage, languages: [String], recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult
     func recognizeText(in image: CGImage, recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult
 }
 
 // Result type for OCR operations
-public struct OCRResult {
+public struct OCRResult: Sendable {
     public let text: String
     public let confidence: Float
     public let recognizedLanguages: [String]
-    
-    public init(text: String, confidence: Float, recognizedLanguages: [String]) {
+    public let engineName: String?
+    public let recognitionLevel: String?
+
+    public init(
+        text: String,
+        confidence: Float,
+        recognizedLanguages: [String],
+        engineName: String? = nil,
+        recognitionLevel: String? = nil
+    ) {
         self.text = text
         self.confidence = confidence
         self.recognizedLanguages = recognizedLanguages
+        self.engineName = engineName
+        self.recognitionLevel = recognitionLevel
+    }
+
+    /// Create a contextualized description of this OCR result for LLM processing
+    public func contextDescription() -> String {
+        var parts: [String] = []
+
+        if let engine = engineName {
+            parts.append("OCR Engine: \(engine)")
+        }
+
+        if confidence > 0 {
+            let confidencePercent = Int(confidence * 100)
+            parts.append("Confidence: \(confidencePercent)%")
+        }
+
+        if !recognizedLanguages.isEmpty {
+            parts.append("Language(s): \(recognizedLanguages.joined(separator: ", "))")
+        }
+
+        if let level = recognitionLevel {
+            parts.append("Recognition Level: \(level)")
+        }
+
+        return parts.isEmpty ? "No OCR metadata available" : parts.joined(separator: ", ")
     }
 }
 
 // Manager to handle multiple OCR engines
-public class OCRManager {
+public final class OCRManager: Sendable {
     public static let shared = OCRManager()
 
-    public private(set) var engines: [OCREngine] = []
-    
+    private let _engines: OSAllocatedUnfairLock<[OCREngine]>
+
+    public var engines: [OCREngine] {
+        _engines.withLock { $0 }
+    }
+
     private init() {
+        _engines = OSAllocatedUnfairLock(initialState: [])
+
         // Register engines
         registerEngine(VisionOCREngine())
-        
+
         // Register Tesseract engine (always available with TesseractSwift)
         registerEngine(TesseractOCREngine())
     }
-    
+
     public func registerEngine(_ engine: OCREngine) {
-        engines.append(engine)
-        engines.sort { $0.priority > $1.priority }
-    }
-    
-    public func findEngine(for languages: [String]) -> OCREngine? {
-        // Find the first engine that supports all requested languages
-        for engine in engines {
-            let supportsAll = languages.allSatisfy { engine.supportsLanguage($0) }
-            if supportsAll {
-                return engine
-            }
+        _engines.withLock { engines in
+            engines.append(engine)
+            engines.sort { $0.priority > $1.priority }
         }
-        return nil
     }
-    
+
+    public func findEngine(for languages: [String]) -> OCREngine? {
+        _engines.withLock { engines in
+            // Find the first engine that supports all requested languages
+            for engine in engines {
+                let supportsAll = languages.allSatisfy { engine.supportsLanguage($0) }
+                if supportsAll {
+                    return engine
+                }
+            }
+            return nil
+        }
+    }
+
     public func defaultEngine() -> OCREngine? {
-        return engines.first
+        _engines.withLock { $0.first }
     }
 }
 
 // Apple Vision framework OCR engine
-public class VisionOCREngine: OCREngine {
+public final class VisionOCREngine: OCREngine {
     public var name: String { "Apple Vision" }
     public var identifier: String { "vision" }
     public var priority: Int { 50 } // Lower priority than Tesseract
@@ -137,7 +181,8 @@ public class VisionOCREngine: OCREngine {
     public func recognizeText(in image: CGImage, languages: [String], recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult {
         Self.logger.info("🔍 VisionOCREngine.recognizeText called")
         Self.logger.info("  → Languages: \(languages.joined(separator: ", "), privacy: .public)")
-        Self.logger.info("  → Recognition level: \(recognitionLevel == .accurate ? "accurate" : "fast", privacy: .public)")
+        let levelString = recognitionLevel == .accurate ? "accurate" : "fast"
+        Self.logger.info("  → Recognition level: \(levelString, privacy: .public)")
         Self.logger.info("  → Image size: \(image.width, privacy: .public)x\(image.height, privacy: .public)")
 
         // Enhance image contrast for better recognition
@@ -154,7 +199,13 @@ public class VisionOCREngine: OCREngine {
 
                 guard let observations = request.results as? [VNRecognizedTextObservation] else {
                     Self.logger.warning("⚠️ No observations returned from Vision")
-                    continuation.resume(returning: OCRResult(text: "", confidence: 0, recognizedLanguages: languages))
+                    continuation.resume(returning: OCRResult(
+                        text: "",
+                        confidence: 0,
+                        recognizedLanguages: languages,
+                        engineName: "Apple Vision",
+                        recognitionLevel: levelString
+                    ))
                     return
                 }
 
@@ -192,7 +243,9 @@ public class VisionOCREngine: OCREngine {
                 continuation.resume(returning: OCRResult(
                     text: text,
                     confidence: avgConfidence,
-                    recognizedLanguages: languages
+                    recognizedLanguages: languages,
+                    engineName: "Apple Vision",
+                    recognitionLevel: levelString
                 ))
             }
 

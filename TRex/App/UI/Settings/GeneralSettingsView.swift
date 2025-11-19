@@ -121,9 +121,9 @@ struct GeneralSettingsView: View {
         }
         .padding(20)
         #if MAC_APP_STORE
-        .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 220 : 280) : (preferences.tesseractEnabled ? 140 : 200))
+        .frame(width: 500, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 220 : 280) : (preferences.tesseractEnabled ? 140 : 200))
         #else
-        .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 300 : 360) : (preferences.tesseractEnabled ? 220 : 280))
+        .frame(width: 500, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 300 : 360) : (preferences.tesseractEnabled ? 220 : 280))
         #endif
         .onAppear {
             loadVisionLanguages()

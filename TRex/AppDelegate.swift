@@ -47,6 +47,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         setupShortcuts()
 
+        // Initialize LLM if enabled
+        trex.initializeLLM()
+
         showOnboardingIfNeeded()
     }
 

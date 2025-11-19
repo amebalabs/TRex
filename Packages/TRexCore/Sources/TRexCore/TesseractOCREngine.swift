@@ -1,9 +1,9 @@
 import Foundation
 import Cocoa
 import Vision
-import TesseractSwift
+@preconcurrency import TesseractSwift
 
-public class TesseractOCREngine: OCREngine {
+public final class TesseractOCREngine: @unchecked Sendable, OCREngine {
     private let tessdataPath: URL
     private let tesseractEngine: TesseractEngine
     private let languageDownloader = LanguageDownloader.shared
@@ -83,7 +83,9 @@ public class TesseractOCREngine: OCREngine {
         return OCRResult(
             text: text,
             confidence: confidence,
-            recognizedLanguages: requestedLanguages
+            recognizedLanguages: requestedLanguages,
+            engineName: "Tesseract",
+            recognitionLevel: "standard"
         )
     }
     

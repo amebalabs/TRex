@@ -3,9 +3,9 @@ import Combine
 import SwiftUI
 
 public class Preferences: ObservableObject {
-    public static let shared = Preferences()
+    public nonisolated(unsafe) static let shared = Preferences()
     static let suiteName = "X93LWC49WV.TRex.preferences"
-    static let userDefaults = UserDefaults(suiteName: suiteName)!
+    nonisolated(unsafe) static let userDefaults = UserDefaults(suiteName: suiteName)!
 
     enum PreferencesKeys: String {
         case CaptureSound
@@ -27,6 +27,20 @@ public class Preferences: ObservableObject {
         case TesseractLanguages
         case TesseractPath
         case IncludeBetaUpdates
+        case LLMEnabled
+        case LLMOCRProvider
+        case LLMOCRAPIKey
+        case LLMOCRCustomEndpoint
+        case LLMPostProcessProvider
+        case LLMPostProcessAPIKey
+        case LLMPostProcessCustomEndpoint
+        case LLMOCRModel
+        case LLMPostProcessModel
+        case LLMEnableOCR
+        case LLMEnablePostProcessing
+        case LLMOCRPrompt
+        case LLMPostProcessPrompt
+        case LLMFallbackToBuiltIn
     }
 
     public enum MenuBarIcon: String, CaseIterable {
@@ -185,6 +199,90 @@ public class Preferences: ObservableObject {
         }
     }
 
+    @Published public var llmEnabled: Bool {
+        didSet {
+            Preferences.setValue(value: llmEnabled, key: .LLMEnabled)
+        }
+    }
+
+    @Published public var llmOCRProvider: String {
+        didSet {
+            Preferences.setValue(value: llmOCRProvider, key: .LLMOCRProvider)
+        }
+    }
+
+    @Published public var llmOCRAPIKey: String {
+        didSet {
+            Preferences.setValue(value: llmOCRAPIKey, key: .LLMOCRAPIKey)
+        }
+    }
+
+    @Published public var llmOCRCustomEndpoint: String {
+        didSet {
+            Preferences.setValue(value: llmOCRCustomEndpoint, key: .LLMOCRCustomEndpoint)
+        }
+    }
+
+    @Published public var llmPostProcessProvider: String {
+        didSet {
+            Preferences.setValue(value: llmPostProcessProvider, key: .LLMPostProcessProvider)
+        }
+    }
+
+    @Published public var llmPostProcessAPIKey: String {
+        didSet {
+            Preferences.setValue(value: llmPostProcessAPIKey, key: .LLMPostProcessAPIKey)
+        }
+    }
+
+    @Published public var llmPostProcessCustomEndpoint: String {
+        didSet {
+            Preferences.setValue(value: llmPostProcessCustomEndpoint, key: .LLMPostProcessCustomEndpoint)
+        }
+    }
+
+    @Published public var llmOCRModel: String {
+        didSet {
+            Preferences.setValue(value: llmOCRModel, key: .LLMOCRModel)
+        }
+    }
+
+    @Published public var llmPostProcessModel: String {
+        didSet {
+            Preferences.setValue(value: llmPostProcessModel, key: .LLMPostProcessModel)
+        }
+    }
+
+    @Published public var llmEnableOCR: Bool {
+        didSet {
+            Preferences.setValue(value: llmEnableOCR, key: .LLMEnableOCR)
+        }
+    }
+
+    @Published public var llmEnablePostProcessing: Bool {
+        didSet {
+            Preferences.setValue(value: llmEnablePostProcessing, key: .LLMEnablePostProcessing)
+        }
+    }
+
+    @Published public var llmOCRPrompt: String {
+        didSet {
+            Preferences.setValue(value: llmOCRPrompt, key: .LLMOCRPrompt)
+        }
+    }
+
+    @Published public var llmPostProcessPrompt: String {
+        didSet {
+            Preferences.setValue(value: llmPostProcessPrompt, key: .LLMPostProcessPrompt)
+        }
+    }
+
+    @Published public var llmFallbackToBuiltIn: Bool {
+        didSet {
+            Preferences.setValue(value: llmFallbackToBuiltIn, key: .LLMFallbackToBuiltIn)
+        }
+    }
+
     init() {
         needsOnboarding = Preferences.getValue(key: .NeedsOnboarding) as? Bool ?? true
         captureSound = Preferences.getValue(key: .CaptureSound) as? Bool ?? true
@@ -250,6 +348,20 @@ public class Preferences: ObservableObject {
         tesseractLanguages = Preferences.getValue(key: .TesseractLanguages) as? [String] ?? ["eng"]
         tesseractPath = Preferences.getValue(key: .TesseractPath) as? String ?? ""
         includeBetaUpdates = Preferences.getValue(key: .IncludeBetaUpdates) as? Bool ?? false
+        llmEnabled = Preferences.getValue(key: .LLMEnabled) as? Bool ?? false
+        llmOCRProvider = Preferences.getValue(key: .LLMOCRProvider) as? String ?? "OpenAI"
+        llmOCRAPIKey = Preferences.getValue(key: .LLMOCRAPIKey) as? String ?? ""
+        llmOCRCustomEndpoint = Preferences.getValue(key: .LLMOCRCustomEndpoint) as? String ?? ""
+        llmPostProcessProvider = Preferences.getValue(key: .LLMPostProcessProvider) as? String ?? "OpenAI"
+        llmPostProcessAPIKey = Preferences.getValue(key: .LLMPostProcessAPIKey) as? String ?? ""
+        llmPostProcessCustomEndpoint = Preferences.getValue(key: .LLMPostProcessCustomEndpoint) as? String ?? ""
+        llmOCRModel = Preferences.getValue(key: .LLMOCRModel) as? String ?? "gpt-4o"
+        llmPostProcessModel = Preferences.getValue(key: .LLMPostProcessModel) as? String ?? "gpt-4o"
+        llmEnableOCR = Preferences.getValue(key: .LLMEnableOCR) as? Bool ?? false
+        llmEnablePostProcessing = Preferences.getValue(key: .LLMEnablePostProcessing) as? Bool ?? false
+        llmOCRPrompt = Preferences.getValue(key: .LLMOCRPrompt) as? String ?? "Extract all visible text from this image. Preserve the layout and formatting as much as possible. Return only the extracted text without any additional commentary."
+        llmPostProcessPrompt = Preferences.getValue(key: .LLMPostProcessPrompt) as? String ?? "You are given OCR output that may contain errors. Please:\n1. Correct any obvious spelling or recognition errors\n2. Fix formatting issues (spacing, line breaks)\n3. Preserve the original structure and meaning\n4. Return only the corrected text without explanations\n\nOCR Text:\n{text}"
+        llmFallbackToBuiltIn = Preferences.getValue(key: .LLMFallbackToBuiltIn) as? Bool ?? true
     }
 
     static func removeAll() {

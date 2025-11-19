@@ -1,7 +1,8 @@
 import OSLog
 import SwiftUI
-import UserNotifications
+@preconcurrency import UserNotifications
 import Vision
+import TRexLLM
 
 /// Bundle identifiers for TRex apps
 enum BundleIdentifiers {
@@ -20,17 +21,17 @@ enum TimeoutError: Error {
 }
 
 // Async timeout utility
-func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+func withTimeout<T: Sendable>(seconds: TimeInterval, operation: @escaping @Sendable () async throws -> T) async throws -> T {
     try await withThrowingTaskGroup(of: T.self) { group in
         group.addTask {
             try await operation()
         }
-        
+
         group.addTask {
             try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
             throw TimeoutError.timedOut
         }
-        
+
         let result = try await group.next()!
         group.cancelAll()
         return result
@@ -38,10 +39,12 @@ func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws 
 }
 
 public class TRex: NSObject {
-    public static let shared = TRex()
+    public nonisolated(unsafe) static let shared = TRex()
     let preferences = Preferences.shared
     private var currentInvocationMode: InvocationMode = .captureScreen
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.ameba.TRex", category: "TRexCore")
+    private var llmEngine: LLMOCREngine?
+    private var llmPostProcessor: LLMPostProcessor?
 
     var task: Process?
     let sceenCaptureURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
@@ -70,18 +73,112 @@ public class TRex: NSObject {
             currentInvocationMode == .captureFromFileAndTriggerAutomation
     }
 
-    /// Performs OCR capture and processes the result.
-    /// - Returns: `true` if text was successfully captured, `false` otherwise.
-    @discardableResult
-    public func capture(_ mode: InvocationMode, imagePath: String? = nil) async -> Bool {
+    // MARK: - LLM Integration
+
+    public func initializeLLM() {
+        // Auto-enable if either feature is enabled
+        let shouldEnable = preferences.llmEnableOCR || preferences.llmEnablePostProcessing
+
+        if !shouldEnable {
+            llmEngine = nil
+            llmPostProcessor = nil
+            return
+        }
+
+        // Enable the master flag if needed
+        if !preferences.llmEnabled {
+            preferences.llmEnabled = true
+        }
+
+        let config = createLLMConfiguration()
+
+        // Create LLM engine if OCR is enabled
+        if preferences.llmEnableOCR {
+            let fallbackEngine = OCRManager.shared.engines.first(where: { $0.identifier == "vision" })
+            llmEngine = LLMOCREngine(config: config, fallbackEngine: fallbackEngine)
+
+            // Register with OCRManager
+            if let engine = llmEngine {
+                OCRManager.shared.registerEngine(engine)
+            }
+        } else {
+            llmEngine = nil
+        }
+
+        // Create post-processor if enabled
+        if preferences.llmEnablePostProcessing {
+            llmPostProcessor = LLMPostProcessor(config: config)
+        } else {
+            llmPostProcessor = nil
+        }
+
+        logger.info("🤖 LLM initialized: OCR=\(self.preferences.llmEnableOCR, privacy: .public), PostProcess=\(self.preferences.llmEnablePostProcessing, privacy: .public)")
+    }
+
+    private func createLLMConfiguration() -> LLMConfiguration {
+        // Parse OCR provider
+        let ocrProviderType: LLMProviderType
+        switch preferences.llmOCRProvider {
+        case "OpenAI":
+            ocrProviderType = .openai
+        case "Anthropic":
+            ocrProviderType = .anthropic
+        case "Custom":
+            ocrProviderType = .custom
+        case "Apple":
+            ocrProviderType = .apple
+        default:
+            ocrProviderType = .openai
+        }
+
+        // Parse post-processing provider
+        let postProcessProviderType: LLMProviderType
+        switch preferences.llmPostProcessProvider {
+        case "OpenAI":
+            postProcessProviderType = .openai
+        case "Anthropic":
+            postProcessProviderType = .anthropic
+        case "Custom":
+            postProcessProviderType = .custom
+        case "Apple":
+            postProcessProviderType = .apple
+        default:
+            postProcessProviderType = .openai
+        }
+
+        return LLMConfiguration(
+            ocrProvider: ocrProviderType,
+            ocrAPIKey: preferences.llmOCRAPIKey.isEmpty ? nil : preferences.llmOCRAPIKey,
+            ocrCustomEndpoint: preferences.llmOCRCustomEndpoint.isEmpty ? nil : preferences.llmOCRCustomEndpoint,
+            postProcessProvider: postProcessProviderType,
+            postProcessAPIKey: preferences.llmPostProcessAPIKey.isEmpty ? nil : preferences.llmPostProcessAPIKey,
+            postProcessCustomEndpoint: preferences.llmPostProcessCustomEndpoint.isEmpty ? nil : preferences.llmPostProcessCustomEndpoint,
+            ocrModel: preferences.llmOCRModel,
+            postProcessModel: preferences.llmPostProcessModel,
+            enableLLMOCR: preferences.llmEnableOCR,
+            enablePostProcessing: preferences.llmEnablePostProcessing,
+            ocrPrompt: preferences.llmOCRPrompt,
+            postProcessPrompt: preferences.llmPostProcessPrompt,
+            fallbackToBuiltInOCR: preferences.llmFallbackToBuiltIn
+        )
+    }
+
+    public func capture(_ mode: InvocationMode, imagePath: String? = nil) async {
         currentInvocationMode = mode
 
-        guard let text = await getText(imagePath) else { return false }
+        guard let ocrResult = await getText(imagePath) else { return }
+        var text = ocrResult.text
 
-        await MainActor.run {
-            self.processDetectedText(text)
+        // Apply LLM post-processing if enabled
+        if preferences.llmEnablePostProcessing, let postProcessor = llmPostProcessor {
+            logger.info("📝 Applying LLM post-processing...")
+            let metadata = ocrResult.contextDescription()
+            text = await postProcessor.processSilently(text, metadata: metadata)
+            logger.info("✅ Post-processing complete")
         }
-        return true
+
+        // Process results back on main thread for UI updates
+        await processDetectedText(text)
     }
 
     private func getImage(_ imagePath: String? = nil) -> NSImage? {
@@ -123,7 +220,7 @@ public class TRex: NSObject {
         }
     }
 
-    private func getText(_ imagePath: String? = nil) async -> String? {
+    private func getText(_ imagePath: String? = nil) async -> OCRResult? {
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         logger.info("🚀 getText called - starting OCR process")
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -152,7 +249,13 @@ public class TRex: NSObject {
             if preferences.autoOpenQRCodeURL {
                 detectAndOpenURL(text: text)
             }
-            return text
+            return OCRResult(
+                text: text,
+                confidence: 1.0,
+                recognizedLanguages: [],
+                engineName: "QR Code Detector",
+                recognitionLevel: "exact"
+            )
         }
 
         logger.info("📝 No QR code detected, proceeding with text recognition")
@@ -181,6 +284,12 @@ public class TRex: NSObject {
             return await performVisionOCR(cgImage: cgImage)
         }
 
+        // If LLM OCR is enabled and available, use it
+        if preferences.llmEnabled && preferences.llmEnableOCR, let llmEngine = llmEngine {
+            logger.info("🛤️ OCR Path: Using LLM OCR engine")
+            return await performOCR(with: llmEngine, cgImage: cgImage, languages: languages)
+        }
+
         // If Tesseract is disabled, only use Vision
         if !preferences.tesseractEnabled {
             logger.info("🛤️ OCR Path: Using Apple Vision (Tesseract disabled)")
@@ -202,7 +311,7 @@ public class TRex: NSObject {
     }
     
     
-    private func performOCR(with engine: OCREngine, cgImage: CGImage, languages: [String]) async -> String? {
+    private func performOCR(with engine: OCREngine, cgImage: CGImage, languages: [String]) async -> OCRResult? {
         logger.info("🔧 performOCR called with engine: \(engine.name, privacy: .public)")
         do {
             // Use timeout utility for 5 second timeout
@@ -224,7 +333,7 @@ public class TRex: NSObject {
                 detectAndOpenURL(text: result.text)
             }
 
-            return result.text
+            return result
         } catch TimeoutError.timedOut {
             logger.error("⏱️ OCR timed out after 5 seconds, falling back to Vision")
             return await performVisionOCR(cgImage: cgImage)
@@ -235,20 +344,29 @@ public class TRex: NSObject {
         }
     }
 
-    private func performVisionOCR(cgImage: CGImage) async -> String? {
+    private func performVisionOCR(cgImage: CGImage) async -> OCRResult? {
         logger.info("🔧 performVisionOCR (legacy path) called")
         return await withCheckedContinuation { continuation in
-            detectText(in: cgImage) { result in
-                if let result = result {
-                    self.logger.info("✅ Legacy Vision OCR successful, result length: \(result.count, privacy: .public)")
+            detectText(in: cgImage) { text in
+                if let text = text {
+                    self.logger.info("✅ Legacy Vision OCR successful, result length: \(text.count, privacy: .public)")
+                    let result = OCRResult(
+                        text: text,
+                        confidence: 0.0, // Legacy path doesn't provide confidence
+                        recognizedLanguages: [self.preferences.recognitionLanguageCode],
+                        engineName: "Apple Vision (Legacy)",
+                        recognitionLevel: "accurate"
+                    )
+                    continuation.resume(returning: result)
                 } else {
                     self.logger.warning("⚠️ Legacy Vision OCR returned no text")
+                    continuation.resume(returning: nil)
                 }
-                continuation.resume(returning: result)
             }
         }
     }
 
+    @MainActor
     func processDetectedText(_ text: String) {
         showNotification(text: text)
 
@@ -405,7 +523,7 @@ public class TRex: NSObject {
 
 extension TRex {
     class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
-        static let shared = NotificationDelegate()
+        nonisolated(unsafe) static let shared = NotificationDelegate()
         
         override init() {
             super.init()
