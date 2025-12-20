@@ -51,7 +51,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-//        NSApp.openSettings()
+        if !flag {
+            NSApp.openSettings()
+            NSApp.activate(ignoringOtherApps: true)
+        }
         return true
     }
     
@@ -76,6 +79,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 }
             case "showpreferences":
                 NSApp.openSettings()
+                NSApp.activate(ignoringOtherApps: true)
             case "shortcut":
                 if let name = url.queryParameters?["name"] {
                     preferences.autoRunShortcut = name

@@ -92,7 +92,7 @@ class MenubarItem: NSObject {
 
     @objc func showPreferences() {
         NSApp.openSettings()
-        return
+        NSApp.activate(ignoringOtherApps: true)
     }
 }
 
