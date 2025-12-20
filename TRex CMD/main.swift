@@ -2,8 +2,6 @@ import ArgumentParser
 import Foundation
 import TRexCore
 
-let _trex = TRex()
-
 @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 struct trex: AsyncParsableCommand {
     static let configuration = CommandConfiguration(abstract: "Magic OCR for macOS")
@@ -18,18 +16,21 @@ struct trex: AsyncParsableCommand {
     var input = false
 
     func run() async throws {
+        let trexInstance = TRex()
+
         if clipboard {
-            await _trex.capture(automation ? .captureClipboardAndTriggerAutomation : .captureClipboard)
-            return
+            await trexInstance.capture(automation ? .captureClipboardAndTriggerAutomation : .captureClipboard)
+            Darwin.exit(0)
         }
 
         if input, let data = try? FileHandle.standardInput.readToEnd() {
-            try? data.write(to: URL(fileURLWithPath: _trex.screenShotFilePath))
-            await _trex.capture(automation ? .captureFromFileAndTriggerAutomation : .captureFromFile, imagePath: _trex.screenShotFilePath)
-            return
+            try? data.write(to: URL(fileURLWithPath: trexInstance.screenShotFilePath))
+            await trexInstance.capture(automation ? .captureFromFileAndTriggerAutomation : .captureFromFile, imagePath: trexInstance.screenShotFilePath)
+            Darwin.exit(0)
         }
 
-        await _trex.capture(automation ? .captureScreenAndTriggerAutomation : .captureScreen)
+        await trexInstance.capture(automation ? .captureScreenAndTriggerAutomation : .captureScreen)
+        Darwin.exit(0)
     }
 }
 

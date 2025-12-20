@@ -61,12 +61,18 @@ public class TRex: NSObject {
 
     public func capture(_ mode: InvocationMode, imagePath: String? = nil) async {
         currentInvocationMode = mode
-        
+
         guard let text = await getText(imagePath) else { return }
-        
-        // Process results back on main thread for UI updates
-        await MainActor.run {
+
+        let isCLI = Bundle.main.bundleIdentifier == "com.ameba.TRex.cli"
+        if isCLI {
+            // CLI doesn't need MainActor - process directly to avoid keeping run loop alive
             self.precessDetectedText(text)
+        } else {
+            // GUI app needs main thread for UI updates
+            await MainActor.run {
+                self.precessDetectedText(text)
+            }
         }
     }
 
