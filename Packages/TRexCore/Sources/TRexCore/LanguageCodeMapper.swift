@@ -36,6 +36,7 @@ public enum LanguageCodeMapper {
 
     /// Maps standard language codes (e.g., "en-US") to Tesseract language codes (e.g., "eng")
     public static func toTesseract(_ code: String) -> String {
+        let normalizedCode = code.replacingOccurrences(of: "_", with: "-")
         let mapping: [String: String] = [
             // Common languages with region codes
             "en-US": "eng", "en": "eng",
@@ -149,7 +150,7 @@ public enum LanguageCodeMapper {
             "yo": "yor"   // Yoruba
         ]
 
-        return mapping[code] ?? code
+        return mapping[normalizedCode] ?? normalizedCode
     }
     
     /// Maps Tesseract language codes (e.g., "eng") to standard language codes (e.g., "en-US")
