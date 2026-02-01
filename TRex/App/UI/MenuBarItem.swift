@@ -91,8 +91,7 @@ class MenubarItem: NSObject {
     }
 
     @objc func showPreferences() {
-        NSApp.openSettings()
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.showAndActivateSettings()
     }
 }
 

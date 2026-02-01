@@ -4,11 +4,41 @@
 import Foundation
 import PackageDescription
 
-private let tesseractCoreForceLoadPath = URL(fileURLWithPath: #filePath)
-    .deletingLastPathComponent()
-    .appendingPathComponent("../../../TesseractSwift/Binaries/TesseractCore.xcframework/macos-arm64_x86_64/TesseractCore.framework/TesseractCore")
-    .standardized
-    .path
+// MARK: - TesseractCore Force-Load Workaround
+//
+// This workaround is required for x86_64 (Intel Mac) support.
+//
+// Problem: The TesseractCore static library contains weak SIMD symbols that are not
+// automatically linked when building for x86_64. This causes runtime crashes with
+// "Symbol not found" errors on Intel Macs.
+//
+// Solution: Force-load the TesseractCore framework binary to ensure all symbols
+// (including weak ones) are included in the final binary.
+//
+// Requirements:
+// - TesseractSwift must be checked out at ../../../TesseractSwift relative to this package
+// - The xcframework must be pre-built at TesseractSwift/Binaries/TesseractCore.xcframework
+//
+// Long-term: This should be replaced with a proper SPM binary target or by fixing
+// the weak symbol linking in the TesseractSwift project.
+
+private let tesseractCoreRelativePath = "../../../TesseractSwift/Binaries/TesseractCore.xcframework/macos-arm64_x86_64/TesseractCore.framework/TesseractCore"
+
+private let tesseractCoreForceLoadPath: String = {
+    let path = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .appendingPathComponent(tesseractCoreRelativePath)
+        .standardized
+        .path
+
+    // Validate that the framework exists at build configuration time
+    if !FileManager.default.fileExists(atPath: path) {
+        print("⚠️ WARNING: TesseractCore not found at expected path: \(path)")
+        print("   x86_64 builds may fail. Ensure TesseractSwift is checked out correctly.")
+    }
+
+    return path
+}()
 
 let package = Package(
     name: "TRexCore",

@@ -2,6 +2,24 @@ import ArgumentParser
 import Foundation
 import TRexCore
 
+/// Errors that can occur during CLI execution
+enum CLIError: LocalizedError {
+    case stdinReadFailed
+    case stdinEmpty
+    case tempFileWriteFailed(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .stdinReadFailed:
+            return "Failed to read from standard input"
+        case .stdinEmpty:
+            return "No data received from standard input"
+        case .tempFileWriteFailed(let path):
+            return "Failed to write temporary file at \(path)"
+        }
+    }
+}
+
 @available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *)
 struct trex: AsyncParsableCommand {
     static let configuration = CommandConfiguration(abstract: "Magic OCR for macOS")
@@ -18,18 +36,31 @@ struct trex: AsyncParsableCommand {
     func run() async throws {
         let trexInstance = TRex()
 
+        let mode: InvocationMode
+        var imagePath: String?
+
         if clipboard {
-            await trexInstance.capture(automation ? .captureClipboardAndTriggerAutomation : .captureClipboard)
-            Darwin.exit(0)
+            mode = automation ? .captureClipboardAndTriggerAutomation : .captureClipboard
+        } else if input {
+            guard let data = try? FileHandle.standardInput.readToEnd() else {
+                throw CLIError.stdinReadFailed
+            }
+            guard !data.isEmpty else {
+                throw CLIError.stdinEmpty
+            }
+            let tempPath = trexInstance.screenShotFilePath
+            do {
+                try data.write(to: URL(fileURLWithPath: tempPath))
+            } catch {
+                throw CLIError.tempFileWriteFailed(tempPath)
+            }
+            mode = automation ? .captureFromFileAndTriggerAutomation : .captureFromFile
+            imagePath = tempPath
+        } else {
+            mode = automation ? .captureScreenAndTriggerAutomation : .captureScreen
         }
 
-        if input, let data = try? FileHandle.standardInput.readToEnd() {
-            try? data.write(to: URL(fileURLWithPath: trexInstance.screenShotFilePath))
-            await trexInstance.capture(automation ? .captureFromFileAndTriggerAutomation : .captureFromFile, imagePath: trexInstance.screenShotFilePath)
-            Darwin.exit(0)
-        }
-
-        await trexInstance.capture(automation ? .captureScreenAndTriggerAutomation : .captureScreen)
+        await trexInstance.capture(mode, imagePath: imagePath)
         Darwin.exit(0)
     }
 }

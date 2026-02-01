@@ -9,6 +9,58 @@
 /* Begin PBXBuildFile section */
 		3957B9C52646DAEF00A62506 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 3957B9C42646DAEF00A62506 /* README.md */; };
 		FA04A09F2E16C70900C6FCA2 /* TesseractSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */; };
+		FA1E99D12EF77006002A457E /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA3AEAAE2C9B8BCB0096CCA5 /* LaunchAtLogin.swift */; };
+		FA1E99D22EF77006002A457E /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE61B2E1F264A009D86D8 /* WelcomeView.swift */; };
+		FA1E99D32EF77006002A457E /* SetupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6022E1F264A009D86D8 /* SetupSection.swift */; };
+		FA1E99D42EF77006002A457E /* LanguageSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6132E1F264A009D86D8 /* LanguageSection.swift */; };
+		FA1E99D52EF77006002A457E /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6082E1F264A009D86D8 /* OnboardingViewModel.swift */; };
+		FA1E99D62EF77006002A457E /* Feature.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6002E1F264A009D86D8 /* Feature.swift */; };
+		FA1E99D72EF77006002A457E /* SettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6152E1F264A009D86D8 /* SettingsSection.swift */; };
+		FA1E99D82EF77006002A457E /* ModernTextFieldStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE60E2E1F264A009D86D8 /* ModernTextFieldStyle.swift */; };
+		FA1E99D92EF77006002A457E /* Color+Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE5FD2E1F264A009D86D8 /* Color+Brand.swift */; };
+		FA1E99DA2EF77006002A457E /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6182E1F264A009D86D8 /* SetupView.swift */; };
+		FA1E99DB2EF77006002A457E /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6172E1F264A009D86D8 /* OnboardingView.swift */; };
+		FA1E99DC2EF77006002A457E /* BrandBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE60C2E1F264A009D86D8 /* BrandBackground.swift */; };
+		FA1E99DD2EF77006002A457E /* TutorialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE61A2E1F264A009D86D8 /* TutorialView.swift */; };
+		FA1E99DE2EF77006002A457E /* PreferenceKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6062E1F264A009D86D8 /* PreferenceKeys.swift */; };
+		FA1E99DF2EF77006002A457E /* QLImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE63C2E1F2F5F009D86D8 /* QLImage.swift */; };
+		FA1E99E02EF77006002A457E /* Animation+App.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE5FB2E1F264A009D86D8 /* Animation+App.swift */; };
+		FA1E99E12EF77006002A457E /* SetupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6092E1F264A009D86D8 /* SetupViewModel.swift */; };
+		FA1E99E22EF77006002A457E /* PermissionsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6142E1F264A009D86D8 /* PermissionsSection.swift */; };
+		FA1E99E32EF77006002A457E /* NavigationFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6102E1F264A009D86D8 /* NavigationFooter.swift */; };
+		FA1E99E42EF77006002A457E /* OnboardingPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6012E1F264A009D86D8 /* OnboardingPage.swift */; };
+		FA1E99E52EF77006002A457E /* FeatureCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE60D2E1F264A009D86D8 /* FeatureCard.swift */; };
+		FA1E99E62EF77006002A457E /* AnyTransition+SlideFade.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE5FC2E1F264A009D86D8 /* AnyTransition+SlideFade.swift */; };
+		FA1E99E72EF77006002A457E /* SetupTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6112E1F264A009D86D8 /* SetupTab.swift */; };
+		FA1E99E82EF77006002A457E /* ModernToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE60F2E1F264A009D86D8 /* ModernToggleStyle.swift */; };
+		FA1E99E92EF77006002A457E /* View+OnboardingStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE5FE2E1F264A009D86D8 /* View+OnboardingStyle.swift */; };
+		FA1E99EA2EF77006002A457E /* ShortcutsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6FA272C4D3E00011ED6 /* ShortcutsSettingsView.swift */; };
+		FA1E99EB2EF77006002A457E /* PagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345E25DF05950087CCEA /* PagerView.swift */; };
+		FA1E99EC2EF77006002A457E /* TesseractSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */; };
+		FA1E99ED2EF77006002A457E /* AboutSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */; };
+		FA1E99EE2EF77006002A457E /* NotificationName+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */; };
+		FA1E99EF2EF77006002A457E /* Localizable.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFF12D02739E24600B3993B /* Localizable.swift */; };
+		FA1E99F02EF77006002A457E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F874725DCB3B200B1AF77 /* AppDelegate.swift */; };
+		FA1E99F12EF77006002A457E /* NSImage+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345B25DEFD500087CCEA /* NSImage+Extension.swift */; };
+		FA1E99F22EF77006002A457E /* MenuBarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F875A25DD59D000B1AF77 /* MenuBarItem.swift */; };
+		FA1E99F32EF77006002A457E /* KeyboardShortcuts+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F876125DD63AA00B1AF77 /* KeyboardShortcuts+Extension.swift */; };
+		FA1E99F42EF77006002A457E /* UniversalShowSettingsHack.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA8A957B2B67CA41008C0B7B /* UniversalShowSettingsHack.swift */; };
+		FA1E99F52EF77006002A457E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F874A25DCB50A00B1AF77 /* SettingsView.swift */; };
+		FA1E99F62EF77006002A457E /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F8272C4CEA00011ED6 /* GeneralSettingsView.swift */; };
+		FA1E99F72EF77006002A457E /* EnumPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA48BA2F25DDEBCE00E98F77 /* EnumPicker.swift */; };
+		FA1E99F82EF77006002A457E /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39627AC7F630034837F /* Utils.swift */; };
+		FA1E99F92EF77006002A457E /* AutomationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F6272C4CC700011ED6 /* AutomationSettingsView.swift */; };
+		FA1E99FA2EF77006002A457E /* TRexApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F873125DC243200B1AF77 /* TRexApp.swift */; };
+		FA1E99FB2EF77006002A457E /* CustomWordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39427AB74530034837F /* CustomWordsView.swift */; };
+		FA1E99FD2EF77006002A457E /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA1E99CB2EF77006002A457E /* TRexCore */; };
+		FA1E99FF2EF77006002A457E /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = FA1E99C92EF77006002A457E /* KeyboardShortcuts */; };
+		FA1E9A002EF77006002A457E /* TesseractSwift in Frameworks */ = {isa = PBXBuildFile; productRef = FA1E99CC2EF77006002A457E /* TesseractSwift */; };
+		FA1E9A022EF77006002A457E /* step2.gif in Resources */ = {isa = PBXBuildFile; fileRef = FA1EE63E2E1F32C0009D86D8 /* step2.gif */; };
+		FA1E9A032EF77006002A457E /* step3.gif in Resources */ = {isa = PBXBuildFile; fileRef = FA1EE63F2E1F32C0009D86D8 /* step3.gif */; };
+		FA1E9A042EF77006002A457E /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = FA2B835A25DEBF8200B23F25 /* Credits.rtf */; };
+		FA1E9A052EF77006002A457E /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FA5F873825DC243400B1AF77 /* Preview Assets.xcassets */; };
+		FA1E9A062EF77006002A457E /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 3957B9C42646DAEF00A62506 /* README.md */; };
+		FA1E9A072EF77006002A457E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FA5F873525DC243400B1AF77 /* Assets.xcassets */; };
 		FA1EE61D2E1F264A009D86D8 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE61B2E1F264A009D86D8 /* WelcomeView.swift */; };
 		FA1EE61E2E1F264A009D86D8 /* SetupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6022E1F264A009D86D8 /* SetupSection.swift */; };
 		FA1EE61F2E1F264A009D86D8 /* LanguageSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1EE6132E1F264A009D86D8 /* LanguageSection.swift */; };
@@ -66,6 +118,16 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		FA1E9A082EF77006002A457E /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FA3AEAA42C9B83F70096CCA5 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -91,6 +153,8 @@
 /* Begin PBXFileReference section */
 		3957B9C42646DAEF00A62506 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesseractSettingsView.swift; sourceTree = "<group>"; };
+		FA1E9A0D2EF77006002A457E /* TRex AppStore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TRex AppStore.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA1E9A0E2EF77006002A457E /* TRex copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "TRex copy-Info.plist"; path = "/Users/alex/Developer/github.com/amebalabs/TRex/TRex copy-Info.plist"; sourceTree = "<absolute>"; };
 		FA1EE5FB2E1F264A009D86D8 /* Animation+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Animation+App.swift"; sourceTree = "<group>"; };
 		FA1EE5FC2E1F264A009D86D8 /* AnyTransition+SlideFade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AnyTransition+SlideFade.swift"; sourceTree = "<group>"; };
 		FA1EE5FD2E1F264A009D86D8 /* Color+Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Brand.swift"; sourceTree = "<group>"; };
@@ -149,6 +213,16 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		FA1E99FC2EF77006002A457E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA1E99FD2EF77006002A457E /* TRexCore in Frameworks */,
+				FA1E99FF2EF77006002A457E /* KeyboardShortcuts in Frameworks */,
+				FA1E9A002EF77006002A457E /* TesseractSwift in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FA58E39C27AE1CFA0034837F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -327,6 +401,7 @@
 				FA58E3A027AE1CFA0034837F /* TRex CMD */,
 				FA5F872F25DC243200B1AF77 /* Products */,
 				FA58E3AA27AE1D8F0034837F /* Frameworks */,
+				FA1E9A0E2EF77006002A457E /* TRex copy-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -335,6 +410,7 @@
 			children = (
 				FA5F872E25DC243200B1AF77 /* TRex.app */,
 				FAEBC6CF2EBAC8230068BB97 /* trex */,
+				FA1E9A0D2EF77006002A457E /* TRex AppStore.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -406,6 +482,31 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		FA1E99C82EF77006002A457E /* TRex AppStore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA1E9A0A2EF77006002A457E /* Build configuration list for PBXNativeTarget "TRex AppStore" */;
+			buildPhases = (
+				FA1E99CF2EF77006002A457E /* Swift Format */,
+				FA1E99D02EF77006002A457E /* Sources */,
+				FA1E99FC2EF77006002A457E /* Frameworks */,
+				FA1E9A012EF77006002A457E /* Resources */,
+				FA1E9A082EF77006002A457E /* Embed Frameworks */,
+				FA1E9A092EF77006002A457E /* Version */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "TRex AppStore";
+			packageProductDependencies = (
+				FA1E99C92EF77006002A457E /* KeyboardShortcuts */,
+				FA1E99CB2EF77006002A457E /* TRexCore */,
+				FA1E99CC2EF77006002A457E /* TesseractSwift */,
+			);
+			productName = TRex;
+			productReference = FA1E9A0D2EF77006002A457E /* TRex AppStore.app */;
+			productType = "com.apple.product-type.application";
+		};
 		FA58E39E27AE1CFA0034837F /* trex */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FA58E3A527AE1CFA0034837F /* Build configuration list for PBXNativeTarget "trex" */;
@@ -493,11 +594,25 @@
 			targets = (
 				FA5F872D25DC243200B1AF77 /* TRex */,
 				FA58E39E27AE1CFA0034837F /* trex */,
+				FA1E99C82EF77006002A457E /* TRex AppStore */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		FA1E9A012EF77006002A457E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA1E9A022EF77006002A457E /* step2.gif in Resources */,
+				FA1E9A032EF77006002A457E /* step3.gif in Resources */,
+				FA1E9A042EF77006002A457E /* Credits.rtf in Resources */,
+				FA1E9A052EF77006002A457E /* Preview Assets.xcassets in Resources */,
+				FA1E9A062EF77006002A457E /* README.md in Resources */,
+				FA1E9A072EF77006002A457E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FA5F872C25DC243200B1AF77 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -515,6 +630,44 @@
 
 /* Begin PBXShellScriptBuildPhase section */
 		39CBA9AC25E160E800FDE12E /* Version */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = Version;
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n#buildNumber=$(git rev-list --count HEAD)\n#/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $buildNumber\" \"$PRODUCT_SETTINGS_PATH\"\n";
+		};
+		FA1E99CF2EF77006002A457E /* Swift Format */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Swift Format";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n#if which swiftformat >/dev/null; then\n # swiftformat --swiftversion \"5.7.0\" \"$SRCROOT\"\n#else\n # echo \"warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat\"\n#fi\n";
+		};
+		FA1E9A092EF77006002A457E /* Version */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -574,6 +727,56 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		FA1E99D02EF77006002A457E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA1E99D12EF77006002A457E /* LaunchAtLogin.swift in Sources */,
+				FA1E99D22EF77006002A457E /* WelcomeView.swift in Sources */,
+				FA1E99D32EF77006002A457E /* SetupSection.swift in Sources */,
+				FA1E99D42EF77006002A457E /* LanguageSection.swift in Sources */,
+				FA1E99D52EF77006002A457E /* OnboardingViewModel.swift in Sources */,
+				FA1E99D62EF77006002A457E /* Feature.swift in Sources */,
+				FA1E99D72EF77006002A457E /* SettingsSection.swift in Sources */,
+				FA1E99D82EF77006002A457E /* ModernTextFieldStyle.swift in Sources */,
+				FA1E99D92EF77006002A457E /* Color+Brand.swift in Sources */,
+				FA1E99DA2EF77006002A457E /* SetupView.swift in Sources */,
+				FA1E99DB2EF77006002A457E /* OnboardingView.swift in Sources */,
+				FA1E99DC2EF77006002A457E /* BrandBackground.swift in Sources */,
+				FA1E99DD2EF77006002A457E /* TutorialView.swift in Sources */,
+				FA1E99DE2EF77006002A457E /* PreferenceKeys.swift in Sources */,
+				FA1E99DF2EF77006002A457E /* QLImage.swift in Sources */,
+				FA1E99E02EF77006002A457E /* Animation+App.swift in Sources */,
+				FA1E99E12EF77006002A457E /* SetupViewModel.swift in Sources */,
+				FA1E99E22EF77006002A457E /* PermissionsSection.swift in Sources */,
+				FA1E99E32EF77006002A457E /* NavigationFooter.swift in Sources */,
+				FA1E99E42EF77006002A457E /* OnboardingPage.swift in Sources */,
+				FA1E99E52EF77006002A457E /* FeatureCard.swift in Sources */,
+				FA1E99E62EF77006002A457E /* AnyTransition+SlideFade.swift in Sources */,
+				FA1E99E72EF77006002A457E /* SetupTab.swift in Sources */,
+				FA1E99E82EF77006002A457E /* ModernToggleStyle.swift in Sources */,
+				FA1E99E92EF77006002A457E /* View+OnboardingStyle.swift in Sources */,
+				FA1E99EA2EF77006002A457E /* ShortcutsSettingsView.swift in Sources */,
+				FA1E99EB2EF77006002A457E /* PagerView.swift in Sources */,
+				FA1E99EC2EF77006002A457E /* TesseractSettingsView.swift in Sources */,
+				FA1E99ED2EF77006002A457E /* AboutSettingsView.swift in Sources */,
+				FA1E99EE2EF77006002A457E /* NotificationName+Extension.swift in Sources */,
+				FA1E99EF2EF77006002A457E /* Localizable.swift in Sources */,
+				FA1E99F02EF77006002A457E /* AppDelegate.swift in Sources */,
+				FA1E99F12EF77006002A457E /* NSImage+Extension.swift in Sources */,
+				FA1E99F22EF77006002A457E /* MenuBarItem.swift in Sources */,
+				FA1E99F32EF77006002A457E /* KeyboardShortcuts+Extension.swift in Sources */,
+				FA1E99F42EF77006002A457E /* UniversalShowSettingsHack.swift in Sources */,
+				FA1E99F52EF77006002A457E /* SettingsView.swift in Sources */,
+				FA1E99F62EF77006002A457E /* GeneralSettingsView.swift in Sources */,
+				FA1E99F72EF77006002A457E /* EnumPicker.swift in Sources */,
+				FA1E99F82EF77006002A457E /* Utils.swift in Sources */,
+				FA1E99F92EF77006002A457E /* AutomationSettingsView.swift in Sources */,
+				FA1E99FA2EF77006002A457E /* TRexApp.swift in Sources */,
+				FA1E99FB2EF77006002A457E /* CustomWordsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FA58E39B27AE1CFA0034837F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -635,6 +838,78 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		FA1E9A0B2EF77006002A457E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = "TRex/Resources/TRex-AppStore.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 149;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
+				DEVELOPMENT_TEAM = X93LWC49WV;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = TRex/Resources/info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MAC_APP_STORE = YES;
+				MARKETING_VERSION = 1.9.2;
+				MTL_ENABLE_DEBUG_INFO = "";
+				OTHER_LDFLAGS = "-lc++";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG MAC_APP_STORE";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FA1E9A0C2EF77006002A457E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = "TRex/Resources/TRex-AppStore.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 149;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "\"TRex/Preview Content\"";
+				DEVELOPMENT_TEAM = X93LWC49WV;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = TRex/Resources/info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MAC_APP_STORE = YES;
+				MARKETING_VERSION = 1.9.2;
+				OTHER_LDFLAGS = "-lc++";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = MAC_APP_STORE;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		FA58E3A327AE1CFA0034837F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -846,7 +1121,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = TRex/Resources/TRex.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -875,6 +1150,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		FA1E9A0A2EF77006002A457E /* Build configuration list for PBXNativeTarget "TRex AppStore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FA1E9A0B2EF77006002A457E /* Debug */,
+				FA1E9A0C2EF77006002A457E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		FA58E3A527AE1CFA0034837F /* Build configuration list for PBXNativeTarget "trex" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -905,6 +1189,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		FA1E99CA2EF77006002A457E /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.7.0;
+			};
+		};
 		FA1EE6432E254E54009D86D8 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sparkle-project/Sparkle";
@@ -932,6 +1224,19 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		FA1E99C92EF77006002A457E /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA1E99CA2EF77006002A457E /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+		FA1E99CB2EF77006002A457E /* TRexCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TRexCore;
+		};
+		FA1E99CC2EF77006002A457E /* TesseractSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TesseractSwift;
+		};
 		FA1EE6442E254E54009D86D8 /* Sparkle */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FA1EE6432E254E54009D86D8 /* XCRemoteSwiftPackageReference "Sparkle" */;

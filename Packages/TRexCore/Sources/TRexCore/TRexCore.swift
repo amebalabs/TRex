@@ -3,6 +3,17 @@ import SwiftUI
 import UserNotifications
 import Vision
 
+/// Bundle identifiers for TRex apps
+public enum BundleIdentifiers {
+    public static let gui = "com.ameba.TRex"
+    public static let cli = "com.ameba.TRex.cli"
+
+    /// Check if current process is the CLI tool
+    public static var isCLI: Bool {
+        Bundle.main.bundleIdentifier == cli
+    }
+}
+
 // Timeout error for async operations
 enum TimeoutError: Error {
     case timedOut
@@ -64,14 +75,13 @@ public class TRex: NSObject {
 
         guard let text = await getText(imagePath) else { return }
 
-        let isCLI = Bundle.main.bundleIdentifier == "com.ameba.TRex.cli"
-        if isCLI {
+        if BundleIdentifiers.isCLI {
             // CLI doesn't need MainActor - process directly to avoid keeping run loop alive
-            self.precessDetectedText(text)
+            self.processDetectedText(text)
         } else {
             // GUI app needs main thread for UI updates
             await MainActor.run {
-                self.precessDetectedText(text)
+                self.processDetectedText(text)
             }
         }
     }
@@ -241,7 +251,7 @@ public class TRex: NSObject {
         }
     }
 
-    func precessDetectedText(_ text: String) {
+    func processDetectedText(_ text: String) {
         showNotification(text: text)
 
         defer {
@@ -253,8 +263,8 @@ public class TRex: NSObject {
             let pasteBoard = NSPasteboard.general
             pasteBoard.clearContents()
             pasteBoard.setString(text, forType: .string)
-            // output to STDOUT for cli
-            if Bundle.main.bundleIdentifier == "com.ameba.TRex.cli" {
+            // output to STDOUT for CLI
+            if BundleIdentifiers.isCLI {
                 print(text)
             }
             return
@@ -415,7 +425,7 @@ extension TRex {
     
     func showNotification(text: String) {
         guard preferences.resultNotification else { return }
-        guard Bundle.main.bundleIdentifier != "com.ameba.TRex.cli" else { return }
+        guard !BundleIdentifiers.isCLI else { return }
         
         let notificationCenter = UNUserNotificationCenter.current()
         
