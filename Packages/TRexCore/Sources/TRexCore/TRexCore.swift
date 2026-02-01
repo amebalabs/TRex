@@ -4,12 +4,12 @@ import UserNotifications
 import Vision
 
 /// Bundle identifiers for TRex apps
-public enum BundleIdentifiers {
-    public static let gui = "com.ameba.TRex"
-    public static let cli = "com.ameba.TRex.cli"
+enum BundleIdentifiers {
+    static let gui = "com.ameba.TRex"
+    static let cli = "com.ameba.TRex.cli"
 
     /// Check if current process is the CLI tool
-    public static var isCLI: Bool {
+    static var isCLI: Bool {
         Bundle.main.bundleIdentifier == cli
     }
 }
@@ -70,20 +70,18 @@ public class TRex: NSObject {
             currentInvocationMode == .captureFromFileAndTriggerAutomation
     }
 
-    public func capture(_ mode: InvocationMode, imagePath: String? = nil) async {
+    /// Performs OCR capture and processes the result.
+    /// - Returns: `true` if text was successfully captured, `false` otherwise.
+    @discardableResult
+    public func capture(_ mode: InvocationMode, imagePath: String? = nil) async -> Bool {
         currentInvocationMode = mode
 
-        guard let text = await getText(imagePath) else { return }
+        guard let text = await getText(imagePath) else { return false }
 
-        if BundleIdentifiers.isCLI {
-            // CLI doesn't need MainActor - process directly to avoid keeping run loop alive
+        await MainActor.run {
             self.processDetectedText(text)
-        } else {
-            // GUI app needs main thread for UI updates
-            await MainActor.run {
-                self.processDetectedText(text)
-            }
         }
+        return true
     }
 
     private func getImage(_ imagePath: String? = nil) -> NSImage? {

@@ -56,7 +56,7 @@ The codebase follows a modular architecture:
 
 When modifying TRex:
 
-1. **Swift Version**: Use Swift 6.1+ features and syntax (strict concurrency enabled)
+1. **Swift Version**: Use Swift 5.x syntax (project uses swift-tools-version 5.9, aim for Swift Concurrency best practices)
 2. **UI Framework**: All UI should be built with SwiftUI
 3. **Minimum OS**: Ensure compatibility with macOS 14.0+ (Sonoma). Apple Intelligence features require macOS 15.1+
 4. **Dependencies**: Managed via Swift Package Manager (KeyboardShortcuts, LaunchAtLogin, AnyLanguageModel)

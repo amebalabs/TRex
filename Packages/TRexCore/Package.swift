@@ -24,21 +24,11 @@ import PackageDescription
 
 private let tesseractCoreRelativePath = "../../../TesseractSwift/Binaries/TesseractCore.xcframework/macos-arm64_x86_64/TesseractCore.framework/TesseractCore"
 
-private let tesseractCoreForceLoadPath: String = {
-    let path = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent()
-        .appendingPathComponent(tesseractCoreRelativePath)
-        .standardized
-        .path
-
-    // Validate that the framework exists at build configuration time
-    if !FileManager.default.fileExists(atPath: path) {
-        print("⚠️ WARNING: TesseractCore not found at expected path: \(path)")
-        print("   x86_64 builds may fail. Ensure TesseractSwift is checked out correctly.")
-    }
-
-    return path
-}()
+private let tesseractCoreForceLoadPath: String = URL(fileURLWithPath: #filePath)
+    .deletingLastPathComponent()
+    .appendingPathComponent(tesseractCoreRelativePath)
+    .standardized
+    .path
 
 let package = Package(
     name: "TRexCore",

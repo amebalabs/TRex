@@ -6,7 +6,7 @@ import TRexCore
 enum CLIError: LocalizedError {
     case stdinReadFailed
     case stdinEmpty
-    case tempFileWriteFailed(String)
+    case tempFileWriteFailed(path: String, underlying: Error)
 
     var errorDescription: String? {
         switch self {
@@ -14,8 +14,8 @@ enum CLIError: LocalizedError {
             return "Failed to read from standard input"
         case .stdinEmpty:
             return "No data received from standard input"
-        case .tempFileWriteFailed(let path):
-            return "Failed to write temporary file at \(path)"
+        case .tempFileWriteFailed(let path, let underlying):
+            return "Failed to write temporary file at \(path): \(underlying.localizedDescription)"
         }
     }
 }
@@ -52,7 +52,7 @@ struct trex: AsyncParsableCommand {
             do {
                 try data.write(to: URL(fileURLWithPath: tempPath))
             } catch {
-                throw CLIError.tempFileWriteFailed(tempPath)
+                throw CLIError.tempFileWriteFailed(path: tempPath, underlying: error)
             }
             mode = automation ? .captureFromFileAndTriggerAutomation : .captureFromFile
             imagePath = tempPath
@@ -60,8 +60,8 @@ struct trex: AsyncParsableCommand {
             mode = automation ? .captureScreenAndTriggerAutomation : .captureScreen
         }
 
-        await trexInstance.capture(mode, imagePath: imagePath)
-        Darwin.exit(0)
+        let success = await trexInstance.capture(mode, imagePath: imagePath)
+        Darwin.exit(success ? 0 : 1)
     }
 }
 

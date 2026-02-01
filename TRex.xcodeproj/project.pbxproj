@@ -154,7 +154,7 @@
 		3957B9C42646DAEF00A62506 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesseractSettingsView.swift; sourceTree = "<group>"; };
 		FA1E9A0D2EF77006002A457E /* TRex AppStore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TRex AppStore.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		FA1E9A0E2EF77006002A457E /* TRex copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "TRex copy-Info.plist"; path = "/Users/alex/Developer/github.com/amebalabs/TRex/TRex copy-Info.plist"; sourceTree = "<absolute>"; };
+
 		FA1EE5FB2E1F264A009D86D8 /* Animation+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Animation+App.swift"; sourceTree = "<group>"; };
 		FA1EE5FC2E1F264A009D86D8 /* AnyTransition+SlideFade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AnyTransition+SlideFade.swift"; sourceTree = "<group>"; };
 		FA1EE5FD2E1F264A009D86D8 /* Color+Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Brand.swift"; sourceTree = "<group>"; };
@@ -401,7 +401,6 @@
 				FA58E3A027AE1CFA0034837F /* TRex CMD */,
 				FA5F872F25DC243200B1AF77 /* Products */,
 				FA58E3AA27AE1D8F0034837F /* Frameworks */,
-				FA1E9A0E2EF77006002A457E /* TRex copy-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
