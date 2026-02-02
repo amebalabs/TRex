@@ -79,6 +79,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 Task {
                     await trex.capture(.captureClipboardAndTriggerAutomation)
                 }
+            case "capturemultiregion":
+                Task {
+                    await trex.capture(.captureMultiRegion)
+                }
+            case "capturemultiregionautomation":
+                Task {
+                    await trex.capture(.captureMultiRegionAndTriggerAutomation)
+                }
             case "showpreferences":
                 NSApp.showAndActivateSettings()
             case "shortcut":
@@ -110,6 +118,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         KeyboardShortcuts.onKeyUp(for: .captureClipboardAndTriggerAutomation) { [self] in
             Task {
                 await trex.capture(.captureClipboardAndTriggerAutomation)
+            }
+        }
+        KeyboardShortcuts.onKeyUp(for: .captureMultiRegion) { [self] in
+            Task {
+                await trex.capture(.captureMultiRegion)
+            }
+        }
+        KeyboardShortcuts.onKeyUp(for: .captureMultiRegionAndTriggerAutomation) { [self] in
+            Task {
+                await trex.capture(.captureMultiRegionAndTriggerAutomation)
             }
         }
     }

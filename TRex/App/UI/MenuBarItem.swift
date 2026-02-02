@@ -10,6 +10,7 @@ class MenubarItem: NSObject {
     var statusBarItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let statusBarmenu = NSMenu()
     let captureTextItem = NSMenuItem(title: "Capture", action: #selector(captureScreen), keyEquivalent: "")
+    let captureMultiRegionItem = NSMenuItem(title: "Capture Multi-Region", action: #selector(captureMultiRegion), keyEquivalent: "")
     let captureTextAndTriggerAutomationItem = NSMenuItem(title: "Capture & Run Automation", action: #selector(captureScreenAndTriggerAutomation), keyEquivalent: "")
     let captureFromClipboard = NSMenuItem(title: "Capture from Clipboard", action: #selector(captureClipboard), keyEquivalent: "")
     let ignoreLineBreaksItem = NSMenuItem(title: "Ignore Line Breaks", action: #selector(ignoreLineBreaks), keyEquivalent: "")
@@ -92,10 +93,11 @@ class MenubarItem: NSObject {
     }
 
     private func buildMenu() {
-        let menuItems = [captureTextItem, captureTextAndTriggerAutomationItem, captureFromClipboard, ignoreLineBreaksItem, outputFormatItem, preferencesItem, aboutItem, quitItem]
+        let menuItems = [captureTextItem, captureMultiRegionItem, captureTextAndTriggerAutomationItem, captureFromClipboard, ignoreLineBreaksItem, outputFormatItem, preferencesItem, aboutItem, quitItem]
         menuItems.forEach { $0.target = self }
 
         statusBarmenu.addItem(captureTextItem)
+        statusBarmenu.addItem(captureMultiRegionItem)
         statusBarmenu.addItem(captureTextAndTriggerAutomationItem)
         statusBarmenu.addItem(captureFromClipboard)
         statusBarmenu.addItem(ignoreLineBreaksItem)
@@ -122,6 +124,12 @@ class MenubarItem: NSObject {
     @objc func captureScreen() {
         Task {
             await trex.capture(.captureScreen)
+        }
+    }
+
+    @objc func captureMultiRegion() {
+        Task {
+            await trex.capture(.captureMultiRegion)
         }
     }
 
@@ -165,7 +173,8 @@ extension MenubarItem: NSMenuDelegate {
         
         if NSApp.currentEvent?.modifierFlags.contains(.option) == true {
             menu.cancelTracking()
-            if preferences.optionQuickAction == .captureFromFile || preferences.optionQuickAction == .captureFromFileAndTriggerAutomation {
+            let quickAction = preferences.optionQuickAction
+            if quickAction == .captureFromFile || quickAction == .captureFromFileAndTriggerAutomation {
                 let dialog = NSOpenPanel()
                 dialog.title = "Choose an image"
                 dialog.showsResizeIndicator = true
@@ -176,18 +185,19 @@ extension MenubarItem: NSMenuDelegate {
                 
                 if dialog.runModal() == .OK {
                     Task {
-                        await trex.capture(preferences.optionQuickAction, imagePath: dialog.url?.path(percentEncoded: false))
+                        await trex.capture(quickAction, imagePath: dialog.url?.path(percentEncoded: false))
                     }
                 }
                 return
             }
             Task {
-                await trex.capture(preferences.optionQuickAction)
+                await trex.capture(quickAction)
             }
             return
         }
         
         captureTextItem.setShortcut(for: .captureScreen)
+        captureMultiRegionItem.setShortcut(for: .captureMultiRegion)
         captureTextAndTriggerAutomationItem.setShortcut(for: .captureScreenAndTriggerAutomation)
         captureFromClipboard.setShortcut(for: .captureClipboard)
 
