@@ -52,7 +52,6 @@
 		FA1E99F92EF77006002A457E /* AutomationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F6272C4CC700011ED6 /* AutomationSettingsView.swift */; };
 		FA1E99FA2EF77006002A457E /* TRexApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5F873125DC243200B1AF77 /* TRexApp.swift */; };
 		FA1E99FB2EF77006002A457E /* CustomWordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39427AB74530034837F /* CustomWordsView.swift */; };
-		FA1E99FD2EF77006002A457E /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA1E99CB2EF77006002A457E /* TRexCore */; };
 		FA1E99FF2EF77006002A457E /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = FA1E99C92EF77006002A457E /* KeyboardShortcuts */; };
 		FA1E9A002EF77006002A457E /* TesseractSwift in Frameworks */ = {isa = PBXBuildFile; productRef = FA1E99CC2EF77006002A457E /* TesseractSwift */; };
 		FA1E9A022EF77006002A457E /* step2.gif in Resources */ = {isa = PBXBuildFile; fileRef = FA1EE63E2E1F32C0009D86D8 /* step2.gif */; };
@@ -89,8 +88,6 @@
 		FA1EE6422E1F32C0009D86D8 /* step3.gif in Resources */ = {isa = PBXBuildFile; fileRef = FA1EE63F2E1F32C0009D86D8 /* step3.gif */; };
 		FA1EE6452E254E54009D86D8 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = FA1EE6442E254E54009D86D8 /* Sparkle */; };
 		FA2B835B25DEBF8200B23F25 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = FA2B835A25DEBF8200B23F25 /* Credits.rtf */; };
-		FA3AEAA82C9B85710096CCA5 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA3AEAA72C9B85710096CCA5 /* TRexCore */; };
-		FA3AEAAA2C9B85790096CCA5 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA3AEAA92C9B85790096CCA5 /* TRexCore */; };
 		FA3AEAAF2C9B8BCB0096CCA5 /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA3AEAAE2C9B8BCB0096CCA5 /* LaunchAtLogin.swift */; };
 		FA48BA3025DDEBCE00E98F77 /* EnumPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA48BA2F25DDEBCE00E98F77 /* EnumPicker.swift */; };
 		FA58E39527AB74530034837F /* CustomWordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA58E39427AB74530034837F /* CustomWordsView.swift */; };
@@ -109,6 +106,9 @@
 		FA66345F25DF05950087CCEA /* PagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA66345E25DF05950087CCEA /* PagerView.swift */; };
 		FA6648712E18469400EF497A /* TesseractSwift in Frameworks */ = {isa = PBXBuildFile; productRef = FA6648702E18469400EF497A /* TesseractSwift */; };
 		FA8A957C2B67CA41008C0B7B /* UniversalShowSettingsHack.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA8A957B2B67CA41008C0B7B /* UniversalShowSettingsHack.swift */; };
+		FAC3F8D02F2FDEFD006C4A56 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FAC3F8CF2F2FDEFD006C4A56 /* TRexCore */; };
+		FAC3F8D22F2FDF03006C4A56 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FAC3F8D12F2FDF03006C4A56 /* TRexCore */; };
+		FAC3F8D42F2FDF0B006C4A56 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FAC3F8D32F2FDF0B006C4A56 /* TRexCore */; };
 		FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */; };
 		FAFAC6F5272C4CAE00011ED6 /* AboutSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */; };
 		FAFAC6F7272C4CC700011ED6 /* AutomationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F6272C4CC700011ED6 /* AutomationSettingsView.swift */; };
@@ -154,7 +154,6 @@
 		3957B9C42646DAEF00A62506 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesseractSettingsView.swift; sourceTree = "<group>"; };
 		FA1E9A0D2EF77006002A457E /* TRex AppStore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TRex AppStore.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-
 		FA1EE5FB2E1F264A009D86D8 /* Animation+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Animation+App.swift"; sourceTree = "<group>"; };
 		FA1EE5FC2E1F264A009D86D8 /* AnyTransition+SlideFade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AnyTransition+SlideFade.swift"; sourceTree = "<group>"; };
 		FA1EE5FD2E1F264A009D86D8 /* Color+Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Brand.swift"; sourceTree = "<group>"; };
@@ -217,8 +216,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FA1E99FD2EF77006002A457E /* TRexCore in Frameworks */,
 				FA1E99FF2EF77006002A457E /* KeyboardShortcuts in Frameworks */,
+				FAC3F8D42F2FDF0B006C4A56 /* TRexCore in Frameworks */,
 				FA1E9A002EF77006002A457E /* TesseractSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -227,7 +226,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FA3AEAAA2C9B85790096CCA5 /* TRexCore in Frameworks */,
+				FAC3F8D22F2FDF03006C4A56 /* TRexCore in Frameworks */,
 				FA58E3E127AE31DF0034837F /* ArgumentParser in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -236,7 +235,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FA3AEAA82C9B85710096CCA5 /* TRexCore in Frameworks */,
+				FAC3F8D02F2FDEFD006C4A56 /* TRexCore in Frameworks */,
 				FA1EE6452E254E54009D86D8 /* Sparkle in Frameworks */,
 				FA5F875F25DD637300B1AF77 /* KeyboardShortcuts in Frameworks */,
 				FA6648712E18469400EF497A /* TesseractSwift in Frameworks */,
@@ -499,8 +498,8 @@
 			name = "TRex AppStore";
 			packageProductDependencies = (
 				FA1E99C92EF77006002A457E /* KeyboardShortcuts */,
-				FA1E99CB2EF77006002A457E /* TRexCore */,
 				FA1E99CC2EF77006002A457E /* TesseractSwift */,
+				FAC3F8D32F2FDF0B006C4A56 /* TRexCore */,
 			);
 			productName = TRex;
 			productReference = FA1E9A0D2EF77006002A457E /* TRex AppStore.app */;
@@ -522,7 +521,7 @@
 			name = trex;
 			packageProductDependencies = (
 				FA58E3E027AE31DF0034837F /* ArgumentParser */,
-				FA3AEAA92C9B85790096CCA5 /* TRexCore */,
+				FAC3F8D12F2FDF03006C4A56 /* TRexCore */,
 			);
 			productName = "TRex CMD";
 			productReference = FAEBC6CF2EBAC8230068BB97 /* trex */;
@@ -546,9 +545,9 @@
 			name = TRex;
 			packageProductDependencies = (
 				FA5F875E25DD637300B1AF77 /* KeyboardShortcuts */,
-				FA3AEAA72C9B85710096CCA5 /* TRexCore */,
 				FA6648702E18469400EF497A /* TesseractSwift */,
 				FA1EE6442E254E54009D86D8 /* Sparkle */,
+				FAC3F8CF2F2FDEFD006C4A56 /* TRexCore */,
 			);
 			productName = TRex;
 			productReference = FA5F872E25DC243200B1AF77 /* TRex.app */;
@@ -1228,10 +1227,6 @@
 			package = FA1E99CA2EF77006002A457E /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
 			productName = KeyboardShortcuts;
 		};
-		FA1E99CB2EF77006002A457E /* TRexCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = TRexCore;
-		};
 		FA1E99CC2EF77006002A457E /* TesseractSwift */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = TesseractSwift;
@@ -1240,14 +1235,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA1EE6432E254E54009D86D8 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
-		};
-		FA3AEAA72C9B85710096CCA5 /* TRexCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = TRexCore;
-		};
-		FA3AEAA92C9B85790096CCA5 /* TRexCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = TRexCore;
 		};
 		FA58E3E027AE31DF0034837F /* ArgumentParser */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1262,6 +1249,18 @@
 		FA6648702E18469400EF497A /* TesseractSwift */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = TesseractSwift;
+		};
+		FAC3F8CF2F2FDEFD006C4A56 /* TRexCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TRexCore;
+		};
+		FAC3F8D12F2FDF03006C4A56 /* TRexCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TRexCore;
+		};
+		FAC3F8D32F2FDF0B006C4A56 /* TRexCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TRexCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
