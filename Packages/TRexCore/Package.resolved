@@ -1,5 +1,5 @@
 {
-  "originHash" : "490637db7c6cca3ff0d50eb12d5ea6576f760c9c00b269b6b59407aec2aeb034",
+  "originHash" : "51e2f886dd90c6e6fba13cb57244bcd18e1069f5194e12e0df0cc5780b73d426",
   "pins" : [
     {
       "identity" : "anylanguagemodel",
@@ -29,12 +29,39 @@
       }
     },
     {
+      "identity" : "keyboardshortcuts",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sindresorhus/KeyboardShortcuts",
+      "state" : {
+        "revision" : "f09de800a4f05d66fe2a9924c81a932454a9f39a",
+        "version" : "0.7.1"
+      }
+    },
+    {
       "identity" : "partialjsondecoder",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mattt/PartialJSONDecoder.git",
       "state" : {
         "revision" : "e4d389e6bcc6771bb988d1a8a17695d8bfa97172",
         "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "sparkle",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sparkle-project/Sparkle",
+      "state" : {
+        "revision" : "06beff60e3b609a485290e4d5d2d1e2eedb1e55d",
+        "version" : "2.7.3"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser.git",
+      "state" : {
+        "revision" : "309a47b2b1d9b5e991f36961c983ecec72275be3",
+        "version" : "1.6.1"
       }
     },
     {

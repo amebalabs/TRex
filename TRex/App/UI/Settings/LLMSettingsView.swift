@@ -6,13 +6,15 @@ struct LLMSettingsView: View {
     @State private var showOCRAPIKeyInfo = false
     @State private var showPostProcessAPIKeyInfo = false
 
+    /// Base 200pt covers two collapsed setting cards with padding.
+    /// Each expanded card adds ~300pt for provider config, prompt editor, and options.
     private var contentHeight: CGFloat {
-        var height: CGFloat = 170 // Base height for two collapsed cards + padding
+        var height: CGFloat = 200
         if preferences.llmEnableOCR {
-            height += 330
+            height += 300
         }
         if preferences.llmEnablePostProcessing {
-            height += 280
+            height += 300
         }
         return height
     }

@@ -41,6 +41,8 @@ public class Preferences: ObservableObject {
         case LLMOCRPrompt
         case LLMPostProcessPrompt
         case LLMFallbackToBuiltIn
+        case TableDetectionEnabled
+        case TableOutputFormat
     }
 
     public enum MenuBarIcon: String, CaseIterable {
@@ -283,6 +285,18 @@ public class Preferences: ObservableObject {
         }
     }
 
+    @Published public var tableDetectionEnabled: Bool {
+        didSet {
+            Preferences.setValue(value: tableDetectionEnabled, key: .TableDetectionEnabled)
+        }
+    }
+
+    @Published public var tableOutputFormat: TableOutputFormat {
+        didSet {
+            Preferences.setValue(value: tableOutputFormat.rawValue, key: .TableOutputFormat)
+        }
+    }
+
     init() {
         needsOnboarding = Preferences.getValue(key: .NeedsOnboarding) as? Bool ?? true
         captureSound = Preferences.getValue(key: .CaptureSound) as? Bool ?? true
@@ -362,6 +376,13 @@ public class Preferences: ObservableObject {
         llmOCRPrompt = Preferences.getValue(key: .LLMOCRPrompt) as? String ?? "Extract all visible text from this image. Preserve the layout and formatting as much as possible. Return only the extracted text without any additional commentary."
         llmPostProcessPrompt = Preferences.getValue(key: .LLMPostProcessPrompt) as? String ?? "You are given OCR output that may contain errors. Please:\n1. Correct any obvious spelling or recognition errors\n2. Fix formatting issues (spacing, line breaks)\n3. Preserve the original structure and meaning\n4. Return only the corrected text without explanations\n\nOCR Text:\n{text}"
         llmFallbackToBuiltIn = Preferences.getValue(key: .LLMFallbackToBuiltIn) as? Bool ?? true
+        tableDetectionEnabled = Preferences.getValue(key: .TableDetectionEnabled) as? Bool ?? true
+        if let rawFormat = Preferences.getValue(key: .TableOutputFormat) as? String,
+           let format = TableOutputFormat(rawValue: rawFormat) {
+            tableOutputFormat = format
+        } else {
+            tableOutputFormat = .markdown
+        }
     }
 
     static func removeAll() {

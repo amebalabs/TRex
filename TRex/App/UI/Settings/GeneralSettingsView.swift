@@ -96,6 +96,16 @@ struct GeneralSettingsView: View {
                 }
             }
             
+            Section(header: Text("Table Detection")) {
+                Picker("Table format:", selection: $preferences.tableOutputFormat) {
+                    ForEach(TableOutputFormat.allCases, id: \.self) { format in
+                        Text(format.rawValue).tag(format)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(maxWidth: 250, alignment: .leading)
+            }
+
             Spacer()
 
             #if !MAC_APP_STORE
@@ -120,16 +130,27 @@ struct GeneralSettingsView: View {
             #endif
         }
         .padding(20)
-        #if MAC_APP_STORE
-        .frame(width: 500, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 220 : 280) : (preferences.tesseractEnabled ? 140 : 200))
-        #else
-        .frame(width: 500, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 300 : 360) : (preferences.tesseractEnabled ? 220 : 280))
-        #endif
+        .frame(width: 500, height: settingsHeight)
         .onAppear {
             loadVisionLanguages()
         }
     }
     
+    /// Height varies based on visible sections:
+    /// - Tesseract enabled hides the language picker section, reducing height by ~60pt.
+    /// - Menu bar icon shown adds the icon grid row (~80pt).
+    /// - Non-MAS builds add CLI install + updates sections (~80pt).
+    private var settingsHeight: CGFloat {
+        #if MAC_APP_STORE
+        let base: CGFloat = preferences.tesseractEnabled ? 210 : 270
+        let withIcon: CGFloat = preferences.tesseractEnabled ? 290 : 350
+        #else
+        let base: CGFloat = preferences.tesseractEnabled ? 290 : 350
+        let withIcon: CGFloat = preferences.tesseractEnabled ? 370 : 430
+        #endif
+        return preferences.showMenuBarIcon ? withIcon : base
+    }
+
     private func loadVisionLanguages() {
         let manager = LanguageManager.shared
         let allLanguages = manager.availableLanguages()

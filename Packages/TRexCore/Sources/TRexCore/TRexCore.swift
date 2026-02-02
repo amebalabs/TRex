@@ -38,6 +38,19 @@ func withTimeout<T: Sendable>(seconds: TimeInterval, operation: @escaping @Senda
     }
 }
 
+/// Observable state for LLM processing activity, used to drive menu bar animations.
+/// All access is confined to the main actor to ensure thread-safe UI updates.
+@MainActor
+public final class LLMProcessingState: ObservableObject {
+    @Published public var isProcessing: Bool = false
+
+    nonisolated public init() {}
+
+    public func set(_ value: Bool) {
+        isProcessing = value
+    }
+}
+
 public class TRex: NSObject {
     public nonisolated(unsafe) static let shared = TRex()
     let preferences = Preferences.shared
@@ -45,6 +58,7 @@ public class TRex: NSObject {
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.ameba.TRex", category: "TRexCore")
     private var llmEngine: LLMOCREngine?
     private var llmPostProcessor: LLMPostProcessor?
+    public let llmProcessingState = LLMProcessingState()
 
     var task: Process?
     let sceenCaptureURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
@@ -163,17 +177,112 @@ public class TRex: NSObject {
         )
     }
 
+    // MARK: - Table Detection
+
+    private static let tableDetectionPrompt = """
+        Analyze the following OCR text for tabular data. If you find tables:
+        - Extract the table structure (headers and rows)
+        - Format each table in {format} format
+        - Preserve all non-table text in its original position
+        - Output the full text with tables replaced by their formatted version
+        - If no table is found, return the original text unchanged
+
+        OCR Text:
+        {text}
+        """
+
+    /// Detect tables in the captured content and format them.
+    /// Detect tables in the captured content and format them.
+    /// Returns combined text with formatted tables, or nil if no tables were detected.
+    /// Tries Vision document recognition first (macOS 26+), then falls back to LLM.
+    private func detectAndFormatTables(ocrText: String, capturedImage: CGImage?) async -> String? {
+        let format = preferences.tableOutputFormat
+
+        if #available(macOS 26, *), let cgImage = capturedImage {
+            if let result = await detectTablesViaVision(in: cgImage, format: format) {
+                return result
+            }
+        }
+
+        return await detectTablesViaLLM(ocrText: ocrText, format: format)
+    }
+
+    /// Use Vision's RecognizeDocumentsRequest (macOS 26+) for structural table detection.
+    @available(macOS 26, *)
+    private func detectTablesViaVision(in cgImage: CGImage, format: TableOutputFormat) async -> String? {
+        logger.info("📊 Using Vision RecognizeDocumentsRequest for table detection")
+        do {
+            let visionEngine = VisionOCREngine()
+            guard let result = try await visionEngine.recognizeDocument(in: cgImage),
+                  !result.tables.isEmpty else {
+                return nil
+            }
+
+            let formattedTables = result.tables.map { $0.formatted(as: format) }
+                .joined(separator: "\n\n")
+
+            // plainText is already filtered to exclude text inside tables
+            // (using bounding region overlap in recognizeDocument).
+            // Note: relative ordering between text and tables is not preserved;
+            // plain text appears first, followed by all formatted tables.
+            var parts: [String] = []
+            if !result.plainText.isEmpty {
+                parts.append(result.plainText)
+            }
+            parts.append(formattedTables)
+            return parts.joined(separator: "\n\n")
+        } catch {
+            logger.error("📊 Vision document recognition failed: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+    }
+
+    /// Fallback: use LLM post-processing with a table detection prompt.
+    /// Returns nil if LLM is not configured or if no tables were detected.
+    private func detectTablesViaLLM(ocrText: String, format: TableOutputFormat) async -> String? {
+        guard preferences.llmEnablePostProcessing, let postProcessor = llmPostProcessor else {
+            return nil
+        }
+
+        logger.info("📊 Using LLM for table detection (Vision unavailable fallback)")
+        let processingState = llmProcessingState
+        await processingState.set(true)
+        let prompt = Self.tableDetectionPrompt
+            .replacingOccurrences(of: "{format}", with: format.rawValue)
+            .replacingOccurrences(of: "{text}", with: ocrText)
+        let result = await postProcessor.processSilently(ocrText, prompt: prompt)
+        await processingState.set(false)
+
+        // Only return if the LLM actually modified the text (i.e. found tables)
+        guard result != ocrText else { return nil }
+        return result
+    }
+
     public func capture(_ mode: InvocationMode, imagePath: String? = nil) async {
         currentInvocationMode = mode
 
         guard let ocrResult = await getText(imagePath) else { return }
         var text = ocrResult.text
 
-        // Apply LLM post-processing if enabled
+        // Apply table detection if enabled
+        if preferences.tableDetectionEnabled {
+            logger.info("📊 Table detection enabled, analyzing for tables...")
+            if let tableText = await detectAndFormatTables(ocrText: ocrResult.text, capturedImage: ocrResult.sourceImage) {
+                text = tableText
+                logger.info("✅ Table detection complete, using formatted output")
+            } else {
+                logger.info("📊 No tables detected, using plain OCR text")
+            }
+        }
+
+        // Apply LLM post-processing if enabled (runs after table detection)
         if preferences.llmEnablePostProcessing, let postProcessor = llmPostProcessor {
             logger.info("📝 Applying LLM post-processing...")
+            let processingState = llmProcessingState
+            await processingState.set(true)
             let metadata = ocrResult.contextDescription()
             text = await postProcessor.processSilently(text, metadata: metadata)
+            await processingState.set(false)
             logger.info("✅ Post-processing complete")
         }
 
@@ -254,7 +363,8 @@ public class TRex: NSObject {
                 confidence: 1.0,
                 recognizedLanguages: [],
                 engineName: "QR Code Detector",
-                recognitionLevel: "exact"
+                recognitionLevel: "exact",
+                sourceImage: cgImage
             )
         }
 
@@ -287,7 +397,11 @@ public class TRex: NSObject {
         // If LLM OCR is enabled and available, use it
         if preferences.llmEnabled && preferences.llmEnableOCR, let llmEngine = llmEngine {
             logger.info("🛤️ OCR Path: Using LLM OCR engine")
-            return await performOCR(with: llmEngine, cgImage: cgImage, languages: languages)
+            let processingState = llmProcessingState
+            await processingState.set(true)
+            let result = await performOCR(with: llmEngine, cgImage: cgImage, languages: languages)
+            await processingState.set(false)
+            return result
         }
 
         // If Tesseract is disabled, only use Vision
@@ -315,7 +429,7 @@ public class TRex: NSObject {
         logger.info("🔧 performOCR called with engine: \(engine.name, privacy: .public)")
         do {
             // Use timeout utility for 5 second timeout
-            let result = try await withTimeout(seconds: 5.0) {
+            var result = try await withTimeout(seconds: 5.0) {
                 try await engine.recognizeText(
                     in: cgImage,
                     languages: languages,
@@ -327,6 +441,16 @@ public class TRex: NSObject {
             logger.info("  → Result length: \(result.text.count, privacy: .public) characters")
             logger.info("  → Confidence: \(String(format: "%.2f", result.confidence), privacy: .public)")
             logger.info("  → Recognized languages: \(result.recognizedLanguages.joined(separator: ", "), privacy: .public)")
+
+            // Attach source image for downstream processing (e.g. table detection)
+            result = OCRResult(
+                text: result.text,
+                confidence: result.confidence,
+                recognizedLanguages: result.recognizedLanguages,
+                engineName: result.engineName,
+                recognitionLevel: result.recognitionLevel,
+                sourceImage: cgImage
+            )
 
             // Handle URL opening if needed
             if preferences.autoOpenCapturedURL {
@@ -355,7 +479,8 @@ public class TRex: NSObject {
                         confidence: 0.0, // Legacy path doesn't provide confidence
                         recognizedLanguages: [self.preferences.recognitionLanguageCode],
                         engineName: "Apple Vision (Legacy)",
-                        recognitionLevel: "accurate"
+                        recognitionLevel: "accurate",
+                        sourceImage: cgImage
                     )
                     continuation.resume(returning: result)
                 } else {

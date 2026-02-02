@@ -21,19 +21,23 @@ public struct OCRResult: Sendable {
     public let recognizedLanguages: [String]
     public let engineName: String?
     public let recognitionLevel: String?
+    /// The source image used for OCR, retained for downstream processing (e.g. table detection).
+    public let sourceImage: CGImage?
 
     public init(
         text: String,
         confidence: Float,
         recognizedLanguages: [String],
         engineName: String? = nil,
-        recognitionLevel: String? = nil
+        recognitionLevel: String? = nil,
+        sourceImage: CGImage? = nil
     ) {
         self.text = text
         self.confidence = confidence
         self.recognizedLanguages = recognizedLanguages
         self.engineName = engineName
         self.recognitionLevel = recognitionLevel
+        self.sourceImage = sourceImage
     }
 
     /// Create a contextualized description of this OCR result for LLM processing
@@ -276,6 +280,118 @@ public final class VisionOCREngine: OCREngine {
     
     public func recognizeText(in image: CGImage, recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult {
         return try await recognizeText(in: image, languages: ["en-US"], recognitionLevel: recognitionLevel)
+    }
+
+    // MARK: - Document Recognition (macOS 26+)
+
+    @available(macOS 26, *)
+    public func recognizeDocument(in image: CGImage) async throws -> DocumentResult? {
+        Self.logger.info("📄 VisionOCREngine.recognizeDocument called")
+        Self.logger.info("  → Image size: \(image.width, privacy: .public)x\(image.height, privacy: .public)")
+
+        let request = RecognizeDocumentsRequest()
+        let observations = try await request.perform(on: image)
+
+        var tables: [DetectedTable] = []
+        var plainTextParts: [String] = []
+
+        for observation in observations {
+            let doc = observation.document
+
+            // Collect table bounding boxes to filter overlapping paragraphs
+            var tableBoundingBoxes: [NormalizedRect] = []
+            for table in doc.tables {
+                let detectedTable = extractTable(from: table)
+                // Skip empty tables (no rows at all)
+                guard detectedTable.headers != nil || !detectedTable.rows.isEmpty else { continue }
+                tables.append(detectedTable)
+                if let bbox = boundingBox(for: table) {
+                    tableBoundingBoxes.append(bbox)
+                }
+            }
+
+            // Extract plain text only from paragraphs that don't overlap with tables
+            for paragraph in doc.paragraphs {
+                guard let paraBBox = boundingBox(for: paragraph) else { continue }
+                let overlapsTable = tableBoundingBoxes.contains { tableBBox in
+                    bboxOverlaps(paraBBox, tableBBox)
+                }
+                if !overlapsTable {
+                    plainTextParts.append(paragraph.transcript)
+                }
+            }
+        }
+
+        let plainText = plainTextParts.joined(separator: "\n")
+        Self.logger.info("📄 Document recognition complete: \(tables.count, privacy: .public) tables, \(plainText.count, privacy: .public) chars plain text")
+
+        return DocumentResult(tables: tables, plainText: plainText)
+    }
+
+    /// Compute a NormalizedRect enclosing all the given bounding boxes.
+    /// Returns nil if the array is empty (no geometry available).
+    /// All coordinates are in Vision's normalized coordinate space.
+    @available(macOS 26, *)
+    private func enclosingRect(of boxes: [NormalizedRect]) -> NormalizedRect? {
+        guard !boxes.isEmpty else { return nil }
+        var minX: Double = .greatestFiniteMagnitude
+        var minY: Double = .greatestFiniteMagnitude
+        var maxX: Double = -.greatestFiniteMagnitude
+        var maxY: Double = -.greatestFiniteMagnitude
+        for box in boxes {
+            minX = min(minX, box.origin.x)
+            minY = min(minY, box.origin.y)
+            maxX = max(maxX, box.origin.x + box.width)
+            maxY = max(maxY, box.origin.y + box.height)
+        }
+        return NormalizedRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+    }
+
+    @available(macOS 26, *)
+    private func boundingBox(for table: DocumentObservation.Container.Table) -> NormalizedRect? {
+        let lineBoxes = table.rows.flatMap { row in
+            row.flatMap { cell in cell.content.text.lines.map(\.boundingBox) }
+        }
+        return enclosingRect(of: lineBoxes)
+    }
+
+    @available(macOS 26, *)
+    private func boundingBox(for paragraph: DocumentObservation.Container.Text) -> NormalizedRect? {
+        return enclosingRect(of: paragraph.lines.map(\.boundingBox))
+    }
+
+    /// Check if two normalized rects overlap
+    @available(macOS 26, *)
+    private func bboxOverlaps(_ a: NormalizedRect, _ b: NormalizedRect) -> Bool {
+        let aMaxX = a.origin.x + a.width
+        let aMaxY = a.origin.y + a.height
+        let bMaxX = b.origin.x + b.width
+        let bMaxY = b.origin.y + b.height
+        return a.origin.x < bMaxX && aMaxX > b.origin.x &&
+               a.origin.y < bMaxY && aMaxY > b.origin.y
+    }
+
+    @available(macOS 26, *)
+    private func extractTable(from table: DocumentObservation.Container.Table) -> DetectedTable {
+        // Use rows property which gives [[Table.Cell]]
+        var allRows: [[String]] = []
+        for row in table.rows {
+            let rowCells = row.map { $0.content.text.transcript }
+            allRows.append(rowCells)
+        }
+
+        // Treat the first row as headers (heuristic: no explicit header API)
+        let headers: [String]?
+        let dataRows: [[String]]
+        if allRows.count > 1 {
+            headers = allRows.first
+            dataRows = Array(allRows.dropFirst())
+        } else {
+            headers = nil
+            dataRows = allRows
+        }
+
+        return DetectedTable(headers: headers, rows: dataRows)
     }
 
     // MARK: - Image Enhancement

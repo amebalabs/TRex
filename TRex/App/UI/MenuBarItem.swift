@@ -13,11 +13,14 @@ class MenubarItem: NSObject {
     let captureTextAndTriggerAutomationItem = NSMenuItem(title: "Capture & Run Automation", action: #selector(captureScreenAndTriggerAutomation), keyEquivalent: "")
     let captureFromClipboard = NSMenuItem(title: "Capture from Clipboard", action: #selector(captureClipboard), keyEquivalent: "")
     let ignoreLineBreaksItem = NSMenuItem(title: "Ignore Line Breaks", action: #selector(ignoreLineBreaks), keyEquivalent: "")
+    let outputFormatItem = NSMenuItem(title: "Table Output Format", action: nil, keyEquivalent: "")
     let preferencesItem = NSMenuItem(title: "Settings...", action: #selector(showPreferences), keyEquivalent: ",")
     let quitItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
     let aboutItem = NSMenuItem(title: "About TRex", action: #selector(showAbout), keyEquivalent: "")
 
     var cancellable: AnyCancellable?
+    var llmProcessingCancellable: AnyCancellable?
+    private var pulseAnimation: CFRunLoopTimer?
     private lazy var workQueue: OperationQueue = {
         let providerQueue = OperationQueue()
         providerQueue.qualityOfService = .userInitiated
@@ -41,21 +44,77 @@ class MenubarItem: NSObject {
             image.isTemplate = true
             self?.statusBarItem.button?.image = image
         }
+
+        // LLMProcessingState is @MainActor; subscribe from main actor context
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            self.llmProcessingCancellable = trex.llmProcessingState.$isProcessing
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] isProcessing in
+                    if isProcessing {
+                        self?.startPulse()
+                    } else {
+                        self?.stopPulse()
+                    }
+                }
+        }
+    }
+
+    private func startPulse() {
+        guard pulseAnimation == nil, let button = statusBarItem.button else { return }
+        let minAlpha: CGFloat = 0.3
+        let maxAlpha: CGFloat = 1.0
+        let step: CGFloat = 0.05
+        var fadingOut = true
+        let timer = CFRunLoopTimerCreateWithHandler(kCFAllocatorDefault, CFAbsoluteTimeGetCurrent(), 0.05, 0, 0) { _ in
+            if fadingOut {
+                button.alphaValue = max(minAlpha, button.alphaValue - step)
+                if button.alphaValue <= minAlpha {
+                    fadingOut = false
+                }
+            } else {
+                button.alphaValue = min(maxAlpha, button.alphaValue + step)
+                if button.alphaValue >= maxAlpha {
+                    fadingOut = true
+                }
+            }
+        }
+        CFRunLoopAddTimer(CFRunLoopGetMain(), timer, .commonModes)
+        pulseAnimation = timer
+    }
+
+    private func stopPulse() {
+        if let timer = pulseAnimation {
+            CFRunLoopTimerInvalidate(timer)
+            pulseAnimation = nil
+        }
+        statusBarItem.button?.alphaValue = 1.0
     }
 
     private func buildMenu() {
-        let menuItems = [captureTextItem, captureTextAndTriggerAutomationItem, captureFromClipboard, ignoreLineBreaksItem, preferencesItem, aboutItem, quitItem]
+        let menuItems = [captureTextItem, captureTextAndTriggerAutomationItem, captureFromClipboard, ignoreLineBreaksItem, outputFormatItem, preferencesItem, aboutItem, quitItem]
         menuItems.forEach { $0.target = self }
 
         statusBarmenu.addItem(captureTextItem)
         statusBarmenu.addItem(captureTextAndTriggerAutomationItem)
         statusBarmenu.addItem(captureFromClipboard)
         statusBarmenu.addItem(ignoreLineBreaksItem)
+        statusBarmenu.addItem(outputFormatItem)
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(preferencesItem)
         statusBarmenu.addItem(aboutItem)
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(quitItem)
+
+        // Build output format submenu
+        let formatSubmenu = NSMenu()
+        for format in TableOutputFormat.allCases {
+            let item = NSMenuItem(title: format.rawValue, action: #selector(selectOutputFormat(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = format
+            formatSubmenu.addItem(item)
+        }
+        outputFormatItem.submenu = formatSubmenu
 
         statusBarmenu.delegate = self
     }
@@ -80,6 +139,12 @@ class MenubarItem: NSObject {
 
     @objc func ignoreLineBreaks() {
         preferences.ignoreLineBreaks.toggle()
+    }
+
+    @objc func selectOutputFormat(_ sender: NSMenuItem) {
+        if let format = sender.representedObject as? TableOutputFormat {
+            preferences.tableOutputFormat = format
+        }
     }
 
     @objc func quit() {
@@ -128,6 +193,13 @@ extension MenubarItem: NSMenuDelegate {
 
         captureFromClipboard.isEnabled = clipboardHasSupportedContente() ? true : false
         ignoreLineBreaksItem.state = preferences.ignoreLineBreaks ? .on : .off
+
+        // Update radio-style selection in output format submenu
+        if let formatSubmenu = outputFormatItem.submenu {
+            for item in formatSubmenu.items {
+                item.state = (item.representedObject as? TableOutputFormat) == preferences.tableOutputFormat ? .on : .off
+            }
+        }
     }
 
     func menuDidClose(_: NSMenu) {
