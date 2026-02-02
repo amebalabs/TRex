@@ -41,7 +41,7 @@ public class UnifiedLanguageModelProvider: LLMProvider {
             }
 
             self.name = "Anthropic"
-            self.supportedModels = ["claude-sonnet-4-5-20250929", "claude-3-5-sonnet-20241022", "claude-3-opus-20240229", "claude-3-haiku-20240307"]
+            self.supportedModels = ["claude-sonnet-4-5-20250929", "claude-sonnet-4-20250514", "claude-haiku-3-5-20241022"]
 
             self.model = AnthropicLanguageModel(
                 apiKey: key,

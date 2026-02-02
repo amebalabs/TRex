@@ -12,13 +12,15 @@ final class LLMErrorTests: XCTestCase {
             (.responseParsingFailed, "Failed to parse response"),
             (.timeout, "LLM request timed out"),
             (.invalidConfiguration, "Invalid LLM configuration"),
-            (.unsupportedOperation, "This operation is not supported")
+            (.unsupportedOperation("vision not supported"), "vision not supported"),
+            (.modelNotAvailable("requires macOS 15.1"), "requires macOS 15.1"),
+            (.configurationError("bad config"), "bad config"),
         ]
 
         for (error, expectedSubstring) in errors {
             XCTAssertTrue(
                 error.localizedDescription.contains(expectedSubstring),
-                "Error description for \(error) should contain '\(expectedSubstring)'"
+                "Error description for \(error) should contain '\(expectedSubstring)', got: '\(error.localizedDescription)'"
             )
         }
     }

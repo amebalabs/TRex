@@ -6,249 +6,137 @@ struct LLMSettingsView: View {
     @State private var showOCRAPIKeyInfo = false
     @State private var showPostProcessAPIKeyInfo = false
 
+    private var contentHeight: CGFloat {
+        var height: CGFloat = 170 // Base height for two collapsed cards + padding
+        if preferences.llmEnableOCR {
+            height += 330
+        }
+        if preferences.llmEnablePostProcessing {
+            height += 280
+        }
+        return height
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-
-                    // LLM OCR Engine Section
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("LLM OCR Engine")
-                                .font(.headline)
-
-                            Spacer()
-
-                            Toggle("", isOn: $preferences.llmEnableOCR)
-                                .toggleStyle(SwitchToggleStyle())
-                                .onChange(of: preferences.llmEnableOCR) { _ in
-                                    TRex.shared.initializeLLM()
-                                }
-                        }
+                    // MARK: - OCR Engine Section
+                    SettingsCard {
+                        SettingsCardHeader(
+                            icon: "eye.circle",
+                            title: "LLM OCR Engine",
+                            subtitle: "Use a language model for text recognition instead of built-in OCR",
+                            isOn: $preferences.llmEnableOCR,
+                            onChange: { TRex.shared.initializeLLM() }
+                        )
 
                         if preferences.llmEnableOCR {
-                            // OCR Provider Selection
-                            Text("Provider")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
+                            SettingsDivider()
 
-                            Picker("", selection: $preferences.llmOCRProvider) {
-                                Text("OpenAI").tag("OpenAI")
-                                Text("Anthropic").tag("Anthropic")
-                                Text("Custom").tag("Custom")
-                                // No Apple option for OCR - doesn't support vision
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
-                            .onChange(of: preferences.llmOCRProvider) { _ in
-                                TRex.shared.initializeLLM()
+                            ProviderConfigSection(
+                                provider: $preferences.llmOCRProvider,
+                                apiKey: $preferences.llmOCRAPIKey,
+                                customEndpoint: $preferences.llmOCRCustomEndpoint,
+                                model: $preferences.llmOCRModel,
+                                showAPIKeyInfo: $showOCRAPIKeyInfo,
+                                apiKeyEnvVarMessage: ocrAPIKeyEnvVarMessage,
+                                includeApple: false,
+                                onChange: { TRex.shared.initializeLLM() }
+                            )
+
+                            SettingsDivider()
+
+                            SettingsFormRow(label: "Prompt") {
+                                TextEditor(text: $preferences.llmOCRPrompt)
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .frame(height: 72)
+                                    .scrollContentBackground(.hidden)
+                                    .padding(6)
+                                    .background(Color(NSColor.textBackgroundColor))
+                                    .cornerRadius(6)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
+                                    )
                             }
 
-                            // API Key for OCR
-                            if preferences.llmOCRProvider != "Custom" {
-                                HStack {
-                                    Text("API Key")
-                                        .font(.subheadline)
+                            SettingsDivider()
+
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Fallback to built-in OCR")
+                                        .font(.system(size: 12, weight: .medium))
+                                    Text("Use Apple Vision if LLM fails or times out")
+                                        .font(.system(size: 11))
                                         .foregroundColor(.secondary)
-
-                                    Button(action: { showOCRAPIKeyInfo.toggle() }) {
-                                        Image(systemName: "info.circle")
-                                            .foregroundColor(.secondary)
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                    .help("API key can also be set via environment variable")
                                 }
 
-                                SecureField("Enter API key or use environment variable", text: $preferences.llmOCRAPIKey)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .onChange(of: preferences.llmOCRAPIKey) { _ in
+                                Spacer()
+
+                                Toggle("", isOn: $preferences.llmFallbackToBuiltIn)
+                                    .toggleStyle(SwitchToggleStyle())
+                                    .onChange(of: preferences.llmFallbackToBuiltIn) { _ in
                                         TRex.shared.initializeLLM()
                                     }
-
-                                if showOCRAPIKeyInfo {
-                                    Text(ocrAPIKeyEnvVarMessage)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
                             }
-
-                            // Custom Endpoint for OCR
-                            if preferences.llmOCRProvider == "Custom" {
-                                Text("Custom Endpoint")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-
-                                TextField("http://localhost:11434/v1", text: $preferences.llmOCRCustomEndpoint)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .onChange(of: preferences.llmOCRCustomEndpoint) { _ in
-                                        TRex.shared.initializeLLM()
-                                    }
-
-                                Text("OpenAI-compatible endpoint (e.g., Ollama, LM Studio)")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-
-                            // OCR Model
-                            Text("Model")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-
-                            TextField("Model name (e.g., gpt-4o, claude-3-5-sonnet-20241022)", text: $preferences.llmOCRModel)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .onChange(of: preferences.llmOCRModel) { _ in
-                                    TRex.shared.initializeLLM()
-                                }
-
-                            // OCR Prompt
-                            Text("Prompt")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-
-                            TextEditor(text: $preferences.llmOCRPrompt)
-                                .font(.system(size: 11))
-                                .frame(height: 80)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .stroke(Color(NSColor.separatorColor), lineWidth: 1)
-                                )
                         }
                     }
 
-                    Divider()
-
-                    // Post-Processing Section
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Post-Processing")
-                                .font(.headline)
-
-                            Spacer()
-
-                            Toggle("", isOn: $preferences.llmEnablePostProcessing)
-                                .toggleStyle(SwitchToggleStyle())
-                                .onChange(of: preferences.llmEnablePostProcessing) { _ in
-                                    TRex.shared.initializeLLM()
-                                }
-                        }
+                    // MARK: - Post-Processing Section
+                    SettingsCard {
+                        SettingsCardHeader(
+                            icon: "wand.and.stars",
+                            title: "Post-Processing",
+                            subtitle: "Refine OCR output using a language model",
+                            isOn: $preferences.llmEnablePostProcessing,
+                            onChange: { TRex.shared.initializeLLM() }
+                        )
 
                         if preferences.llmEnablePostProcessing {
-                            // Post-Processing Provider Selection
-                            Text("Provider")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
+                            SettingsDivider()
 
-                            Picker("", selection: $preferences.llmPostProcessProvider) {
-                                Text("OpenAI").tag("OpenAI")
-                                Text("Anthropic").tag("Anthropic")
-                                Text("Custom").tag("Custom")
-                                Text("Apple").tag("Apple")
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
-                            .onChange(of: preferences.llmPostProcessProvider) { _ in
-                                TRex.shared.initializeLLM()
-                            }
+                            ProviderConfigSection(
+                                provider: $preferences.llmPostProcessProvider,
+                                apiKey: $preferences.llmPostProcessAPIKey,
+                                customEndpoint: $preferences.llmPostProcessCustomEndpoint,
+                                model: $preferences.llmPostProcessModel,
+                                showAPIKeyInfo: $showPostProcessAPIKeyInfo,
+                                apiKeyEnvVarMessage: postProcessAPIKeyEnvVarMessage,
+                                includeApple: true,
+                                onChange: { TRex.shared.initializeLLM() }
+                            )
 
-                            // API Key for Post-Processing
-                            if preferences.llmPostProcessProvider != "Custom" && preferences.llmPostProcessProvider != "Apple" {
-                                HStack {
-                                    Text("API Key")
-                                        .font(.subheadline)
+                            SettingsDivider()
+
+                            SettingsFormRow(label: "Prompt") {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    TextEditor(text: $preferences.llmPostProcessPrompt)
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .frame(height: 88)
+                                        .scrollContentBackground(.hidden)
+                                        .padding(6)
+                                        .background(Color(NSColor.textBackgroundColor))
+                                        .cornerRadius(6)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
+                                        )
+
+                                    Text("Use {text} as placeholder for captured text")
+                                        .font(.system(size: 11))
                                         .foregroundColor(.secondary)
-
-                                    Button(action: { showPostProcessAPIKeyInfo.toggle() }) {
-                                        Image(systemName: "info.circle")
-                                            .foregroundColor(.secondary)
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                    .help("API key can also be set via environment variable")
-                                }
-
-                                SecureField("Enter API key or use environment variable", text: $preferences.llmPostProcessAPIKey)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .onChange(of: preferences.llmPostProcessAPIKey) { _ in
-                                        TRex.shared.initializeLLM()
-                                    }
-
-                                if showPostProcessAPIKeyInfo {
-                                    Text(postProcessAPIKeyEnvVarMessage)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
-
-                            // Custom Endpoint for Post-Processing
-                            if preferences.llmPostProcessProvider == "Custom" {
-                                Text("Custom Endpoint")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-
-                                TextField("http://localhost:11434/v1", text: $preferences.llmPostProcessCustomEndpoint)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .onChange(of: preferences.llmPostProcessCustomEndpoint) { _ in
-                                        TRex.shared.initializeLLM()
-                                    }
-
-                                Text("OpenAI-compatible endpoint (e.g., Ollama, LM Studio)")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-
-                            // Apple Intelligence note
-                            if preferences.llmPostProcessProvider == "Apple" {
-                                Text("Using on-device Apple Intelligence (requires macOS 15.1+)")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-
-                            // Post-Processing Model
-                            if preferences.llmPostProcessProvider != "Apple" {
-                                Text("Model")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-
-                                TextField("Model name (e.g., gpt-4o, claude-3-5-sonnet-20241022)", text: $preferences.llmPostProcessModel)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .onChange(of: preferences.llmPostProcessModel) { _ in
-                                        TRex.shared.initializeLLM()
-                                    }
-                            }
-
-                            // Post-Processing Prompt
-                            Text("Prompt (use {text} placeholder)")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-
-                            TextEditor(text: $preferences.llmPostProcessPrompt)
-                                .font(.system(size: 11))
-                                .frame(height: 100)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .stroke(Color(NSColor.separatorColor), lineWidth: 1)
-                                )
                         }
                     }
 
-                    Divider()
-
-                    // Options
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Options")
-                            .font(.headline)
-
-                        Toggle("Fallback to built-in OCR on failure", isOn: $preferences.llmFallbackToBuiltIn)
-                            .toggleStyle(SwitchToggleStyle())
-                            .onChange(of: preferences.llmFallbackToBuiltIn) { _ in
-                                TRex.shared.initializeLLM()
-                            }
-                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
             }
         }
-        .frame(width: 500, height: 650)
+        .frame(width: 500, height: contentHeight)
     }
 
     private var ocrAPIKeyEnvVarMessage: String {
@@ -271,5 +159,212 @@ struct LLMSettingsView: View {
         default:
             return ""
         }
+    }
+}
+
+// MARK: - Card Container
+
+private struct SettingsCard<Content: View>: View {
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            content
+        }
+        .padding(14)
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(NSColor.separatorColor), lineWidth: 0.5)
+        )
+    }
+}
+
+// MARK: - Card Header
+
+private struct SettingsCardHeader: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    @Binding var isOn: Bool
+    var onChange: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 18))
+                .foregroundColor(.accentColor)
+                .frame(width: 24, alignment: .center)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(subtitle)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+
+            Toggle("", isOn: $isOn)
+                .toggleStyle(SwitchToggleStyle())
+                .onChange(of: isOn) { _ in
+                    onChange()
+                }
+        }
+    }
+}
+
+// MARK: - Provider Configuration
+
+private struct ProviderConfigSection: View {
+    @Binding var provider: String
+    @Binding var apiKey: String
+    @Binding var customEndpoint: String
+    @Binding var model: String
+    @Binding var showAPIKeyInfo: Bool
+    let apiKeyEnvVarMessage: String
+    let includeApple: Bool
+    var onChange: () -> Void
+
+    private var needsAPIKey: Bool {
+        provider != "Custom" && provider != "Apple"
+    }
+
+    private var needsModel: Bool {
+        provider != "Apple"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Provider picker
+            SettingsFormRow(label: "Provider") {
+                Picker("", selection: $provider) {
+                    Text("OpenAI").tag("OpenAI")
+                    Text("Anthropic").tag("Anthropic")
+                    Text("Custom").tag("Custom")
+                    if includeApple {
+                        Text("Apple").tag("Apple")
+                    }
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .onChange(of: provider) { _ in
+                    onChange()
+                }
+            }
+
+            // Apple Intelligence note
+            if provider == "Apple" {
+                HStack(spacing: 6) {
+                    Image(systemName: "apple.logo")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                    Text("On-device Apple Intelligence (requires macOS 15.1+)")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.leading, 70)
+            }
+
+            // API Key
+            if needsAPIKey {
+                SettingsFormRow(label: "API Key") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 4) {
+                            SecureField("Enter API key", text: $apiKey)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .onChange(of: apiKey) { _ in
+                                    onChange()
+                                }
+
+                            Button(action: { showAPIKeyInfo.toggle() }) {
+                                Image(systemName: "info.circle")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .help("API key can also be set via environment variable")
+                        }
+
+                        if showAPIKeyInfo, !apiKeyEnvVarMessage.isEmpty {
+                            Text(apiKeyEnvVarMessage)
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+
+            // Custom Endpoint
+            if provider == "Custom" {
+                SettingsFormRow(label: "Endpoint") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("http://localhost:11434/v1", text: $customEndpoint)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .onChange(of: customEndpoint) { _ in
+                                onChange()
+                            }
+
+                        Text("OpenAI-compatible endpoint (Ollama, LM Studio, etc.)")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+
+            // Model
+            if needsModel {
+                SettingsFormRow(label: "Model") {
+                    TextField(modelPlaceholder, text: $model)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .onChange(of: model) { _ in
+                            onChange()
+                        }
+                }
+            }
+        }
+    }
+
+    private var modelPlaceholder: String {
+        switch provider {
+        case "OpenAI":
+            return "e.g. gpt-5.2, gpt-5"
+        case "Anthropic":
+            return "e.g. claude-sonnet-4-5-20250929, claude-opus-4-5-20251101"
+        case "Custom":
+            return "Model name"
+        default:
+            return "Model name"
+        }
+    }
+}
+
+// MARK: - Form Row
+
+private struct SettingsFormRow<Content: View>: View {
+    let label: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+                .frame(width: 56, alignment: .trailing)
+                .padding(.top, 4)
+
+            content
+        }
+    }
+}
+
+// MARK: - Divider
+
+private struct SettingsDivider: View {
+    var body: some View {
+        Divider()
+            .padding(.vertical, 2)
     }
 }
