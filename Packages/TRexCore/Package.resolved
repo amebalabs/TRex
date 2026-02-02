@@ -26,15 +26,6 @@
         "revision" : "309a47b2b1d9b5e991f36961c983ecec72275be3",
         "version" : "1.6.1"
       }
-    },
-    {
-      "identity" : "tesseractswift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/amebalabs/TesseractSwift.git",
-      "state" : {
-        "branch" : "main",
-        "revision" : "3f3e73b2ba576f4a26fb58826598b99e0358db0f"
-      }
     }
   ],
   "version" : 2

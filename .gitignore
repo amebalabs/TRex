@@ -92,3 +92,7 @@ iOSInjectionProject/
 
 # CLI cache artifacts
 .cli-cache/
+
+# Tesseract NEON stub build artifacts
+NEONStub.cpp
+NEONStub_x86.o

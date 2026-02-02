@@ -51,7 +51,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-//        NSApp.openSettings()
+        if !flag {
+            NSApp.showAndActivateSettings()
+        }
         return true
     }
     
@@ -75,7 +77,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                     await trex.capture(.captureClipboardAndTriggerAutomation)
                 }
             case "showpreferences":
-                NSApp.openSettings()
+                NSApp.showAndActivateSettings()
             case "shortcut":
                 if let name = url.queryParameters?["name"] {
                     preferences.autoRunShortcut = name
@@ -151,6 +153,16 @@ extension AppDelegate {
                 }
             })
         }
+    }
+}
+
+// MARK: - NSApplication Settings Extension
+
+extension NSApplication {
+    /// Opens settings and brings the app to front
+    func showAndActivateSettings() {
+        openSettings()
+        activate(ignoringOtherApps: true)
     }
 }
 

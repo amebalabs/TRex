@@ -3,6 +3,17 @@ import SwiftUI
 import UserNotifications
 import Vision
 
+/// Bundle identifiers for TRex apps
+enum BundleIdentifiers {
+    static let gui = "com.ameba.TRex"
+    static let cli = "com.ameba.TRex.cli"
+
+    /// Check if current process is the CLI tool
+    static var isCLI: Bool {
+        Bundle.main.bundleIdentifier == cli
+    }
+}
+
 // Timeout error for async operations
 enum TimeoutError: Error {
     case timedOut
@@ -59,15 +70,18 @@ public class TRex: NSObject {
             currentInvocationMode == .captureFromFileAndTriggerAutomation
     }
 
-    public func capture(_ mode: InvocationMode, imagePath: String? = nil) async {
+    /// Performs OCR capture and processes the result.
+    /// - Returns: `true` if text was successfully captured, `false` otherwise.
+    @discardableResult
+    public func capture(_ mode: InvocationMode, imagePath: String? = nil) async -> Bool {
         currentInvocationMode = mode
-        
-        guard let text = await getText(imagePath) else { return }
-        
-        // Process results back on main thread for UI updates
+
+        guard let text = await getText(imagePath) else { return false }
+
         await MainActor.run {
-            self.precessDetectedText(text)
+            self.processDetectedText(text)
         }
+        return true
     }
 
     private func getImage(_ imagePath: String? = nil) -> NSImage? {
@@ -235,7 +249,7 @@ public class TRex: NSObject {
         }
     }
 
-    func precessDetectedText(_ text: String) {
+    func processDetectedText(_ text: String) {
         showNotification(text: text)
 
         defer {
@@ -247,8 +261,8 @@ public class TRex: NSObject {
             let pasteBoard = NSPasteboard.general
             pasteBoard.clearContents()
             pasteBoard.setString(text, forType: .string)
-            // output to STDOUT for cli
-            if Bundle.main.bundleIdentifier == "com.ameba.TRex.cli" {
+            // output to STDOUT for CLI
+            if BundleIdentifiers.isCLI {
                 print(text)
             }
             return
@@ -409,7 +423,7 @@ extension TRex {
     
     func showNotification(text: String) {
         guard preferences.resultNotification else { return }
-        guard Bundle.main.bundleIdentifier != "com.ameba.TRex.cli" else { return }
+        guard !BundleIdentifiers.isCLI else { return }
         
         let notificationCenter = UNUserNotificationCenter.current()
         
