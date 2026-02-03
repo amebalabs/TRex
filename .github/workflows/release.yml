@@ -16,7 +16,7 @@ permissions:
   id-token: write
 
 env:
-  XCODE_VERSION: "16.2.0"
+  XCODE_VERSION: "26.0.1"
   BUNDLE_ID: "com.ameba.TRex"
   APP_NAME: "TRex"
   BETA_FEED_URL: "https://amebalabs.github.io/TRex/appcast_beta.xml"
@@ -52,7 +52,6 @@ jobs:
           echo "content=$CONTENT" >> $GITHUB_OUTPUT
 
   build:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: macos-latest
     timeout-minutes: 30
     outputs:
@@ -106,6 +105,8 @@ jobs:
             -configuration Release \
             -derivedDataPath build \
             -arch arm64 \
+            -skipMacroValidation \
+            -skipPackagePluginValidation \
             ONLY_ACTIVE_ARCH=NO \
             MARKETING_VERSION="$MARKETING_VERSION" \
             CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \
@@ -123,6 +124,8 @@ jobs:
             -configuration Release \
             -derivedDataPath build-cli \
             -arch arm64 \
+            -skipMacroValidation \
+            -skipPackagePluginValidation \
             ONLY_ACTIVE_ARCH=NO \
             MARKETING_VERSION="$MARKETING_VERSION" \
             CURRENT_PROJECT_VERSION="$CURRENT_PROJECT_VERSION" \

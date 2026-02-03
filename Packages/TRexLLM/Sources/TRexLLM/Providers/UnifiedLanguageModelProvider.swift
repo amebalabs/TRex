@@ -79,42 +79,15 @@ public class UnifiedLanguageModelProvider: LLMProvider {
     }
 
     /// Perform OCR using vision-capable LLM
+    ///
+    /// AnyLanguageModel does not currently expose a vision/image API.
+    /// LLM-based OCR is handled by LLMOCREngine which makes direct provider API calls.
     public func performOCR(
         image: NSImage,
         prompt: String?,
         model: String
     ) async throws -> String {
-        // Check if the provider supports vision
-        if case .apple = self.getProviderType() {
-            throw LLMError.unsupportedOperation("Apple Foundation Models do not support vision/OCR")
-        }
-
-        // Convert NSImage to data
-        guard let tiffData = image.tiffRepresentation,
-              let bitmapImage = NSBitmapImageRep(data: tiffData) else {
-            throw LLMError.imageProcessingFailed
-        }
-
-        // Convert to JPEG for efficient transfer
-        guard let jpegData = bitmapImage.representation(using: .jpeg, properties: [.compressionFactor: 0.85]) else {
-            throw LLMError.imageProcessingFailed
-        }
-
-        // Create image segment for AnyLanguageModel
-        let imageSegment = Transcript.ImageSegment(
-            source: .data(jpegData, mimeType: "image/jpeg")
-        )
-
-        // Use provided prompt or default
-        let promptText = prompt ?? "Extract all visible text from this image. Preserve the layout and formatting as much as possible. Return only the extracted text without any additional commentary."
-
-        // Perform OCR
-        let response = try await session.respond(
-            to: promptText,
-            image: imageSegment
-        )
-
-        return response.content
+        throw LLMError.unsupportedOperation("Vision OCR is not supported through AnyLanguageModel. Use LLMOCREngine for direct API-based vision OCR.")
     }
 
     /// Process text with LLM

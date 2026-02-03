@@ -1,13 +1,13 @@
 {
-  "originHash" : "51e2f886dd90c6e6fba13cb57244bcd18e1069f5194e12e0df0cc5780b73d426",
+  "originHash" : "f6072e2d5fa0bb86369258ff0dc0163854e50548e73fa993cc3b47c81668fcf5",
   "pins" : [
     {
       "identity" : "anylanguagemodel",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mattt/AnyLanguageModel.git",
       "state" : {
-        "revision" : "18b1e1b4755143767e5c8f0066b59f009f601232",
-        "version" : "0.4.0"
+        "revision" : "bfee8f6198996d3094d1db521f6ab7b7965c5a54",
+        "version" : "0.3.3"
       }
     },
     {
@@ -80,6 +80,15 @@
       "state" : {
         "revision" : "0687f71944021d616d34d922343dcef086855920",
         "version" : "600.0.1"
+      }
+    },
+    {
+      "identity" : "tesseractswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/amebalabs/TesseractSwift.git",
+      "state" : {
+        "revision" : "404092e4f24c7f344a68bf20118169b2b1ecbfd7",
+        "version" : "1.2.0"
       }
     }
   ],
