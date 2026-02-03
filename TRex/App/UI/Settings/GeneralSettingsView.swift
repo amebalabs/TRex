@@ -7,6 +7,7 @@ struct GeneralSettingsView: View {
     @EnvironmentObject var appDelegate: AppDelegate
     @ObservedObject private var launchAtLogin = LaunchAtLogin.observable
     @State private var visionLanguages: [LanguageManager.Language] = []
+    @State private var showHideIconAlert = false
     let width: CGFloat = 90
     
     var body: some View {
@@ -24,8 +25,25 @@ struct GeneralSettingsView: View {
                        state: $preferences.resultNotification,
                        width: width)
             ToggleView(label: "Menu Bar", secondLabel: "Show Icon",
-                       state: $preferences.showMenuBarIcon,
+                       state: Binding(
+                           get: { preferences.showMenuBarIcon },
+                           set: { newValue in
+                               if newValue {
+                                   preferences.showMenuBarIcon = true
+                               } else {
+                                   showHideIconAlert = true
+                               }
+                           }
+                       ),
                        width: width)
+            .alert("Hide Menu Bar Icon?", isPresented: $showHideIconAlert) {
+                Button("Hide Icon") {
+                    preferences.showMenuBarIcon = false
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("You can reopen settings by launching TRex again, or by running \"open trex://showPreferences\" in Terminal.")
+            }
 
             if preferences.showMenuBarIcon {
                 ZStack {

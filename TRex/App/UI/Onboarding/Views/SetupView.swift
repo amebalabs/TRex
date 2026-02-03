@@ -26,17 +26,19 @@ struct SetupView: View {
             .animation(Animation.brandEaseOut(delay: 0.1), value: animateContent)
             
             // Content area
-            ZStack {
-                switch vm.activeSection {
-                case .permissions:
-                    PermissionsSection(vm: vm)
-                        .transition(AnyTransition.slideFade)
-                case .settings:
-                    SettingsSection(preferences: preferences, launchAtLogin: launchAtLogin.isEnabled)
-                        .transition(AnyTransition.slideFade)
-                case .language:
-                    LanguageSection(selectedLanguageCode: $vm.selectedLanguageCode, preferences: preferences, availableLanguages: vm.availableLanguages)
-                        .transition(AnyTransition.slideFade)
+            ScrollView {
+                ZStack {
+                    switch vm.activeSection {
+                    case .permissions:
+                        PermissionsSection(vm: vm)
+                            .transition(AnyTransition.slideFade)
+                    case .settings:
+                        SettingsSection(preferences: preferences, launchAtLogin: launchAtLogin.isEnabled)
+                            .transition(AnyTransition.slideFade)
+                    case .language:
+                        LanguageSection(selectedLanguageCode: $vm.selectedLanguageCode, preferences: preferences, availableLanguages: vm.availableLanguages)
+                            .transition(AnyTransition.slideFade)
+                    }
                 }
             }
             .frame(height: 350)

@@ -157,10 +157,10 @@ public final class VisionOCREngine: OCREngine {
             return Set([
                 "en-US", "fr-FR", "de-DE", "es-ES", "it-IT",
                 "pt-BR", "zh-Hans", "zh-Hant", "ja-JP", "ko-KR",
-                "ru-RU", "uk-UA", "th-TH", "vi-VN"
+                "ru-RU", "uk-UA", "th-TH", "vi-VN", "tr-TR"
             ])
         }
-        
+
         do {
             let request = VNRecognizeTextRequest()
             let languages = try request.supportedRecognitionLanguages()
@@ -181,7 +181,7 @@ public final class VisionOCREngine: OCREngine {
             return Set([
                 "en-US", "fr-FR", "de-DE", "es-ES", "it-IT",
                 "pt-BR", "zh-Hans", "zh-Hant", "ja-JP", "ko-KR",
-                "ru-RU", "uk-UA", "th-TH", "vi-VN"
+                "ru-RU", "uk-UA", "th-TH", "vi-VN", "tr-TR"
             ])
         }
     }
