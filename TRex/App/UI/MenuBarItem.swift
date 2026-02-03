@@ -17,13 +17,16 @@ class MenubarItem: NSObject {
     let tableDetectionMenuItem = NSMenuItem(title: "Table Detection", action: nil, keyEquivalent: "")
     let tableDetectionToggleItem = NSMenuItem(title: "Enable Table Detection", action: #selector(toggleTableDetection), keyEquivalent: "")
     let historyItem = NSMenuItem(title: "History", action: nil, keyEquivalent: "")
+    let watchModeItem = NSMenuItem(title: "Start Watch Mode", action: #selector(toggleWatchMode), keyEquivalent: "")
     let preferencesItem = NSMenuItem(title: "Settings...", action: #selector(showPreferences), keyEquivalent: ",")
     let quitItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
     let aboutItem = NSMenuItem(title: "About TRex", action: #selector(showAbout), keyEquivalent: "")
 
     var cancellable: AnyCancellable?
     var llmProcessingCancellable: AnyCancellable?
+    var watchModeCancellable: AnyCancellable?
     private var pulseAnimation: CFRunLoopTimer?
+    private var watchPulseAnimation: CFRunLoopTimer?
     private lazy var workQueue: OperationQueue = {
         let providerQueue = OperationQueue()
         providerQueue.qualityOfService = .userInitiated
@@ -60,16 +63,28 @@ class MenubarItem: NSObject {
                         self?.stopPulse()
                     }
                 }
+            self.watchModeCancellable = trex.watchModeManager.$isCapturing
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] isCapturing in
+                    if isCapturing {
+                        self?.startWatchPulse()
+                    } else {
+                        self?.stopWatchPulse()
+                    }
+                }
         }
     }
 
-    private func startPulse() {
-        guard pulseAnimation == nil, let button = statusBarItem.button else { return }
-        let minAlpha: CGFloat = 0.3
-        let maxAlpha: CGFloat = 1.0
-        let step: CGFloat = 0.05
+    private func makePulseTimer(
+        into storage: UnsafeMutablePointer<CFRunLoopTimer?>,
+        minAlpha: CGFloat,
+        maxAlpha: CGFloat,
+        step: CGFloat,
+        interval: CFTimeInterval
+    ) {
+        guard storage.pointee == nil, let button = statusBarItem.button else { return }
         var fadingOut = true
-        let timer = CFRunLoopTimerCreateWithHandler(kCFAllocatorDefault, CFAbsoluteTimeGetCurrent(), 0.05, 0, 0) { _ in
+        let timer = CFRunLoopTimerCreateWithHandler(kCFAllocatorDefault, CFAbsoluteTimeGetCurrent(), interval, 0, 0) { _ in
             if fadingOut {
                 button.alphaValue = max(minAlpha, button.alphaValue - step)
                 if button.alphaValue <= minAlpha {
@@ -83,25 +98,49 @@ class MenubarItem: NSObject {
             }
         }
         CFRunLoopAddTimer(CFRunLoopGetMain(), timer, .commonModes)
-        pulseAnimation = timer
+        storage.pointee = timer
+    }
+
+    private func invalidatePulseTimer(_ storage: UnsafeMutablePointer<CFRunLoopTimer?>, otherActive: CFRunLoopTimer?) {
+        if let timer = storage.pointee {
+            CFRunLoopTimerInvalidate(timer)
+            storage.pointee = nil
+        }
+        // Only restore full alpha if the other pulse isn't running
+        if otherActive == nil {
+            statusBarItem.button?.alphaValue = 1.0
+        }
+    }
+
+    private func startPulse() {
+        makePulseTimer(into: &pulseAnimation, minAlpha: 0.3, maxAlpha: 1.0, step: 0.05, interval: 0.05)
     }
 
     private func stopPulse() {
-        if let timer = pulseAnimation {
-            CFRunLoopTimerInvalidate(timer)
-            pulseAnimation = nil
-        }
-        statusBarItem.button?.alphaValue = 1.0
+        invalidatePulseTimer(&pulseAnimation, otherActive: watchPulseAnimation)
+    }
+
+    private func startWatchPulse() {
+        // Slower pulse than LLM processing to distinguish watch mode
+        makePulseTimer(into: &watchPulseAnimation, minAlpha: 0.5, maxAlpha: 1.0, step: 0.02, interval: 0.08)
+    }
+
+    private func stopWatchPulse() {
+        invalidatePulseTimer(&watchPulseAnimation, otherActive: pulseAnimation)
     }
 
     private func buildMenu() {
-        let menuItems = [captureTextItem, captureMultiRegionItem, captureTextAndTriggerAutomationItem, captureFromClipboard, ignoreLineBreaksItem, tableDetectionToggleItem, historyItem, preferencesItem, aboutItem, quitItem]
-        menuItems.forEach { $0.target = self }
+        for item in [captureTextItem, captureMultiRegionItem, captureTextAndTriggerAutomationItem,
+                     captureFromClipboard, watchModeItem, ignoreLineBreaksItem,
+                     tableDetectionToggleItem, historyItem, preferencesItem, aboutItem, quitItem] {
+            item.target = self
+        }
 
         statusBarmenu.addItem(captureTextItem)
         statusBarmenu.addItem(captureMultiRegionItem)
         statusBarmenu.addItem(captureTextAndTriggerAutomationItem)
         statusBarmenu.addItem(captureFromClipboard)
+        statusBarmenu.addItem(watchModeItem)
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(historyItem)
         statusBarmenu.addItem(NSMenuItem.separator())
@@ -163,6 +202,18 @@ class MenubarItem: NSObject {
     @objc func selectOutputFormat(_ sender: NSMenuItem) {
         if let format = sender.representedObject as? TableOutputFormat {
             preferences.tableOutputFormat = format
+        }
+    }
+
+    // MARK: - Watch Mode
+
+    @objc func toggleWatchMode() {
+        Task { @MainActor in
+            if trex.watchModeManager.isWatching {
+                trex.watchModeManager.stopWatching()
+            } else {
+                await trex.watchModeManager.startWatching()
+            }
         }
     }
 
@@ -244,6 +295,13 @@ extension MenubarItem: NSMenuDelegate {
                     item.isEnabled = preferences.tableDetectionEnabled
                 }
             }
+        }
+
+        // Update watch mode item title
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let isActive = self.trex.watchModeManager.isWatching
+            self.watchModeItem.title = isActive ? "Stop Watch Mode" : "Start Watch Mode"
         }
 
         // Build history submenu

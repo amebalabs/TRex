@@ -45,6 +45,8 @@ public class Preferences: ObservableObject {
         case TableOutputFormat
         case CaptureHistoryEnabled
         case CaptureHistoryMaxEntries
+        case WatchModePollingInterval
+        case WatchModeDefaultOutputMode
     }
 
     public enum MenuBarIcon: String, CaseIterable {
@@ -296,14 +298,18 @@ public class Preferences: ObservableObject {
     public static let captureHistoryMinEntries = 1
     public static let captureHistoryMaxEntriesLimit = 10_000
 
+    private static func clampHistoryEntries(_ value: Int) -> Int {
+        max(captureHistoryMinEntries, min(value, captureHistoryMaxEntriesLimit))
+    }
+
     @Published public var captureHistoryMaxEntries: Int {
         didSet {
-            let clamped = max(Self.captureHistoryMinEntries, min(captureHistoryMaxEntries, Self.captureHistoryMaxEntriesLimit))
+            let clamped = Self.clampHistoryEntries(captureHistoryMaxEntries)
             if clamped != captureHistoryMaxEntries {
                 captureHistoryMaxEntries = clamped
                 return
             }
-            Preferences.setValue(value: captureHistoryMaxEntries, key: .CaptureHistoryMaxEntries)
+            Preferences.setValue(value: clamped, key: .CaptureHistoryMaxEntries)
         }
     }
 
@@ -316,6 +322,30 @@ public class Preferences: ObservableObject {
     @Published public var tableOutputFormat: TableOutputFormat {
         didSet {
             Preferences.setValue(value: tableOutputFormat.rawValue, key: .TableOutputFormat)
+        }
+    }
+
+    public static let watchModePollingIntervalMin = 0.1
+    public static let watchModePollingIntervalMax = 10.0
+
+    private static func clampPollingInterval(_ value: Double) -> Double {
+        max(watchModePollingIntervalMin, min(value, watchModePollingIntervalMax))
+    }
+
+    @Published public var watchModePollingInterval: Double {
+        didSet {
+            let clamped = Self.clampPollingInterval(watchModePollingInterval)
+            if clamped != watchModePollingInterval {
+                watchModePollingInterval = clamped
+                return
+            }
+            Preferences.setValue(value: clamped, key: .WatchModePollingInterval)
+        }
+    }
+
+    @Published public var watchModeDefaultOutputMode: WatchOutputMode {
+        didSet {
+            Preferences.setValue(value: watchModeDefaultOutputMode.rawValue, key: .WatchModeDefaultOutputMode)
         }
     }
 
@@ -400,13 +430,21 @@ public class Preferences: ObservableObject {
         llmFallbackToBuiltIn = Preferences.getValue(key: .LLMFallbackToBuiltIn) as? Bool ?? true
         captureHistoryEnabled = Preferences.getValue(key: .CaptureHistoryEnabled) as? Bool ?? true
         let storedMaxEntries = Preferences.getValue(key: .CaptureHistoryMaxEntries) as? Int ?? 100
-        captureHistoryMaxEntries = max(Self.captureHistoryMinEntries, min(storedMaxEntries, Self.captureHistoryMaxEntriesLimit))
+        captureHistoryMaxEntries = Self.clampHistoryEntries(storedMaxEntries)
         tableDetectionEnabled = Preferences.getValue(key: .TableDetectionEnabled) as? Bool ?? true
         if let rawFormat = Preferences.getValue(key: .TableOutputFormat) as? String,
            let format = TableOutputFormat(rawValue: rawFormat) {
             tableOutputFormat = format
         } else {
             tableOutputFormat = .markdown
+        }
+        let storedInterval = Preferences.getValue(key: .WatchModePollingInterval) as? Double ?? 1.0
+        watchModePollingInterval = Self.clampPollingInterval(storedInterval)
+        if let rawOutputMode = Preferences.getValue(key: .WatchModeDefaultOutputMode) as? String,
+           let outputMode = WatchOutputMode(rawValue: rawOutputMode) {
+            watchModeDefaultOutputMode = outputMode
+        } else {
+            watchModeDefaultOutputMode = .appendToClipboard
         }
     }
 

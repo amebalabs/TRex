@@ -96,6 +96,29 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 if let name = url.queryParameters?["name"] {
                     preferences.autoRunShortcut = name
                 }
+            case "startwatchmode":
+                Task { @MainActor in
+                    let params = url.queryParameters
+                    let mode: WatchOutputMode?
+                    switch params?["mode"]?.lowercased() {
+                    case "file":
+                        mode = .appendToFile
+                    case "clipboard":
+                        mode = .appendToClipboard
+                    case "notification":
+                        mode = .notificationStream
+                    default:
+                        mode = nil
+                    }
+                    let filePath = params?["path"]
+                    trex.showNotification(text: "Watch mode started via URL scheme")
+                    await trex.watchModeManager.startWatching(
+                        outputMode: mode,
+                        outputFilePath: filePath
+                    )
+                }
+            case "stopwatchmode":
+                trex.watchModeManager.stopWatching()
             default:
                 return
             }

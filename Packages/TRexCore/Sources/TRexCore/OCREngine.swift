@@ -40,6 +40,30 @@ public struct OCRResult: Sendable {
         self.sourceImage = sourceImage
     }
 
+    /// Return a copy with the text replaced, preserving all other fields.
+    public func with(text: String) -> OCRResult {
+        OCRResult(
+            text: text,
+            confidence: confidence,
+            recognizedLanguages: recognizedLanguages,
+            engineName: engineName,
+            recognitionLevel: recognitionLevel,
+            sourceImage: sourceImage
+        )
+    }
+
+    /// Return a copy with the source image replaced, preserving all other fields.
+    public func with(sourceImage: CGImage?) -> OCRResult {
+        OCRResult(
+            text: text,
+            confidence: confidence,
+            recognizedLanguages: recognizedLanguages,
+            engineName: engineName,
+            recognitionLevel: recognitionLevel,
+            sourceImage: sourceImage
+        )
+    }
+
     /// Create a contextualized description of this OCR result for LLM processing
     public func contextDescription() -> String {
         var parts: [String] = []

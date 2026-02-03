@@ -61,8 +61,9 @@ public class TRex: NSObject {
     private var llmPostProcessor: LLMPostProcessor?
     public let llmProcessingState = LLMProcessingState()
     public let captureHistoryStore = CaptureHistoryStore()
+    public let watchModeManager = WatchModeManager()
 
-    private var isCaptureInProgress = false
+    internal private(set) var isCaptureInProgress = false
     let screenCaptureURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
 
     /// Generate a unique temporary file path for each screen capture.
@@ -455,6 +456,19 @@ public class TRex: NSObject {
         return await recognizeImage(cgImage)
     }
 
+    /// Run OCR on a CGImage for watch mode. Delegates to the standard recognition pipeline
+    /// and applies table detection if enabled. Does not modify clipboard or trigger automation.
+    func recognizeImageForWatchMode(_ cgImage: CGImage) async -> OCRResult? {
+        guard let ocrResult = await recognizeImage(cgImage) else { return nil }
+
+        // Apply table detection if enabled, returning a modified result
+        if let processedText = await recognizeAndProcessOCR(from: ocrResult), processedText != ocrResult.text {
+            return ocrResult.with(text: processedText)
+        }
+
+        return ocrResult
+    }
+
     /// Run OCR on a CGImage: QR detection first, then engine selection and text recognition.
     private func recognizeImage(_ cgImage: CGImage) async -> OCRResult? {
         logger.info("📐 Image loaded: \(cgImage.width, privacy: .public)x\(cgImage.height, privacy: .public)")
@@ -551,14 +565,7 @@ public class TRex: NSObject {
             logger.info("  → Recognized languages: \(result.recognizedLanguages.joined(separator: ", "), privacy: .public)")
 
             // Attach source image for downstream processing (e.g. table detection)
-            result = OCRResult(
-                text: result.text,
-                confidence: result.confidence,
-                recognizedLanguages: result.recognizedLanguages,
-                engineName: result.engineName,
-                recognitionLevel: result.recognitionLevel,
-                sourceImage: cgImage
-            )
+            result = result.with(sourceImage: cgImage)
 
             // Handle URL opening if needed
             if preferences.autoOpenCapturedURL {
@@ -777,7 +784,7 @@ extension TRex {
         }
     }
     
-    func showNotification(text: String) {
+    public func showNotification(text: String) {
         guard preferences.resultNotification else { return }
         guard !BundleIdentifiers.isCLI else { return }
         
