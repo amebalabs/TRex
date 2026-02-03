@@ -7,7 +7,6 @@ struct GeneralSettingsView: View {
     @EnvironmentObject var appDelegate: AppDelegate
     @ObservedObject private var launchAtLogin = LaunchAtLogin.observable
     @State private var visionLanguages: [LanguageManager.Language] = []
-
     let width: CGFloat = 90
     
     var body: some View {
@@ -96,16 +95,6 @@ struct GeneralSettingsView: View {
                 }
             }
             
-            Section(header: Text("Table Detection")) {
-                Picker("Table format:", selection: $preferences.tableOutputFormat) {
-                    ForEach(TableOutputFormat.allCases, id: \.self) { format in
-                        Text(format.rawValue).tag(format)
-                    }
-                }
-                .pickerStyle(.menu)
-                .frame(maxWidth: 250, alignment: .leading)
-            }
-
             Spacer()
 
             #if !MAC_APP_STORE
@@ -141,14 +130,17 @@ struct GeneralSettingsView: View {
     /// - Menu bar icon shown adds the icon grid row (~80pt).
     /// - Non-MAS builds add CLI install + updates sections (~80pt).
     private var settingsHeight: CGFloat {
-        #if MAC_APP_STORE
-        let base: CGFloat = preferences.tesseractEnabled ? 210 : 270
-        let withIcon: CGFloat = preferences.tesseractEnabled ? 290 : 350
-        #else
-        let base: CGFloat = preferences.tesseractEnabled ? 290 : 350
-        let withIcon: CGFloat = preferences.tesseractEnabled ? 370 : 430
+        var height: CGFloat = 210
+        if !preferences.tesseractEnabled {
+            height += 60
+        }
+        if preferences.showMenuBarIcon {
+            height += 80
+        }
+        #if !MAC_APP_STORE
+        height += 80
         #endif
-        return preferences.showMenuBarIcon ? withIcon : base
+        return height
     }
 
     private func loadVisionLanguages() {

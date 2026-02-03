@@ -116,6 +116,12 @@
 		FAFAC6F9272C4CEA00011ED6 /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F8272C4CEA00011ED6 /* GeneralSettingsView.swift */; };
 		FAFAC6FB272C4D3E00011ED6 /* ShortcutsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6FA272C4D3E00011ED6 /* ShortcutsSettingsView.swift */; };
 		FAFF12D12739E24600B3993B /* Localizable.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFF12D02739E24600B3993B /* Localizable.swift */; };
+		AA000001AABB000100000005 /* CaptureHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AABB000100000001 /* CaptureHistoryView.swift */; };
+		AA000001AABB000100000006 /* CaptureHistoryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AABB000100000002 /* CaptureHistoryRow.swift */; };
+		AA000001AABB000100000007 /* CaptureHistoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AABB000100000003 /* CaptureHistoryDetailView.swift */; };
+		AA000001AABB000100000008 /* CaptureHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AABB000100000001 /* CaptureHistoryView.swift */; };
+		AA000001AABB000100000009 /* CaptureHistoryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AABB000100000002 /* CaptureHistoryRow.swift */; };
+		AA000001AABB00010000000A /* CaptureHistoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AABB000100000003 /* CaptureHistoryDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -211,6 +217,9 @@
 		FAFAC6F8272C4CEA00011ED6 /* GeneralSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsView.swift; sourceTree = "<group>"; };
 		FAFAC6FA272C4D3E00011ED6 /* ShortcutsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsSettingsView.swift; sourceTree = "<group>"; };
 		FAFF12D02739E24600B3993B /* Localizable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localizable.swift; sourceTree = "<group>"; };
+		AA000001AABB000100000001 /* CaptureHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureHistoryView.swift; sourceTree = "<group>"; };
+		AA000001AABB000100000002 /* CaptureHistoryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureHistoryRow.swift; sourceTree = "<group>"; };
+		AA000001AABB000100000003 /* CaptureHistoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureHistoryDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -454,6 +463,7 @@
 			isa = PBXGroup;
 			children = (
 				FA5F875A25DD59D000B1AF77 /* MenuBarItem.swift */,
+				AA000001AABB000100000004 /* History */,
 				FA2B835F25DEC2FD00B23F25 /* Settings */,
 				FA2B835E25DEC2EE00B23F25 /* Onboarding */,
 				FA48BA3225DDEBD500E98F77 /* Helpers */,
@@ -478,6 +488,16 @@
 				FAFF12D02739E24600B3993B /* Localizable.swift */,
 			);
 			path = Localization;
+			sourceTree = "<group>";
+		};
+		AA000001AABB000100000004 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				AA000001AABB000100000001 /* CaptureHistoryView.swift */,
+				AA000001AABB000100000002 /* CaptureHistoryRow.swift */,
+				AA000001AABB000100000003 /* CaptureHistoryDetailView.swift */,
+			);
+			path = History;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -775,6 +795,9 @@
 				FA1E99F92EF77006002A457E /* AutomationSettingsView.swift in Sources */,
 				FA1E99FA2EF77006002A457E /* TRexApp.swift in Sources */,
 				FA1E99FB2EF77006002A457E /* CustomWordsView.swift in Sources */,
+				AA000001AABB000100000008 /* CaptureHistoryView.swift in Sources */,
+				AA000001AABB000100000009 /* CaptureHistoryRow.swift in Sources */,
+				AA000001AABB00010000000A /* CaptureHistoryDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -834,6 +857,9 @@
 				FAFAC6F7272C4CC700011ED6 /* AutomationSettingsView.swift in Sources */,
 				FA5F873225DC243200B1AF77 /* TRexApp.swift in Sources */,
 				FA58E39527AB74530034837F /* CustomWordsView.swift in Sources */,
+				AA000001AABB000100000005 /* CaptureHistoryView.swift in Sources */,
+				AA000001AABB000100000006 /* CaptureHistoryRow.swift in Sources */,
+				AA000001AABB000100000007 /* CaptureHistoryDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

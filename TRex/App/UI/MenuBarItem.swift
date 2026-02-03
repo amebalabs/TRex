@@ -14,7 +14,9 @@ class MenubarItem: NSObject {
     let captureTextAndTriggerAutomationItem = NSMenuItem(title: "Capture & Run Automation", action: #selector(captureScreenAndTriggerAutomation), keyEquivalent: "")
     let captureFromClipboard = NSMenuItem(title: "Capture from Clipboard", action: #selector(captureClipboard), keyEquivalent: "")
     let ignoreLineBreaksItem = NSMenuItem(title: "Ignore Line Breaks", action: #selector(ignoreLineBreaks), keyEquivalent: "")
-    let outputFormatItem = NSMenuItem(title: "Table Output Format", action: nil, keyEquivalent: "")
+    let tableDetectionMenuItem = NSMenuItem(title: "Table Detection", action: nil, keyEquivalent: "")
+    let tableDetectionToggleItem = NSMenuItem(title: "Enable Table Detection", action: #selector(toggleTableDetection), keyEquivalent: "")
+    let historyItem = NSMenuItem(title: "History", action: nil, keyEquivalent: "")
     let preferencesItem = NSMenuItem(title: "Settings...", action: #selector(showPreferences), keyEquivalent: ",")
     let quitItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
     let aboutItem = NSMenuItem(title: "About TRex", action: #selector(showAbout), keyEquivalent: "")
@@ -93,30 +95,35 @@ class MenubarItem: NSObject {
     }
 
     private func buildMenu() {
-        let menuItems = [captureTextItem, captureMultiRegionItem, captureTextAndTriggerAutomationItem, captureFromClipboard, ignoreLineBreaksItem, outputFormatItem, preferencesItem, aboutItem, quitItem]
+        let menuItems = [captureTextItem, captureMultiRegionItem, captureTextAndTriggerAutomationItem, captureFromClipboard, ignoreLineBreaksItem, tableDetectionToggleItem, historyItem, preferencesItem, aboutItem, quitItem]
         menuItems.forEach { $0.target = self }
 
         statusBarmenu.addItem(captureTextItem)
         statusBarmenu.addItem(captureMultiRegionItem)
         statusBarmenu.addItem(captureTextAndTriggerAutomationItem)
         statusBarmenu.addItem(captureFromClipboard)
+        statusBarmenu.addItem(NSMenuItem.separator())
+        statusBarmenu.addItem(historyItem)
+        statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(ignoreLineBreaksItem)
-        statusBarmenu.addItem(outputFormatItem)
+        statusBarmenu.addItem(tableDetectionMenuItem)
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(preferencesItem)
         statusBarmenu.addItem(aboutItem)
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(quitItem)
 
-        // Build output format submenu
-        let formatSubmenu = NSMenu()
+        // Build table detection submenu (toggle + format options)
+        let tableSubmenu = NSMenu()
+        tableSubmenu.addItem(tableDetectionToggleItem)
+        tableSubmenu.addItem(NSMenuItem.separator())
         for format in TableOutputFormat.allCases {
             let item = NSMenuItem(title: format.rawValue, action: #selector(selectOutputFormat(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = format
-            formatSubmenu.addItem(item)
+            tableSubmenu.addItem(item)
         }
-        outputFormatItem.submenu = formatSubmenu
+        tableDetectionMenuItem.submenu = tableSubmenu
 
         statusBarmenu.delegate = self
     }
@@ -149,9 +156,26 @@ class MenubarItem: NSObject {
         preferences.ignoreLineBreaks.toggle()
     }
 
+    @objc func toggleTableDetection() {
+        preferences.tableDetectionEnabled.toggle()
+    }
+
     @objc func selectOutputFormat(_ sender: NSMenuItem) {
         if let format = sender.representedObject as? TableOutputFormat {
             preferences.tableOutputFormat = format
+        }
+    }
+
+    @objc func showHistory() {
+        guard let url = URL(string: "trex://showHistory") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    @objc func copyHistoryEntry(_ sender: NSMenuItem) {
+        if let text = sender.representedObject as? String {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(text, forType: .string)
         }
     }
 
@@ -203,13 +227,68 @@ extension MenubarItem: NSMenuDelegate {
 
         captureFromClipboard.isEnabled = clipboardHasSupportedContente() ? true : false
         ignoreLineBreaksItem.state = preferences.ignoreLineBreaks ? .on : .off
+        tableDetectionToggleItem.state = preferences.tableDetectionEnabled ? .on : .off
 
-        // Update radio-style selection in output format submenu
-        if let formatSubmenu = outputFormatItem.submenu {
-            for item in formatSubmenu.items {
-                item.state = (item.representedObject as? TableOutputFormat) == preferences.tableOutputFormat ? .on : .off
+        // Update radio-style selection in format submenu + disable when off
+        if let tableSubmenu = tableDetectionMenuItem.submenu {
+            var foundSeparator = false
+            for item in tableSubmenu.items {
+                if item.isSeparatorItem {
+                    foundSeparator = true
+                    continue
+                }
+                if let format = item.representedObject as? TableOutputFormat {
+                    item.state = format == preferences.tableOutputFormat ? .on : .off
+                }
+                if foundSeparator {
+                    item.isEnabled = preferences.tableDetectionEnabled
+                }
             }
         }
+
+        // Build history submenu
+        buildHistorySubmenu()
+    }
+
+    private static let historyMenuMaxEntries = 5
+    private static let historyMenuTruncationLength = 40
+
+    @MainActor private func buildHistorySubmenu() {
+        let submenu = NSMenu()
+
+        guard preferences.captureHistoryEnabled else {
+            let disabledItem = NSMenuItem(title: "History is disabled", action: nil, keyEquivalent: "")
+            disabledItem.isEnabled = false
+            submenu.addItem(disabledItem)
+            historyItem.submenu = submenu
+            return
+        }
+
+        let entries = trex.captureHistoryStore.entries
+        let recentEntries = entries.prefix(Self.historyMenuMaxEntries)
+
+        if recentEntries.isEmpty {
+            let emptyItem = NSMenuItem(title: "No captures yet", action: nil, keyEquivalent: "")
+            emptyItem.isEnabled = false
+            submenu.addItem(emptyItem)
+        } else {
+            for entry in recentEntries {
+                let firstLine = entry.text.components(separatedBy: .newlines).first ?? ""
+                let maxLen = Self.historyMenuTruncationLength
+                let truncated = firstLine.count > maxLen ? String(firstLine.prefix(maxLen)) + "..." : firstLine
+                let item = NSMenuItem(title: truncated, action: #selector(copyHistoryEntry(_:)), keyEquivalent: "")
+                item.target = self
+                item.representedObject = entry.text
+                submenu.addItem(item)
+            }
+        }
+
+        submenu.addItem(NSMenuItem.separator())
+        let showAllItem = NSMenuItem(title: "Show All...", action: #selector(showHistory), keyEquivalent: "")
+        showAllItem.target = self
+        submenu.addItem(showAllItem)
+
+        historyItem.submenu = submenu
     }
 
     func menuDidClose(_: NSMenu) {

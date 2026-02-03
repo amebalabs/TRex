@@ -60,6 +60,7 @@ public class TRex: NSObject {
     private var llmEngine: LLMOCREngine?
     private var llmPostProcessor: LLMPostProcessor?
     public let llmProcessingState = LLMProcessingState()
+    public let captureHistoryStore = CaptureHistoryStore()
 
     private var isCaptureInProgress = false
     let screenCaptureURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
@@ -290,7 +291,7 @@ public class TRex: NSObject {
             logger.info("✅ Post-processing complete")
         }
 
-        await processDetectedText(text)
+        await processDetectedText(text, ocrResult: ocrResult)
     }
 
     /// Capture multiple screen regions in a loop, OCR each one, and combine results.
@@ -599,8 +600,17 @@ public class TRex: NSObject {
     }
 
     @MainActor
-    func processDetectedText(_ text: String) {
+    func processDetectedText(_ text: String, ocrResult: OCRResult? = nil) {
         showNotification(text: text)
+
+        // Save to capture history (GUI only)
+        if preferences.captureHistoryEnabled, !BundleIdentifiers.isCLI {
+            captureHistoryStore.addEntry(
+                text: text,
+                ocrResult: ocrResult,
+                maxEntries: preferences.captureHistoryMaxEntries
+            )
+        }
 
         // Choose between automation and clipboard
         guard invocationRequiresAutomation, hasAutomationsConfigured else {
