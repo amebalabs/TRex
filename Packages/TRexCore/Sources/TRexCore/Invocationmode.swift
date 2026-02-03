@@ -7,4 +7,6 @@ public enum InvocationMode: String, CaseIterable {
     case captureClipboardAndTriggerAutomation = "Capture Clipboard and Run Automation"
     case captureFromFile = "Capture Image"
     case captureFromFileAndTriggerAutomation = "Capture Image and Trigger Automation"
+    case captureMultiRegion = "Capture Multi-Region"
+    case captureMultiRegionAndTriggerAutomation = "Capture Multi-Region and Run Automation"
 }

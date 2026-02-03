@@ -19,6 +19,6 @@ struct CustomWordsView: View {
             Text("You can improve text recognition by providing a list of words that are special to your text.")
                 .font(.footnote)
         }
-        .frame(width: 410, height: 160)
+        .frame(width: 500, height: 160)
     }
 }

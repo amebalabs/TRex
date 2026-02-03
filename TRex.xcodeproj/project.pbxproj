@@ -110,11 +110,18 @@
 		FAC3F8D22F2FDF03006C4A56 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FAC3F8D12F2FDF03006C4A56 /* TRexCore */; };
 		FAC3F8D42F2FDF0B006C4A56 /* TRexCore in Frameworks */ = {isa = PBXBuildFile; productRef = FAC3F8D32F2FDF0B006C4A56 /* TRexCore */; };
 		FAE335C125E0A81500CFFDAF /* NotificationName+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */; };
+		FAEBC6D12EBFC5470068BB97 /* LLMSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAEBC6D02EBFC5470068BB97 /* LLMSettingsView.swift */; };
 		FAFAC6F5272C4CAE00011ED6 /* AboutSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */; };
 		FAFAC6F7272C4CC700011ED6 /* AutomationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F6272C4CC700011ED6 /* AutomationSettingsView.swift */; };
 		FAFAC6F9272C4CEA00011ED6 /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6F8272C4CEA00011ED6 /* GeneralSettingsView.swift */; };
 		FAFAC6FB272C4D3E00011ED6 /* ShortcutsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFAC6FA272C4D3E00011ED6 /* ShortcutsSettingsView.swift */; };
 		FAFF12D12739E24600B3993B /* Localizable.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFF12D02739E24600B3993B /* Localizable.swift */; };
+		AA000001AABB000100000005 /* CaptureHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AABB000100000001 /* CaptureHistoryView.swift */; };
+		AA000001AABB000100000006 /* CaptureHistoryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AABB000100000002 /* CaptureHistoryRow.swift */; };
+		AA000001AABB000100000007 /* CaptureHistoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AABB000100000003 /* CaptureHistoryDetailView.swift */; };
+		AA000001AABB000100000008 /* CaptureHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AABB000100000001 /* CaptureHistoryView.swift */; };
+		AA000001AABB000100000009 /* CaptureHistoryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AABB000100000002 /* CaptureHistoryRow.swift */; };
+		AA000001AABB00010000000A /* CaptureHistoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AABB000100000003 /* CaptureHistoryDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -204,11 +211,15 @@
 		FA8A957B2B67CA41008C0B7B /* UniversalShowSettingsHack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UniversalShowSettingsHack.swift; sourceTree = "<group>"; };
 		FAE335C025E0A81500CFFDAF /* NotificationName+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationName+Extension.swift"; sourceTree = "<group>"; };
 		FAEBC6CF2EBAC8230068BB97 /* trex */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = trex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FAEBC6D02EBFC5470068BB97 /* LLMSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMSettingsView.swift; sourceTree = "<group>"; };
 		FAFAC6F4272C4CAE00011ED6 /* AboutSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutSettingsView.swift; sourceTree = "<group>"; };
 		FAFAC6F6272C4CC700011ED6 /* AutomationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomationSettingsView.swift; sourceTree = "<group>"; };
 		FAFAC6F8272C4CEA00011ED6 /* GeneralSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsView.swift; sourceTree = "<group>"; };
 		FAFAC6FA272C4D3E00011ED6 /* ShortcutsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsSettingsView.swift; sourceTree = "<group>"; };
 		FAFF12D02739E24600B3993B /* Localizable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localizable.swift; sourceTree = "<group>"; };
+		AA000001AABB000100000001 /* CaptureHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureHistoryView.swift; sourceTree = "<group>"; };
+		AA000001AABB000100000002 /* CaptureHistoryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureHistoryRow.swift; sourceTree = "<group>"; };
+		AA000001AABB000100000003 /* CaptureHistoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureHistoryDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -345,6 +356,7 @@
 		FA2B835F25DEC2FD00B23F25 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				FAEBC6D02EBFC5470068BB97 /* LLMSettingsView.swift */,
 				FA04A09E2E16C70900C6FCA2 /* TesseractSettingsView.swift */,
 				FA5F874A25DCB50A00B1AF77 /* SettingsView.swift */,
 				FAFAC6F8272C4CEA00011ED6 /* GeneralSettingsView.swift */,
@@ -451,6 +463,7 @@
 			isa = PBXGroup;
 			children = (
 				FA5F875A25DD59D000B1AF77 /* MenuBarItem.swift */,
+				AA000001AABB000100000004 /* History */,
 				FA2B835F25DEC2FD00B23F25 /* Settings */,
 				FA2B835E25DEC2EE00B23F25 /* Onboarding */,
 				FA48BA3225DDEBD500E98F77 /* Helpers */,
@@ -475,6 +488,16 @@
 				FAFF12D02739E24600B3993B /* Localizable.swift */,
 			);
 			path = Localization;
+			sourceTree = "<group>";
+		};
+		AA000001AABB000100000004 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				AA000001AABB000100000001 /* CaptureHistoryView.swift */,
+				AA000001AABB000100000002 /* CaptureHistoryRow.swift */,
+				AA000001AABB000100000003 /* CaptureHistoryDetailView.swift */,
+			);
+			path = History;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -772,6 +795,9 @@
 				FA1E99F92EF77006002A457E /* AutomationSettingsView.swift in Sources */,
 				FA1E99FA2EF77006002A457E /* TRexApp.swift in Sources */,
 				FA1E99FB2EF77006002A457E /* CustomWordsView.swift in Sources */,
+				AA000001AABB000100000008 /* CaptureHistoryView.swift in Sources */,
+				AA000001AABB000100000009 /* CaptureHistoryRow.swift in Sources */,
+				AA000001AABB00010000000A /* CaptureHistoryDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -792,6 +818,7 @@
 				FA1EE61E2E1F264A009D86D8 /* SetupSection.swift in Sources */,
 				FA1EE61F2E1F264A009D86D8 /* LanguageSection.swift in Sources */,
 				FA1EE6212E1F264A009D86D8 /* OnboardingViewModel.swift in Sources */,
+				FAEBC6D12EBFC5470068BB97 /* LLMSettingsView.swift in Sources */,
 				FA1EE6222E1F264A009D86D8 /* Feature.swift in Sources */,
 				FA1EE6232E1F264A009D86D8 /* SettingsSection.swift in Sources */,
 				FA1EE6242E1F264A009D86D8 /* ModernTextFieldStyle.swift in Sources */,
@@ -830,6 +857,9 @@
 				FAFAC6F7272C4CC700011ED6 /* AutomationSettingsView.swift in Sources */,
 				FA5F873225DC243200B1AF77 /* TRexApp.swift in Sources */,
 				FA58E39527AB74530034837F /* CustomWordsView.swift in Sources */,
+				AA000001AABB000100000005 /* CaptureHistoryView.swift in Sources */,
+				AA000001AABB000100000006 /* CaptureHistoryRow.swift in Sources */,
+				AA000001AABB000100000007 /* CaptureHistoryDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -862,7 +892,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				MAC_APP_STORE = YES;
-				MARKETING_VERSION = 1.9.2;
+				MARKETING_VERSION = 2.0.0;
 				MTL_ENABLE_DEBUG_INFO = "";
 				OTHER_LDFLAGS = "-lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
@@ -899,7 +929,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
 				MAC_APP_STORE = YES;
-				MARKETING_VERSION = 1.9.2;
+				MARKETING_VERSION = 2.0.0;
 				OTHER_LDFLAGS = "-lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -922,7 +952,7 @@
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/TRex CMD/Info.plist";
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.8.0;
 				OTHER_CODE_SIGN_FLAGS = "$(inherited) -i $(PRODUCT_BUNDLE_IDENTIFIER)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex.cli;
@@ -946,7 +976,7 @@
 				DEVELOPMENT_TEAM = X93LWC49WV;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/TRex CMD/Info.plist";
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.8.0;
 				OTHER_CODE_SIGN_FLAGS = "$(inherited) -i $(PRODUCT_BUNDLE_IDENTIFIER)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameba.TRex.cli;
@@ -1009,7 +1039,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1066,7 +1096,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -1099,7 +1129,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MAC_APP_STORE = NO;
 				MARKETING_VERSION = 1.9.2;
 				MTL_ENABLE_DEBUG_INFO = "";
@@ -1135,7 +1165,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MAC_APP_STORE = NO;
 				MARKETING_VERSION = 1.9.2;
 				OTHER_LDFLAGS = "-lc++";

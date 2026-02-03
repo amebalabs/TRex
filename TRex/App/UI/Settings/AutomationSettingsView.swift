@@ -57,6 +57,6 @@ struct AutomationSettingsView: View {
                 }.onAppear { shortcutsManager.getShortcuts() }
             }
         }.padding(20)
-            .frame(width: 410, height: 160)
+            .frame(width: 500, height: 160)
     }
 }

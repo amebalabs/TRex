@@ -18,7 +18,7 @@ struct AboutSettingsView: View {
                         .bold()
                     Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""))")
                         .font(.subheadline)
-                    Text("Copyright ©2025 Ameba Labs. All rights reserved.")
+                    Text("Copyright ©2026 Ameba Labs. All rights reserved.")
                         .font(.footnote)
                         .padding(.top, 10)
                 }
@@ -36,6 +36,6 @@ struct AboutSettingsView: View {
             }.padding(.top, 10)
                 .padding(.bottom, 20)
         }
-        .frame(width: 410, height: 120)
+        .frame(width: 500, height: 120)
     }
 }

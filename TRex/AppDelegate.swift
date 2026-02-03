@@ -14,6 +14,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     let preferences = Preferences.shared
     var cancellable: Set<AnyCancellable> = []
     var onboardingWindowController: NSWindowController?
+    var historyWindowController: NSWindowController?
     let bundleID = Bundle.main.bundleIdentifier!
     #if !MAC_APP_STORE
     var softwareUpdater: SPUUpdater!
@@ -47,6 +48,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         setupShortcuts()
 
+        // Initialize LLM if enabled
+        trex.initializeLLM()
+
         showOnboardingIfNeeded()
     }
 
@@ -76,12 +80,45 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 Task {
                     await trex.capture(.captureClipboardAndTriggerAutomation)
                 }
+            case "capturemultiregion":
+                Task {
+                    await trex.capture(.captureMultiRegion)
+                }
+            case "capturemultiregionautomation":
+                Task {
+                    await trex.capture(.captureMultiRegionAndTriggerAutomation)
+                }
             case "showpreferences":
                 NSApp.showAndActivateSettings()
+            case "showhistory":
+                showHistory()
             case "shortcut":
                 if let name = url.queryParameters?["name"] {
                     preferences.autoRunShortcut = name
                 }
+            case "startwatchmode":
+                Task { @MainActor in
+                    let params = url.queryParameters
+                    let mode: WatchOutputMode?
+                    switch params?["mode"]?.lowercased() {
+                    case "file":
+                        mode = .appendToFile
+                    case "clipboard":
+                        mode = .appendToClipboard
+                    case "notification":
+                        mode = .notificationStream
+                    default:
+                        mode = nil
+                    }
+                    let filePath = params?["path"]
+                    trex.showNotification(text: "Watch mode started via URL scheme")
+                    await trex.watchModeManager.startWatching(
+                        outputMode: mode,
+                        outputFilePath: filePath
+                    )
+                }
+            case "stopwatchmode":
+                trex.watchModeManager.stopWatching()
             default:
                 return
             }
@@ -109,6 +146,45 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 await trex.capture(.captureClipboardAndTriggerAutomation)
             }
         }
+        KeyboardShortcuts.onKeyUp(for: .captureMultiRegion) { [self] in
+            Task {
+                await trex.capture(.captureMultiRegion)
+            }
+        }
+        KeyboardShortcuts.onKeyUp(for: .captureMultiRegionAndTriggerAutomation) { [self] in
+            Task {
+                await trex.capture(.captureMultiRegionAndTriggerAutomation)
+            }
+        }
+    }
+
+    @MainActor func showHistory() {
+        if let controller = historyWindowController {
+            controller.showWindow(self)
+            controller.window?.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: .init(origin: .zero, size: CGSize(width: 700, height: 500)),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Capture History"
+        window.minSize = CGSize(width: 600, height: 400)
+        window.center()
+
+        let controller = NSWindowController(window: window)
+        controller.contentViewController = NSHostingController(
+            rootView: CaptureHistoryView(store: trex.captureHistoryStore)
+        )
+        historyWindowController = controller
+
+        controller.showWindow(self)
+        controller.window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     func showOnboardingIfNeeded() {

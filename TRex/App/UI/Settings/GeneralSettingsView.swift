@@ -7,7 +7,7 @@ struct GeneralSettingsView: View {
     @EnvironmentObject var appDelegate: AppDelegate
     @ObservedObject private var launchAtLogin = LaunchAtLogin.observable
     @State private var visionLanguages: [LanguageManager.Language] = []
-
+    @State private var showHideIconAlert = false
     let width: CGFloat = 90
     
     var body: some View {
@@ -25,8 +25,25 @@ struct GeneralSettingsView: View {
                        state: $preferences.resultNotification,
                        width: width)
             ToggleView(label: "Menu Bar", secondLabel: "Show Icon",
-                       state: $preferences.showMenuBarIcon,
+                       state: Binding(
+                           get: { preferences.showMenuBarIcon },
+                           set: { newValue in
+                               if newValue {
+                                   preferences.showMenuBarIcon = true
+                               } else {
+                                   showHideIconAlert = true
+                               }
+                           }
+                       ),
                        width: width)
+            .alert("Hide Menu Bar Icon?", isPresented: $showHideIconAlert) {
+                Button("Hide Icon") {
+                    preferences.showMenuBarIcon = false
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("You can reopen settings by launching TRex again, or by running \"open trex://showPreferences\" in Terminal.")
+            }
 
             if preferences.showMenuBarIcon {
                 ZStack {
@@ -120,16 +137,30 @@ struct GeneralSettingsView: View {
             #endif
         }
         .padding(20)
-        #if MAC_APP_STORE
-        .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 220 : 280) : (preferences.tesseractEnabled ? 140 : 200))
-        #else
-        .frame(width: 410, height: preferences.showMenuBarIcon ? (preferences.tesseractEnabled ? 300 : 360) : (preferences.tesseractEnabled ? 220 : 280))
-        #endif
+        .frame(width: 500, height: settingsHeight)
         .onAppear {
             loadVisionLanguages()
         }
     }
     
+    /// Height varies based on visible sections:
+    /// - Tesseract enabled hides the language picker section, reducing height by ~60pt.
+    /// - Menu bar icon shown adds the icon grid row (~80pt).
+    /// - Non-MAS builds add CLI install + updates sections (~80pt).
+    private var settingsHeight: CGFloat {
+        var height: CGFloat = 210
+        if !preferences.tesseractEnabled {
+            height += 60
+        }
+        if preferences.showMenuBarIcon {
+            height += 80
+        }
+        #if !MAC_APP_STORE
+        height += 80
+        #endif
+        return height
+    }
+
     private func loadVisionLanguages() {
         let manager = LanguageManager.shared
         let allLanguages = manager.availableLanguages()

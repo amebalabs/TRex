@@ -1,13 +1,13 @@
 {
-  "originHash" : "f6072e2d5fa0bb86369258ff0dc0163854e50548e73fa993cc3b47c81668fcf5",
+  "originHash" : "1ab93f3778cef10af16415c3ec67c03a65a6dc9ae6915eaee39c5e8fcbaf88d6",
   "pins" : [
     {
       "identity" : "anylanguagemodel",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mattt/AnyLanguageModel.git",
       "state" : {
-        "revision" : "bfee8f6198996d3094d1db521f6ab7b7965c5a54",
-        "version" : "0.3.3"
+        "revision" : "18b1e1b4755143767e5c8f0066b59f009f601232",
+        "version" : "0.4.0"
       }
     },
     {
@@ -29,39 +29,12 @@
       }
     },
     {
-      "identity" : "keyboardshortcuts",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/sindresorhus/KeyboardShortcuts",
-      "state" : {
-        "revision" : "f09de800a4f05d66fe2a9924c81a932454a9f39a",
-        "version" : "0.7.1"
-      }
-    },
-    {
       "identity" : "partialjsondecoder",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mattt/PartialJSONDecoder.git",
       "state" : {
         "revision" : "e4d389e6bcc6771bb988d1a8a17695d8bfa97172",
         "version" : "1.0.0"
-      }
-    },
-    {
-      "identity" : "sparkle",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/sparkle-project/Sparkle",
-      "state" : {
-        "revision" : "06beff60e3b609a485290e4d5d2d1e2eedb1e55d",
-        "version" : "2.7.3"
-      }
-    },
-    {
-      "identity" : "swift-argument-parser",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-argument-parser.git",
-      "state" : {
-        "revision" : "309a47b2b1d9b5e991f36961c983ecec72275be3",
-        "version" : "1.6.1"
       }
     },
     {
@@ -80,15 +53,6 @@
       "state" : {
         "revision" : "0687f71944021d616d34d922343dcef086855920",
         "version" : "600.0.1"
-      }
-    },
-    {
-      "identity" : "tesseractswift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/amebalabs/TesseractSwift.git",
-      "state" : {
-        "revision" : "404092e4f24c7f344a68bf20118169b2b1ecbfd7",
-        "version" : "1.2.0"
       }
     }
   ],

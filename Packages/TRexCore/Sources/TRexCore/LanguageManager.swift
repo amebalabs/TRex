@@ -3,7 +3,7 @@ import TesseractSwift
 
 /// Language management for OCR engines
 public class LanguageManager {
-    public static let shared = LanguageManager()
+    public nonisolated(unsafe) static let shared = LanguageManager()
     
     private let tesseractEngine: TesseractOCREngine
     
