@@ -3,9 +3,9 @@ import Combine
 import SwiftUI
 
 public class Preferences: ObservableObject {
-    public static let shared = Preferences()
+    public nonisolated(unsafe) static let shared = Preferences()
     static let suiteName = "X93LWC49WV.TRex.preferences"
-    static let userDefaults = UserDefaults(suiteName: suiteName)!
+    nonisolated(unsafe) static let userDefaults = UserDefaults(suiteName: suiteName)!
 
     enum PreferencesKeys: String {
         case CaptureSound
@@ -27,6 +27,26 @@ public class Preferences: ObservableObject {
         case TesseractLanguages
         case TesseractPath
         case IncludeBetaUpdates
+        case LLMEnabled
+        case LLMOCRProvider
+        case LLMOCRAPIKey
+        case LLMOCRCustomEndpoint
+        case LLMPostProcessProvider
+        case LLMPostProcessAPIKey
+        case LLMPostProcessCustomEndpoint
+        case LLMOCRModel
+        case LLMPostProcessModel
+        case LLMEnableOCR
+        case LLMEnablePostProcessing
+        case LLMOCRPrompt
+        case LLMPostProcessPrompt
+        case LLMFallbackToBuiltIn
+        case TableDetectionEnabled
+        case TableOutputFormat
+        case CaptureHistoryEnabled
+        case CaptureHistoryMaxEntries
+        case WatchModePollingInterval
+        case WatchModeDefaultOutputMode
     }
 
     public enum MenuBarIcon: String, CaseIterable {
@@ -185,6 +205,150 @@ public class Preferences: ObservableObject {
         }
     }
 
+    @Published public var llmEnabled: Bool {
+        didSet {
+            Preferences.setValue(value: llmEnabled, key: .LLMEnabled)
+        }
+    }
+
+    @Published public var llmOCRProvider: String {
+        didSet {
+            Preferences.setValue(value: llmOCRProvider, key: .LLMOCRProvider)
+        }
+    }
+
+    @Published public var llmOCRAPIKey: String {
+        didSet {
+            Preferences.setValue(value: llmOCRAPIKey, key: .LLMOCRAPIKey)
+        }
+    }
+
+    @Published public var llmOCRCustomEndpoint: String {
+        didSet {
+            Preferences.setValue(value: llmOCRCustomEndpoint, key: .LLMOCRCustomEndpoint)
+        }
+    }
+
+    @Published public var llmPostProcessProvider: String {
+        didSet {
+            Preferences.setValue(value: llmPostProcessProvider, key: .LLMPostProcessProvider)
+        }
+    }
+
+    @Published public var llmPostProcessAPIKey: String {
+        didSet {
+            Preferences.setValue(value: llmPostProcessAPIKey, key: .LLMPostProcessAPIKey)
+        }
+    }
+
+    @Published public var llmPostProcessCustomEndpoint: String {
+        didSet {
+            Preferences.setValue(value: llmPostProcessCustomEndpoint, key: .LLMPostProcessCustomEndpoint)
+        }
+    }
+
+    @Published public var llmOCRModel: String {
+        didSet {
+            Preferences.setValue(value: llmOCRModel, key: .LLMOCRModel)
+        }
+    }
+
+    @Published public var llmPostProcessModel: String {
+        didSet {
+            Preferences.setValue(value: llmPostProcessModel, key: .LLMPostProcessModel)
+        }
+    }
+
+    @Published public var llmEnableOCR: Bool {
+        didSet {
+            Preferences.setValue(value: llmEnableOCR, key: .LLMEnableOCR)
+        }
+    }
+
+    @Published public var llmEnablePostProcessing: Bool {
+        didSet {
+            Preferences.setValue(value: llmEnablePostProcessing, key: .LLMEnablePostProcessing)
+        }
+    }
+
+    @Published public var llmOCRPrompt: String {
+        didSet {
+            Preferences.setValue(value: llmOCRPrompt, key: .LLMOCRPrompt)
+        }
+    }
+
+    @Published public var llmPostProcessPrompt: String {
+        didSet {
+            Preferences.setValue(value: llmPostProcessPrompt, key: .LLMPostProcessPrompt)
+        }
+    }
+
+    @Published public var llmFallbackToBuiltIn: Bool {
+        didSet {
+            Preferences.setValue(value: llmFallbackToBuiltIn, key: .LLMFallbackToBuiltIn)
+        }
+    }
+
+    @Published public var captureHistoryEnabled: Bool {
+        didSet {
+            Preferences.setValue(value: captureHistoryEnabled, key: .CaptureHistoryEnabled)
+        }
+    }
+
+    public static let captureHistoryMinEntries = 1
+    public static let captureHistoryMaxEntriesLimit = 10_000
+
+    private static func clampHistoryEntries(_ value: Int) -> Int {
+        max(captureHistoryMinEntries, min(value, captureHistoryMaxEntriesLimit))
+    }
+
+    @Published public var captureHistoryMaxEntries: Int {
+        didSet {
+            let clamped = Self.clampHistoryEntries(captureHistoryMaxEntries)
+            if clamped != captureHistoryMaxEntries {
+                captureHistoryMaxEntries = clamped
+                return
+            }
+            Preferences.setValue(value: clamped, key: .CaptureHistoryMaxEntries)
+        }
+    }
+
+    @Published public var tableDetectionEnabled: Bool {
+        didSet {
+            Preferences.setValue(value: tableDetectionEnabled, key: .TableDetectionEnabled)
+        }
+    }
+
+    @Published public var tableOutputFormat: TableOutputFormat {
+        didSet {
+            Preferences.setValue(value: tableOutputFormat.rawValue, key: .TableOutputFormat)
+        }
+    }
+
+    public static let watchModePollingIntervalMin = 0.1
+    public static let watchModePollingIntervalMax = 10.0
+
+    private static func clampPollingInterval(_ value: Double) -> Double {
+        max(watchModePollingIntervalMin, min(value, watchModePollingIntervalMax))
+    }
+
+    @Published public var watchModePollingInterval: Double {
+        didSet {
+            let clamped = Self.clampPollingInterval(watchModePollingInterval)
+            if clamped != watchModePollingInterval {
+                watchModePollingInterval = clamped
+                return
+            }
+            Preferences.setValue(value: clamped, key: .WatchModePollingInterval)
+        }
+    }
+
+    @Published public var watchModeDefaultOutputMode: WatchOutputMode {
+        didSet {
+            Preferences.setValue(value: watchModeDefaultOutputMode.rawValue, key: .WatchModeDefaultOutputMode)
+        }
+    }
+
     init() {
         needsOnboarding = Preferences.getValue(key: .NeedsOnboarding) as? Bool ?? true
         captureSound = Preferences.getValue(key: .CaptureSound) as? Bool ?? true
@@ -250,6 +414,38 @@ public class Preferences: ObservableObject {
         tesseractLanguages = Preferences.getValue(key: .TesseractLanguages) as? [String] ?? ["eng"]
         tesseractPath = Preferences.getValue(key: .TesseractPath) as? String ?? ""
         includeBetaUpdates = Preferences.getValue(key: .IncludeBetaUpdates) as? Bool ?? false
+        llmEnabled = Preferences.getValue(key: .LLMEnabled) as? Bool ?? false
+        llmOCRProvider = Preferences.getValue(key: .LLMOCRProvider) as? String ?? "OpenAI"
+        llmOCRAPIKey = Preferences.getValue(key: .LLMOCRAPIKey) as? String ?? ""
+        llmOCRCustomEndpoint = Preferences.getValue(key: .LLMOCRCustomEndpoint) as? String ?? ""
+        llmPostProcessProvider = Preferences.getValue(key: .LLMPostProcessProvider) as? String ?? "OpenAI"
+        llmPostProcessAPIKey = Preferences.getValue(key: .LLMPostProcessAPIKey) as? String ?? ""
+        llmPostProcessCustomEndpoint = Preferences.getValue(key: .LLMPostProcessCustomEndpoint) as? String ?? ""
+        llmOCRModel = Preferences.getValue(key: .LLMOCRModel) as? String ?? "gpt-4o"
+        llmPostProcessModel = Preferences.getValue(key: .LLMPostProcessModel) as? String ?? "gpt-4o"
+        llmEnableOCR = Preferences.getValue(key: .LLMEnableOCR) as? Bool ?? false
+        llmEnablePostProcessing = Preferences.getValue(key: .LLMEnablePostProcessing) as? Bool ?? false
+        llmOCRPrompt = Preferences.getValue(key: .LLMOCRPrompt) as? String ?? "Extract all visible text from this image. Preserve the layout and formatting as much as possible. Return only the extracted text without any additional commentary."
+        llmPostProcessPrompt = Preferences.getValue(key: .LLMPostProcessPrompt) as? String ?? "You are given OCR output that may contain errors. Please:\n1. Correct any obvious spelling or recognition errors\n2. Fix formatting issues (spacing, line breaks)\n3. Preserve the original structure and meaning\n4. Return only the corrected text without explanations\n\nOCR Text:\n{text}"
+        llmFallbackToBuiltIn = Preferences.getValue(key: .LLMFallbackToBuiltIn) as? Bool ?? true
+        captureHistoryEnabled = Preferences.getValue(key: .CaptureHistoryEnabled) as? Bool ?? true
+        let storedMaxEntries = Preferences.getValue(key: .CaptureHistoryMaxEntries) as? Int ?? 100
+        captureHistoryMaxEntries = Self.clampHistoryEntries(storedMaxEntries)
+        tableDetectionEnabled = Preferences.getValue(key: .TableDetectionEnabled) as? Bool ?? true
+        if let rawFormat = Preferences.getValue(key: .TableOutputFormat) as? String,
+           let format = TableOutputFormat(rawValue: rawFormat) {
+            tableOutputFormat = format
+        } else {
+            tableOutputFormat = .markdown
+        }
+        let storedInterval = Preferences.getValue(key: .WatchModePollingInterval) as? Double ?? 1.0
+        watchModePollingInterval = Self.clampPollingInterval(storedInterval)
+        if let rawOutputMode = Preferences.getValue(key: .WatchModeDefaultOutputMode) as? String,
+           let outputMode = WatchOutputMode(rawValue: rawOutputMode) {
+            watchModeDefaultOutputMode = outputMode
+        } else {
+            watchModeDefaultOutputMode = .appendToClipboard
+        }
     }
 
     static func removeAll() {

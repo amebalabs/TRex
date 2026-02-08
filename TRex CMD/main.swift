@@ -33,6 +33,7 @@ struct trex: AsyncParsableCommand {
     @Flag(name: .shortAndLong, help: "Read file from standard input")
     var input = false
 
+    @MainActor
     func run() async throws {
         let trexInstance = TRex()
 
@@ -48,7 +49,7 @@ struct trex: AsyncParsableCommand {
             guard !data.isEmpty else {
                 throw CLIError.stdinEmpty
             }
-            let tempPath = trexInstance.screenShotFilePath
+            let tempPath = NSTemporaryDirectory() + "trex-stdin-\(UUID().uuidString).png"
             do {
                 try data.write(to: URL(fileURLWithPath: tempPath))
             } catch {
@@ -60,8 +61,7 @@ struct trex: AsyncParsableCommand {
             mode = automation ? .captureScreenAndTriggerAutomation : .captureScreen
         }
 
-        let success = await trexInstance.capture(mode, imagePath: imagePath)
-        Darwin.exit(success ? 0 : 1)
+        await trexInstance.capture(mode, imagePath: imagePath)
     }
 }
 

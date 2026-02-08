@@ -1,7 +1,8 @@
 import OSLog
 import SwiftUI
-import UserNotifications
+@preconcurrency import UserNotifications
 import Vision
+import TRexLLM
 
 /// Bundle identifiers for TRex apps
 enum BundleIdentifiers {
@@ -20,43 +21,63 @@ enum TimeoutError: Error {
 }
 
 // Async timeout utility
-func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+func withTimeout<T: Sendable>(seconds: TimeInterval, operation: @escaping @Sendable () async throws -> T) async throws -> T {
     try await withThrowingTaskGroup(of: T.self) { group in
         group.addTask {
             try await operation()
         }
-        
+
         group.addTask {
             try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
             throw TimeoutError.timedOut
         }
-        
+
         let result = try await group.next()!
         group.cancelAll()
         return result
     }
 }
 
+/// Observable state for LLM processing activity, used to drive menu bar animations.
+/// All access is confined to the main actor to ensure thread-safe UI updates.
+@MainActor
+public final class LLMProcessingState: ObservableObject {
+    @Published public var isProcessing: Bool = false
+
+    nonisolated public init() {}
+
+    public func set(_ value: Bool) {
+        isProcessing = value
+    }
+}
+
+@MainActor
 public class TRex: NSObject {
     public static let shared = TRex()
     let preferences = Preferences.shared
     private var currentInvocationMode: InvocationMode = .captureScreen
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.ameba.TRex", category: "TRexCore")
+    private var llmEngine: LLMOCREngine?
+    private var llmPostProcessor: LLMPostProcessor?
+    public let llmProcessingState = LLMProcessingState()
+    public let captureHistoryStore = CaptureHistoryStore()
+    public let watchModeManager = WatchModeManager()
 
-    var task: Process?
-    let sceenCaptureURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+    internal private(set) var isCaptureInProgress = false
+    let screenCaptureURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
 
-    public lazy var screenShotFilePath: String = {
+    /// Generate a unique temporary file path for each screen capture.
+    private func makeScreenshotFilePath() -> String {
         let directory = NSTemporaryDirectory()
-        return NSURL.fileURL(withPathComponents: [directory, "capture.png"])!.path
-    }()
+        return NSURL.fileURL(withPathComponents: [directory, "capture-\(UUID().uuidString).png"])!.path
+    }
 
-    var screenCaptureArguments: [String] {
+    private func screenCaptureArguments(outputPath: String) -> [String] {
         var out = ["-i"] // capture screen interactively, by selection or window
         if !preferences.captureSound {
             out.append("-x") // do not play sounds
         }
-        out.append(screenShotFilePath)
+        out.append(outputPath)
         return out
     }
 
@@ -67,42 +88,327 @@ public class TRex: NSObject {
     var invocationRequiresAutomation: Bool {
         currentInvocationMode == .captureClipboardAndTriggerAutomation ||
             currentInvocationMode == .captureScreenAndTriggerAutomation ||
-            currentInvocationMode == .captureFromFileAndTriggerAutomation
+            currentInvocationMode == .captureFromFileAndTriggerAutomation ||
+            currentInvocationMode == .captureMultiRegionAndTriggerAutomation
     }
 
-    /// Performs OCR capture and processes the result.
-    /// - Returns: `true` if text was successfully captured, `false` otherwise.
-    @discardableResult
-    public func capture(_ mode: InvocationMode, imagePath: String? = nil) async -> Bool {
-        currentInvocationMode = mode
+    // MARK: - LLM Integration
 
-        guard let text = await getText(imagePath) else { return false }
+    public func initializeLLM() {
+        // Auto-enable if either feature is enabled
+        let shouldEnable = preferences.llmEnableOCR || preferences.llmEnablePostProcessing
 
-        await MainActor.run {
-            self.processDetectedText(text)
+        if !shouldEnable {
+            llmEngine = nil
+            llmPostProcessor = nil
+            return
         }
-        return true
+
+        // Enable the master flag if needed
+        if !preferences.llmEnabled {
+            preferences.llmEnabled = true
+        }
+
+        let config = createLLMConfiguration()
+
+        // Create LLM engine if OCR is enabled
+        if preferences.llmEnableOCR {
+            let fallbackEngine = OCRManager.shared.engines.first(where: { $0.identifier == "vision" })
+            llmEngine = LLMOCREngine(config: config, fallbackEngine: fallbackEngine)
+
+            // Register with OCRManager
+            if let engine = llmEngine {
+                OCRManager.shared.registerEngine(engine)
+            }
+        } else {
+            llmEngine = nil
+        }
+
+        // Create post-processor if enabled
+        if preferences.llmEnablePostProcessing {
+            llmPostProcessor = LLMPostProcessor(config: config)
+        } else {
+            llmPostProcessor = nil
+        }
+
+        logger.info("🤖 LLM initialized: OCR=\(self.preferences.llmEnableOCR, privacy: .public), PostProcess=\(self.preferences.llmEnablePostProcessing, privacy: .public)")
     }
 
-    private func getImage(_ imagePath: String? = nil) -> NSImage? {
-        switch currentInvocationMode {
-        case .captureScreen, .captureScreenAndTriggerAutomation:
-            task = Process()
-            task?.executableURL = sceenCaptureURL
+    private func createLLMConfiguration() -> LLMConfiguration {
+        // Parse OCR provider
+        let ocrProviderType: LLMProviderType
+        switch preferences.llmOCRProvider {
+        case "OpenAI":
+            ocrProviderType = .openai
+        case "Anthropic":
+            ocrProviderType = .anthropic
+        case "Custom":
+            ocrProviderType = .custom
+        case "Apple":
+            ocrProviderType = .apple
+        default:
+            ocrProviderType = .openai
+        }
 
-            task?.arguments = screenCaptureArguments
+        // Parse post-processing provider
+        let postProcessProviderType: LLMProviderType
+        switch preferences.llmPostProcessProvider {
+        case "OpenAI":
+            postProcessProviderType = .openai
+        case "Anthropic":
+            postProcessProviderType = .anthropic
+        case "Custom":
+            postProcessProviderType = .custom
+        case "Apple":
+            postProcessProviderType = .apple
+        default:
+            postProcessProviderType = .openai
+        }
 
-            do {
-                try task?.run()
-            } catch {
-                logger.error("Screen capture command failed")
-                task = nil
+        return LLMConfiguration(
+            ocrProvider: ocrProviderType,
+            ocrAPIKey: preferences.llmOCRAPIKey.isEmpty ? nil : preferences.llmOCRAPIKey,
+            ocrCustomEndpoint: preferences.llmOCRCustomEndpoint.isEmpty ? nil : preferences.llmOCRCustomEndpoint,
+            postProcessProvider: postProcessProviderType,
+            postProcessAPIKey: preferences.llmPostProcessAPIKey.isEmpty ? nil : preferences.llmPostProcessAPIKey,
+            postProcessCustomEndpoint: preferences.llmPostProcessCustomEndpoint.isEmpty ? nil : preferences.llmPostProcessCustomEndpoint,
+            ocrModel: preferences.llmOCRModel,
+            postProcessModel: preferences.llmPostProcessModel,
+            enableLLMOCR: preferences.llmEnableOCR,
+            enablePostProcessing: preferences.llmEnablePostProcessing,
+            ocrPrompt: preferences.llmOCRPrompt,
+            postProcessPrompt: preferences.llmPostProcessPrompt,
+            fallbackToBuiltInOCR: preferences.llmFallbackToBuiltIn
+        )
+    }
+
+    // MARK: - Table Detection
+
+    private static let tableDetectionPrompt = """
+        Analyze the following OCR text for tabular data. If you find tables:
+        - Extract the table structure (headers and rows)
+        - Format each table in {format} format
+        - Preserve all non-table text in its original position
+        - Output the full text with tables replaced by their formatted version
+        - If no table is found, return the original text unchanged
+
+        OCR Text:
+        {text}
+        """
+
+    /// Detect tables in the captured content and format them.
+    /// Detect tables in the captured content and format them.
+    /// Returns combined text with formatted tables, or nil if no tables were detected.
+    /// Tries Vision document recognition first (macOS 26+), then falls back to LLM.
+    private func detectAndFormatTables(ocrText: String, capturedImage: CGImage?) async -> String? {
+        let format = preferences.tableOutputFormat
+
+        if #available(macOS 26, *), let cgImage = capturedImage {
+            return await detectTablesViaVision(in: cgImage, format: format)
+        }
+
+        // Pre-macOS 26: use LLM for table detection only if LLM OCR is enabled
+        if preferences.llmEnableOCR {
+            return await detectTablesViaLLM(ocrText: ocrText, format: format)
+        }
+
+        return nil
+    }
+
+    /// Use Vision's RecognizeDocumentsRequest (macOS 26+) for structural table detection.
+    @available(macOS 26, *)
+    private func detectTablesViaVision(in cgImage: CGImage, format: TableOutputFormat) async -> String? {
+        logger.info("📊 Using Vision RecognizeDocumentsRequest for table detection")
+        do {
+            let visionEngine = VisionOCREngine()
+            guard let result = try await visionEngine.recognizeDocument(in: cgImage),
+                  !result.tables.isEmpty else {
                 return nil
             }
 
-            task?.waitUntilExit()
-            task = nil
-            return NSImage(contentsOfFile: screenShotFilePath)
+            let formattedTables = result.tables.map { $0.formatted(as: format) }
+                .joined(separator: "\n\n")
+
+            // plainText is already filtered to exclude text inside tables
+            // (using bounding region overlap in recognizeDocument).
+            // Note: relative ordering between text and tables is not preserved;
+            // plain text appears first, followed by all formatted tables.
+            var parts: [String] = []
+            if !result.plainText.isEmpty {
+                parts.append(result.plainText)
+            }
+            parts.append(formattedTables)
+            return parts.joined(separator: "\n\n")
+        } catch {
+            logger.error("📊 Vision document recognition failed: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+    }
+
+    /// Use LLM with a table detection prompt for pre-macOS 26.
+    /// Returns nil if LLM is not configured or if no tables were detected.
+    private func detectTablesViaLLM(ocrText: String, format: TableOutputFormat) async -> String? {
+        guard let postProcessor = llmPostProcessor else {
+            return nil
+        }
+
+        logger.info("📊 Using LLM for table detection (Vision unavailable fallback)")
+        let processingState = llmProcessingState
+        await processingState.set(true)
+        let prompt = Self.tableDetectionPrompt
+            .replacingOccurrences(of: "{format}", with: format.rawValue)
+            .replacingOccurrences(of: "{text}", with: ocrText)
+        let result = await postProcessor.processSilently(ocrText, prompt: prompt)
+        await processingState.set(false)
+
+        // Only return if the LLM actually modified the text (i.e. found tables)
+        guard result != ocrText else { return nil }
+        return result
+    }
+
+    public func capture(_ mode: InvocationMode, imagePath: String? = nil) async {
+        switch mode {
+        case .captureMultiRegion, .captureMultiRegionAndTriggerAutomation:
+            await captureMultiRegion(mode)
+        default:
+            await captureSingle(mode, imagePath: imagePath)
+        }
+    }
+
+    private func captureSingle(_ mode: InvocationMode, imagePath: String? = nil) async {
+        currentInvocationMode = mode
+
+        guard let ocrResult = await getText(imagePath) else { return }
+        guard var text = await recognizeAndProcessOCR(from: ocrResult) else { return }
+
+        // Apply LLM post-processing if enabled (runs after table detection)
+        if preferences.llmEnablePostProcessing, let postProcessor = llmPostProcessor {
+            logger.info("📝 Applying LLM post-processing...")
+            let processingState = llmProcessingState
+            await processingState.set(true)
+            let metadata = ocrResult.contextDescription()
+            text = await postProcessor.processSilently(text, metadata: metadata)
+            await processingState.set(false)
+            logger.info("✅ Post-processing complete")
+        }
+
+        await processDetectedText(text, ocrResult: ocrResult)
+    }
+
+    /// Capture multiple screen regions in a loop, OCR each one, and combine results.
+    /// The loop continues until the user cancels (presses Escape) in the screencapture UI,
+    /// or the maximum region limit is reached.
+    private static let maxMultiRegionCaptures = 50
+
+    private func captureMultiRegion(_ mode: InvocationMode) async {
+        currentInvocationMode = mode
+        var allTexts: [String] = []
+
+        guard !isCaptureInProgress else {
+            logger.warning("⚠️ Capture already in progress, returning early")
+            return
+        }
+        isCaptureInProgress = true
+        defer { isCaptureInProgress = false }
+
+        while allTexts.count < Self.maxMultiRegionCaptures {
+            guard let nsImage = await captureScreenInteractively() else {
+                break // User pressed Escape or capture failed
+            }
+            guard let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+                continue
+            }
+
+            if let text = await recognizeAndProcessOCR(cgImage) {
+                allTexts.append(text)
+            }
+        }
+
+        if allTexts.count >= Self.maxMultiRegionCaptures {
+            logger.warning("⚠️ Multi-region capture reached maximum of \(Self.maxMultiRegionCaptures, privacy: .public) regions")
+        }
+
+        guard !allTexts.isEmpty else { return }
+        var combined = allTexts.joined(separator: "\n\n")
+
+        // Apply LLM post-processing once on the combined text
+        if preferences.llmEnablePostProcessing, let postProcessor = llmPostProcessor {
+            let processingState = llmProcessingState
+            await processingState.set(true)
+            let metadata = "Multi-region capture (\(allTexts.count) regions)"
+            combined = await postProcessor.processSilently(combined, metadata: metadata)
+            await processingState.set(false)
+        }
+
+        await processDetectedText(combined)
+    }
+
+    /// Run OCR on a CGImage and apply table detection if enabled.
+    /// Shared helper used by both single capture and multi-region capture paths.
+    private func recognizeAndProcessOCR(_ cgImage: CGImage) async -> String? {
+        guard let ocrResult = await recognizeImage(cgImage) else { return nil }
+        return await recognizeAndProcessOCR(from: ocrResult)
+    }
+
+    /// Apply table detection to an existing OCR result if enabled.
+    /// Returns the text with tables formatted if detected, or the plain OCR text otherwise.
+    private func recognizeAndProcessOCR(from ocrResult: OCRResult) async -> String? {
+        var text = ocrResult.text
+
+        if preferences.tableDetectionEnabled {
+            logger.info("📊 Table detection enabled, analyzing for tables...")
+            if let tableText = await detectAndFormatTables(ocrText: text, capturedImage: ocrResult.sourceImage) {
+                text = tableText
+                logger.info("✅ Table detection complete, using formatted output")
+            } else {
+                logger.info("📊 No tables detected, using plain OCR text")
+            }
+        }
+
+        return text
+    }
+
+    /// Launch `screencapture -i` interactively and return the captured image.
+    /// Returns nil if the user cancelled (pressed Escape) or if the capture failed.
+    private func captureScreenInteractively() async -> NSImage? {
+        let filePath = makeScreenshotFilePath()
+        let process = Process()
+        process.executableURL = screenCaptureURL
+        process.arguments = screenCaptureArguments(outputPath: filePath)
+        let logger = self.logger
+
+        return await withCheckedContinuation { continuation in
+            process.terminationHandler = { _ in
+                guard FileManager.default.fileExists(atPath: filePath) else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                let image = NSImage(contentsOfFile: filePath)
+
+                // Clean up temp file immediately after loading the image
+                do {
+                    try FileManager.default.removeItem(atPath: filePath)
+                } catch {
+                    logger.warning("Failed to clean up temp screenshot file: \(error.localizedDescription, privacy: .public)")
+                }
+
+                continuation.resume(returning: image)
+            }
+
+            do {
+                try process.run()
+            } catch {
+                logger.error("Screen capture command failed: \(error.localizedDescription, privacy: .public)")
+                continuation.resume(returning: nil)
+            }
+        }
+    }
+
+    private func getImage(_ imagePath: String? = nil) async -> NSImage? {
+        switch currentInvocationMode {
+        case .captureScreen, .captureScreenAndTriggerAutomation:
+            return await captureScreenInteractively()
         case .captureClipboard, .captureClipboardAndTriggerAutomation:
             if let url = NSPasteboard.general.readObjects(forClasses: [NSURL.self], options: nil)?.first as? NSURL,
                url.isFileURL, let path = url.path
@@ -120,20 +426,24 @@ public class TRex: NSObject {
                 return nil
             }
             return NSImage(contentsOfFile: imagePath)
+        case .captureMultiRegion, .captureMultiRegionAndTriggerAutomation:
+            return await captureScreenInteractively()
         }
     }
 
-    private func getText(_ imagePath: String? = nil) async -> String? {
+    private func getText(_ imagePath: String? = nil) async -> OCRResult? {
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         logger.info("🚀 getText called - starting OCR process")
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-        guard task == nil else {
-            logger.warning("⚠️ Task is not nil, returning early")
+        guard !isCaptureInProgress else {
+            logger.warning("⚠️ Capture already in progress, returning early")
             return nil
         }
+        isCaptureInProgress = true
+        defer { isCaptureInProgress = false }
 
-        guard let nsImage = getImage(imagePath) else {
+        guard let nsImage = await getImage(imagePath) else {
             logger.error("❌ Failed to get image")
             return nil
         }
@@ -143,6 +453,24 @@ public class TRex: NSObject {
             return nil
         }
 
+        return await recognizeImage(cgImage)
+    }
+
+    /// Run OCR on a CGImage for watch mode. Delegates to the standard recognition pipeline
+    /// and applies table detection if enabled. Does not modify clipboard or trigger automation.
+    func recognizeImageForWatchMode(_ cgImage: CGImage) async -> OCRResult? {
+        guard let ocrResult = await recognizeImage(cgImage) else { return nil }
+
+        // Apply table detection if enabled, returning a modified result
+        if let processedText = await recognizeAndProcessOCR(from: ocrResult), processedText != ocrResult.text {
+            return ocrResult.with(text: processedText)
+        }
+
+        return ocrResult
+    }
+
+    /// Run OCR on a CGImage: QR detection first, then engine selection and text recognition.
+    private func recognizeImage(_ cgImage: CGImage) async -> OCRResult? {
         logger.info("📐 Image loaded: \(cgImage.width, privacy: .public)x\(cgImage.height, privacy: .public)")
 
         // Always check for QR codes first
@@ -152,7 +480,14 @@ public class TRex: NSObject {
             if preferences.autoOpenQRCodeURL {
                 detectAndOpenURL(text: text)
             }
-            return text
+            return OCRResult(
+                text: text,
+                confidence: 1.0,
+                recognizedLanguages: [],
+                engineName: "QR Code Detector",
+                recognitionLevel: "exact",
+                sourceImage: cgImage
+            )
         }
 
         logger.info("📝 No QR code detected, proceeding with text recognition")
@@ -181,6 +516,16 @@ public class TRex: NSObject {
             return await performVisionOCR(cgImage: cgImage)
         }
 
+        // If LLM OCR is enabled and available, use it
+        if preferences.llmEnabled && preferences.llmEnableOCR, let llmEngine = llmEngine {
+            logger.info("🛤️ OCR Path: Using LLM OCR engine")
+            let processingState = llmProcessingState
+            await processingState.set(true)
+            let result = await performOCR(with: llmEngine, cgImage: cgImage, languages: languages)
+            await processingState.set(false)
+            return result
+        }
+
         // If Tesseract is disabled, only use Vision
         if !preferences.tesseractEnabled {
             logger.info("🛤️ OCR Path: Using Apple Vision (Tesseract disabled)")
@@ -202,11 +547,11 @@ public class TRex: NSObject {
     }
     
     
-    private func performOCR(with engine: OCREngine, cgImage: CGImage, languages: [String]) async -> String? {
+    private func performOCR(with engine: OCREngine, cgImage: CGImage, languages: [String]) async -> OCRResult? {
         logger.info("🔧 performOCR called with engine: \(engine.name, privacy: .public)")
         do {
             // Use timeout utility for 5 second timeout
-            let result = try await withTimeout(seconds: 5.0) {
+            var result = try await withTimeout(seconds: 5.0) {
                 try await engine.recognizeText(
                     in: cgImage,
                     languages: languages,
@@ -219,12 +564,15 @@ public class TRex: NSObject {
             logger.info("  → Confidence: \(String(format: "%.2f", result.confidence), privacy: .public)")
             logger.info("  → Recognized languages: \(result.recognizedLanguages.joined(separator: ", "), privacy: .public)")
 
+            // Attach source image for downstream processing (e.g. table detection)
+            result = result.with(sourceImage: cgImage)
+
             // Handle URL opening if needed
             if preferences.autoOpenCapturedURL {
                 detectAndOpenURL(text: result.text)
             }
 
-            return result.text
+            return result
         } catch TimeoutError.timedOut {
             logger.error("⏱️ OCR timed out after 5 seconds, falling back to Vision")
             return await performVisionOCR(cgImage: cgImage)
@@ -235,25 +583,40 @@ public class TRex: NSObject {
         }
     }
 
-    private func performVisionOCR(cgImage: CGImage) async -> String? {
+    private func performVisionOCR(cgImage: CGImage) async -> OCRResult? {
         logger.info("🔧 performVisionOCR (legacy path) called")
         return await withCheckedContinuation { continuation in
-            detectText(in: cgImage) { result in
-                if let result = result {
-                    self.logger.info("✅ Legacy Vision OCR successful, result length: \(result.count, privacy: .public)")
+            detectText(in: cgImage) { text in
+                if let text = text {
+                    self.logger.info("✅ Legacy Vision OCR successful, result length: \(text.count, privacy: .public)")
+                    let result = OCRResult(
+                        text: text,
+                        confidence: 0.0, // Legacy path doesn't provide confidence
+                        recognizedLanguages: [self.preferences.recognitionLanguageCode],
+                        engineName: "Apple Vision (Legacy)",
+                        recognitionLevel: "accurate",
+                        sourceImage: cgImage
+                    )
+                    continuation.resume(returning: result)
                 } else {
                     self.logger.warning("⚠️ Legacy Vision OCR returned no text")
+                    continuation.resume(returning: nil)
                 }
-                continuation.resume(returning: result)
             }
         }
     }
 
-    func processDetectedText(_ text: String) {
+    @MainActor
+    func processDetectedText(_ text: String, ocrResult: OCRResult? = nil) {
         showNotification(text: text)
 
-        defer {
-            try? FileManager.default.removeItem(atPath: screenShotFilePath)
+        // Save to capture history (GUI only)
+        if preferences.captureHistoryEnabled, !BundleIdentifiers.isCLI {
+            captureHistoryStore.addEntry(
+                text: text,
+                ocrResult: ocrResult,
+                maxEntries: preferences.captureHistoryMaxEntries
+            )
         }
 
         // Choose between automation and clipboard
@@ -405,7 +768,7 @@ public class TRex: NSObject {
 
 extension TRex {
     class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
-        static let shared = NotificationDelegate()
+        nonisolated(unsafe) static let shared = NotificationDelegate()
         
         override init() {
             super.init()
@@ -421,7 +784,7 @@ extension TRex {
         }
     }
     
-    func showNotification(text: String) {
+    public func showNotification(text: String) {
         guard preferences.resultNotification else { return }
         guard !BundleIdentifiers.isCLI else { return }
         

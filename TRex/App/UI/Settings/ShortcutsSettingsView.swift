@@ -19,6 +19,19 @@ struct ShortcutsSettingsView: View {
                 }
             }
             Divider()
+            Section(header: Text("Capture Multi-Region").bold()) {
+                HStack {
+                    Text("To Clipboard:")
+                    Spacer()
+                    KeyboardShortcuts.Recorder(for: .captureMultiRegion)
+                }
+                HStack {
+                    Text("Run Automation:")
+                    Spacer()
+                    KeyboardShortcuts.Recorder(for: .captureMultiRegionAndTriggerAutomation)
+                }
+            }
+            Divider()
             Section(header: Text("Capture ➜ Automation").bold()) {
                 HStack {
                     Text("From Screen:")
@@ -39,6 +52,6 @@ struct ShortcutsSettingsView: View {
             
         }
         .padding(20)
-        .frame(width: 410, height: 260)
+        .frame(width: 500, height: 380)
     }
 }

@@ -149,7 +149,7 @@ struct TesseractSettingsView: View {
                 .padding(.bottom, 16)
             }
         }
-        .frame(width: 410, height: preferences.tesseractEnabled ? 430 : 140)
+        .frame(width: 500, height: preferences.tesseractEnabled ? 430 : 140)
         .onAppear {
             refreshLanguageList()
             selectedLanguages = Set(preferences.tesseractLanguages)

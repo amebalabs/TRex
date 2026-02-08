@@ -46,7 +46,7 @@
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Please give TRex access to Shortcuts via Apple Script</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright ©2025 Ameba Labs. All rights reserved.</string>
+	<string>Copyright ©2026 Ameba Labs. All rights reserved.</string>
 	<key>NSServices</key>
 	<array>
 		<dict>

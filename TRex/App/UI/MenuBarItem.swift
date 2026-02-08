@@ -10,14 +10,23 @@ class MenubarItem: NSObject {
     var statusBarItem: NSStatusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let statusBarmenu = NSMenu()
     let captureTextItem = NSMenuItem(title: "Capture", action: #selector(captureScreen), keyEquivalent: "")
+    let captureMultiRegionItem = NSMenuItem(title: "Capture Multi-Region", action: #selector(captureMultiRegion), keyEquivalent: "")
     let captureTextAndTriggerAutomationItem = NSMenuItem(title: "Capture & Run Automation", action: #selector(captureScreenAndTriggerAutomation), keyEquivalent: "")
     let captureFromClipboard = NSMenuItem(title: "Capture from Clipboard", action: #selector(captureClipboard), keyEquivalent: "")
     let ignoreLineBreaksItem = NSMenuItem(title: "Ignore Line Breaks", action: #selector(ignoreLineBreaks), keyEquivalent: "")
+    let tableDetectionMenuItem = NSMenuItem(title: "Table Detection", action: nil, keyEquivalent: "")
+    let tableDetectionToggleItem = NSMenuItem(title: "Enable Table Detection", action: #selector(toggleTableDetection), keyEquivalent: "")
+    let historyItem = NSMenuItem(title: "History", action: nil, keyEquivalent: "")
+    let watchModeItem = NSMenuItem(title: "Start Watch Mode", action: #selector(toggleWatchMode), keyEquivalent: "")
     let preferencesItem = NSMenuItem(title: "Settings...", action: #selector(showPreferences), keyEquivalent: ",")
     let quitItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
     let aboutItem = NSMenuItem(title: "About TRex", action: #selector(showAbout), keyEquivalent: "")
 
     var cancellable: AnyCancellable?
+    var llmProcessingCancellable: AnyCancellable?
+    var watchModeCancellable: AnyCancellable?
+    private var pulseAnimation: CFRunLoopTimer?
+    private var watchPulseAnimation: CFRunLoopTimer?
     private lazy var workQueue: OperationQueue = {
         let providerQueue = OperationQueue()
         providerQueue.qualityOfService = .userInitiated
@@ -41,21 +50,119 @@ class MenubarItem: NSObject {
             image.isTemplate = true
             self?.statusBarItem.button?.image = image
         }
+
+        // LLMProcessingState is @MainActor; subscribe from main actor context
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            self.llmProcessingCancellable = trex.llmProcessingState.$isProcessing
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] isProcessing in
+                    if isProcessing {
+                        self?.startPulse()
+                    } else {
+                        self?.stopPulse()
+                    }
+                }
+            self.watchModeCancellable = trex.watchModeManager.$isCapturing
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] isCapturing in
+                    if isCapturing {
+                        self?.startWatchPulse()
+                    } else {
+                        self?.stopWatchPulse()
+                    }
+                }
+        }
+    }
+
+    private func makePulseTimer(
+        into storage: UnsafeMutablePointer<CFRunLoopTimer?>,
+        minAlpha: CGFloat,
+        maxAlpha: CGFloat,
+        step: CGFloat,
+        interval: CFTimeInterval
+    ) {
+        guard storage.pointee == nil, let button = statusBarItem.button else { return }
+        var fadingOut = true
+        let timer = CFRunLoopTimerCreateWithHandler(kCFAllocatorDefault, CFAbsoluteTimeGetCurrent(), interval, 0, 0) { _ in
+            if fadingOut {
+                button.alphaValue = max(minAlpha, button.alphaValue - step)
+                if button.alphaValue <= minAlpha {
+                    fadingOut = false
+                }
+            } else {
+                button.alphaValue = min(maxAlpha, button.alphaValue + step)
+                if button.alphaValue >= maxAlpha {
+                    fadingOut = true
+                }
+            }
+        }
+        CFRunLoopAddTimer(CFRunLoopGetMain(), timer, .commonModes)
+        storage.pointee = timer
+    }
+
+    private func invalidatePulseTimer(_ storage: UnsafeMutablePointer<CFRunLoopTimer?>, otherActive: CFRunLoopTimer?) {
+        if let timer = storage.pointee {
+            CFRunLoopTimerInvalidate(timer)
+            storage.pointee = nil
+        }
+        // Only restore full alpha if the other pulse isn't running
+        if otherActive == nil {
+            statusBarItem.button?.alphaValue = 1.0
+        }
+    }
+
+    private func startPulse() {
+        makePulseTimer(into: &pulseAnimation, minAlpha: 0.3, maxAlpha: 1.0, step: 0.05, interval: 0.05)
+    }
+
+    private func stopPulse() {
+        invalidatePulseTimer(&pulseAnimation, otherActive: watchPulseAnimation)
+    }
+
+    private func startWatchPulse() {
+        // Slower pulse than LLM processing to distinguish watch mode
+        makePulseTimer(into: &watchPulseAnimation, minAlpha: 0.5, maxAlpha: 1.0, step: 0.02, interval: 0.08)
+    }
+
+    private func stopWatchPulse() {
+        invalidatePulseTimer(&watchPulseAnimation, otherActive: pulseAnimation)
     }
 
     private func buildMenu() {
-        let menuItems = [captureTextItem, captureTextAndTriggerAutomationItem, captureFromClipboard, ignoreLineBreaksItem, preferencesItem, aboutItem, quitItem]
-        menuItems.forEach { $0.target = self }
+        for item in [captureTextItem, captureMultiRegionItem, captureTextAndTriggerAutomationItem,
+                     captureFromClipboard, watchModeItem, ignoreLineBreaksItem,
+                     tableDetectionToggleItem, historyItem, preferencesItem, aboutItem, quitItem] {
+            item.target = self
+        }
 
         statusBarmenu.addItem(captureTextItem)
+        statusBarmenu.addItem(captureMultiRegionItem)
         statusBarmenu.addItem(captureTextAndTriggerAutomationItem)
         statusBarmenu.addItem(captureFromClipboard)
+        statusBarmenu.addItem(watchModeItem)
+        statusBarmenu.addItem(NSMenuItem.separator())
+        statusBarmenu.addItem(historyItem)
+        statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(ignoreLineBreaksItem)
+        statusBarmenu.addItem(tableDetectionMenuItem)
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(preferencesItem)
         statusBarmenu.addItem(aboutItem)
         statusBarmenu.addItem(NSMenuItem.separator())
         statusBarmenu.addItem(quitItem)
+
+        // Build table detection submenu (toggle + format options)
+        let tableSubmenu = NSMenu()
+        tableSubmenu.addItem(tableDetectionToggleItem)
+        tableSubmenu.addItem(NSMenuItem.separator())
+        for format in TableOutputFormat.allCases {
+            let item = NSMenuItem(title: format.rawValue, action: #selector(selectOutputFormat(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = format
+            tableSubmenu.addItem(item)
+        }
+        tableDetectionMenuItem.submenu = tableSubmenu
 
         statusBarmenu.delegate = self
     }
@@ -63,6 +170,12 @@ class MenubarItem: NSObject {
     @objc func captureScreen() {
         Task {
             await trex.capture(.captureScreen)
+        }
+    }
+
+    @objc func captureMultiRegion() {
+        Task {
+            await trex.capture(.captureMultiRegion)
         }
     }
 
@@ -80,6 +193,41 @@ class MenubarItem: NSObject {
 
     @objc func ignoreLineBreaks() {
         preferences.ignoreLineBreaks.toggle()
+    }
+
+    @objc func toggleTableDetection() {
+        preferences.tableDetectionEnabled.toggle()
+    }
+
+    @objc func selectOutputFormat(_ sender: NSMenuItem) {
+        if let format = sender.representedObject as? TableOutputFormat {
+            preferences.tableOutputFormat = format
+        }
+    }
+
+    // MARK: - Watch Mode
+
+    @objc func toggleWatchMode() {
+        Task { @MainActor in
+            if trex.watchModeManager.isWatching {
+                trex.watchModeManager.stopWatching()
+            } else {
+                await trex.watchModeManager.startWatching()
+            }
+        }
+    }
+
+    @objc func showHistory() {
+        guard let url = URL(string: "trex://showHistory") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    @objc func copyHistoryEntry(_ sender: NSMenuItem) {
+        if let text = sender.representedObject as? String {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(text, forType: .string)
+        }
     }
 
     @objc func quit() {
@@ -100,7 +248,8 @@ extension MenubarItem: NSMenuDelegate {
         
         if NSApp.currentEvent?.modifierFlags.contains(.option) == true {
             menu.cancelTracking()
-            if preferences.optionQuickAction == .captureFromFile || preferences.optionQuickAction == .captureFromFileAndTriggerAutomation {
+            let quickAction = preferences.optionQuickAction
+            if quickAction == .captureFromFile || quickAction == .captureFromFileAndTriggerAutomation {
                 let dialog = NSOpenPanel()
                 dialog.title = "Choose an image"
                 dialog.showsResizeIndicator = true
@@ -111,23 +260,93 @@ extension MenubarItem: NSMenuDelegate {
                 
                 if dialog.runModal() == .OK {
                     Task {
-                        await trex.capture(preferences.optionQuickAction, imagePath: dialog.url?.path(percentEncoded: false))
+                        await trex.capture(quickAction, imagePath: dialog.url?.path(percentEncoded: false))
                     }
                 }
                 return
             }
             Task {
-                await trex.capture(preferences.optionQuickAction)
+                await trex.capture(quickAction)
             }
             return
         }
         
         captureTextItem.setShortcut(for: .captureScreen)
+        captureMultiRegionItem.setShortcut(for: .captureMultiRegion)
         captureTextAndTriggerAutomationItem.setShortcut(for: .captureScreenAndTriggerAutomation)
         captureFromClipboard.setShortcut(for: .captureClipboard)
 
         captureFromClipboard.isEnabled = clipboardHasSupportedContente() ? true : false
         ignoreLineBreaksItem.state = preferences.ignoreLineBreaks ? .on : .off
+        tableDetectionToggleItem.state = preferences.tableDetectionEnabled ? .on : .off
+
+        // Update radio-style selection in format submenu + disable when off
+        if let tableSubmenu = tableDetectionMenuItem.submenu {
+            var foundSeparator = false
+            for item in tableSubmenu.items {
+                if item.isSeparatorItem {
+                    foundSeparator = true
+                    continue
+                }
+                if let format = item.representedObject as? TableOutputFormat {
+                    item.state = format == preferences.tableOutputFormat ? .on : .off
+                }
+                if foundSeparator {
+                    item.isEnabled = preferences.tableDetectionEnabled
+                }
+            }
+        }
+
+        // Update watch mode item title
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let isActive = self.trex.watchModeManager.isWatching
+            self.watchModeItem.title = isActive ? "Stop Watch Mode" : "Start Watch Mode"
+        }
+
+        // Build history submenu
+        buildHistorySubmenu()
+    }
+
+    private static let historyMenuMaxEntries = 5
+    private static let historyMenuTruncationLength = 40
+
+    @MainActor private func buildHistorySubmenu() {
+        let submenu = NSMenu()
+
+        guard preferences.captureHistoryEnabled else {
+            let disabledItem = NSMenuItem(title: "History is disabled", action: nil, keyEquivalent: "")
+            disabledItem.isEnabled = false
+            submenu.addItem(disabledItem)
+            historyItem.submenu = submenu
+            return
+        }
+
+        let entries = trex.captureHistoryStore.entries
+        let recentEntries = entries.prefix(Self.historyMenuMaxEntries)
+
+        if recentEntries.isEmpty {
+            let emptyItem = NSMenuItem(title: "No captures yet", action: nil, keyEquivalent: "")
+            emptyItem.isEnabled = false
+            submenu.addItem(emptyItem)
+        } else {
+            for entry in recentEntries {
+                let firstLine = entry.text.components(separatedBy: .newlines).first ?? ""
+                let maxLen = Self.historyMenuTruncationLength
+                let truncated = firstLine.count > maxLen ? String(firstLine.prefix(maxLen)) + "..." : firstLine
+                let item = NSMenuItem(title: truncated, action: #selector(copyHistoryEntry(_:)), keyEquivalent: "")
+                item.target = self
+                item.representedObject = entry.text
+                submenu.addItem(item)
+            }
+        }
+
+        submenu.addItem(NSMenuItem.separator())
+        let showAllItem = NSMenuItem(title: "Show All...", action: #selector(showHistory), keyEquivalent: "")
+        showAllItem.target = self
+        submenu.addItem(showAllItem)
+
+        historyItem.submenu = submenu
     }
 
     func menuDidClose(_: NSMenu) {
