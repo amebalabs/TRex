@@ -7,17 +7,17 @@
     <language>en</language>
     <item>
       <title>TRex 2.0.0</title>
-      <sparkle:version>154</sparkle:version>
+      <sparkle:version>156</sparkle:version>
       <sparkle:shortVersionString>2.0.0</sparkle:shortVersionString>
       <description><![CDATA[]]></description>
-      <pubDate>Fri, 13 Feb 2026 18:28:54 +0000</pubDate>
+      <pubDate>Fri, 13 Feb 2026 18:38:22 +0000</pubDate>
       <enclosure
         url="https://github.com/amebalabs/TRex/releases/download/v2.0.0/TRex-2.0.0.zip"
-        sparkle:version="154"
+        sparkle:version="156"
         sparkle:shortVersionString="2.0.0"
         type="application/octet-stream"
-        sparkle:edSignature="h0ouvyDwaWPATTimcPyvNsR6zVH1l2Wr1tzsJoVrZ5LjCpEzDID19/NhRaDbnpSV2Y0r2AsnrY2gjS8AjXHhAw==" length="5264332"
-        sparkle:sha256="c4b5a0ff9895cb1317fe70d469cc3b37b7dc9e276f4f6b399ba46c5961ba5303"
+        sparkle:edSignature="Kv+3XYKeqNtXkVQWrmC36GdxdE2+XpegR5+48a0dexNxdOevsCtpkUmjJbsjDYw8QGpdmPQTUCz94PzpysPeBg==" length="5264317"
+        sparkle:sha256="4e8defc680daa6e09cb2daba576aa243683c775b93a9510ce5f12544d222de4d"
       />
     </item>
   </channel>
