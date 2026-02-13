@@ -9,7 +9,61 @@
       <title>TRex 2.0.0</title>
       <sparkle:version>156</sparkle:version>
       <sparkle:shortVersionString>2.0.0</sparkle:shortVersionString>
-      <description><![CDATA[]]></description>
+      <description><![CDATA[
+<h2>🎉 TRex 2.0: Major Update</h2>
+
+<h3>✨ New Features</h3>
+
+<h4>🤖 LLM Integration</h4>
+<ul>
+  <li><strong>AI-powered OCR</strong>: Use GPT-4, Claude, Ollama, or Apple Intelligence for vision-based text recognition</li>
+  <li><strong>Smart post-processing</strong>: Automatically format, correct, or transform captured text</li>
+  <li><strong>Separate providers</strong>: Choose different AI models for OCR vs post-processing</li>
+  <li><strong>On-device processing</strong>: Apple Intelligence runs locally with no API calls (macOS 15.1+)</li>
+  <li><strong>Network-aware fallback</strong>: Automatically uses built-in OCR when offline</li>
+</ul>
+
+<h4>📊 Table Detection</h4>
+<ul>
+  <li><strong>Vision-based detection</strong>: Uses macOS document recognition for table extraction</li>
+  <li><strong>LLM fallback</strong>: AI-based table detection on older systems</li>
+  <li><strong>Multiple formats</strong>: Export as Markdown, CSV, or plain text</li>
+</ul>
+
+<h4>🔲 Multi-Region Capture</h4>
+<ul>
+  <li><strong>Batch selection</strong>: Select multiple screen regions in a single capture session</li>
+  <li><strong>Combined results</strong>: OCR results from all regions merged together</li>
+  <li><strong>Up to 50 regions</strong>: Capture complex layouts in one go</li>
+</ul>
+
+<h4>👁️ Watch Mode</h4>
+<ul>
+  <li><strong>Continuous monitoring</strong>: Automatically capture when content changes</li>
+  <li><strong>Interactive region selection</strong>: Draw regions with visual overlay</li>
+  <li><strong>Floating control panel</strong>: Start, pause, and reselect regions on the fly</li>
+  <li><strong>Multiple output modes</strong>: Append to clipboard, write to file, or notifications</li>
+</ul>
+
+<h4>📜 Capture History</h4>
+<ul>
+  <li><strong>Persistent history</strong>: All OCR captures saved with thumbnails</li>
+  <li><strong>Quick access</strong>: Last 5 captures in menu bar submenu</li>
+  <li><strong>Configurable storage</strong>: Set max entries (1–10,000)</li>
+</ul>
+
+<h3>🐛 Bug Fixes</h3>
+<ul>
+  <li>Fixed CLI not exiting after stdin EOF</li>
+  <li>Added back Intel Support</li>
+  <li>Added Turkish language support</li>
+  <li>Fixed language code normalization</li>
+  <li>Fixed Quick Setup content overflow</li>
+  <li>Added confirmation dialog when hiding menu bar icon</li>
+</ul>
+
+<p><a href="https://github.com/amebalabs/TRex/releases/tag/v2.0.0">Full Release Notes</a></p>
+      ]]></description>
       <pubDate>Fri, 13 Feb 2026 18:38:22 +0000</pubDate>
       <enclosure
         url="https://github.com/amebalabs/TRex/releases/download/v2.0.0/TRex-2.0.0.zip"
