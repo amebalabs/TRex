@@ -1,6 +1,6 @@
 cask "trex" do
-  version "1.9.1"
-  sha256 "01937c514552f2a377de1c272b8cd5bda28e3f3ce752036e48200adaff457c65"
+  version "2.0.0"
+  sha256 "c4b5a0ff9895cb1317fe70d469cc3b37b7dc9e276f4f6b399ba46c5961ba5303"
 
   url "https://github.com/amebalabs/TRex/releases/download/v#{version}/TRex-#{version}.zip"
   name "TRex"

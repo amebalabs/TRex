@@ -1,3 +1,64 @@
+# v2.0.0 (2026-02-13)
+
+# TRex v2.0.0 Release Notes
+
+## ✨ New Features
+
+### Table Detection
+- **Vision-based detection**: Uses macOS 26+ document recognition for table extraction
+- **LLM fallback**: Falls back to AI-based table detection on older systems
+- **Multiple formats**: Export tables as Markdown, CSV, or plain text
+- **Menu bar toggle**: Quick access to table detection settings
+
+### LLM Integration
+- **AI-powered OCR**: Use OpenAI, Anthropic, Ollama, or Apple Intelligence for vision-based text recognition
+- **Smart post-processing**: Automatically format, correct, or transform captured text with LLM
+- **Separate provider configuration**: Choose different providers for OCR vs post-processing
+- **On-device processing**: Apple Intelligence runs locally with no API calls (macOS 15.1+)
+- **Network-aware fallback**: Automatically falls back to built-in OCR when offline
+
+### Multi-Region Capture
+- **Batch selection**: Select multiple screen regions in a single capture session
+- **Combined results**: OCR results from all regions are merged together
+- **Optional LLM processing**: Post-process combined text with AI
+- **Up to 50 regions**: Capture complex layouts in one go
+
+### Watch Mode
+- **Continuous monitoring**: Monitor a screen region and automatically capture when content changes
+- **Interactive region selection**: Draw regions with a visual overlay
+- **Floating control panel**: Start, pause, and reselect regions on the fly
+- **Multiple output modes**: Append to clipboard, write to file, or stream notifications
+- **Smart detection**: SHA256-based change detection with configurable polling interval
+- **URL scheme support**: Trigger watch mode via `trex://watch`
+
+### Capture History
+- **Persistent history**: All OCR captures saved with thumbnails
+- **Quick access**: Last 5 captures available in menu bar submenu
+- **History window**: Browse all captures via `trex://showHistory`
+- **Configurable storage**: Set max entries (1–10,000)
+- **One-click copy**: Quickly copy any previous capture to clipboard
+
+
+## 🐛 Bug Fixes
+
+### CLI Improvements
+- Fixed CLI not exiting after stdin EOF (#61)
+- Added back Intel Support
+- Improved temp file handling with UUID-based paths
+
+### Language Recognition
+- Added Turkish (tr-TR) to Vision OCR fallback language sets (#62)
+- Fixed language code normalization to handle underscore format (#65)
+
+### UI Fixes
+- Fixed Quick Setup content overflow with scrollable language grid (#63)
+- Added confirmation dialog when hiding menu bar icon with recovery instructions (#60)
+
+## 🔗 Links
+
+- [Full Changelog](https://github.com/amebalabs/TRex/compare/v1.9.1...v2.0.0)
+- [GitHub Release](https://github.com/amebalabs/TRex/releases/tag/v2.0.0)
+
 # v1.9.1 (2025-11-05)
 
 # TRex v1.9.1 Release Notes
