@@ -58,7 +58,7 @@ final class LLMProviderIntegrationTests: XCTestCase {
             providerType: .openai,
             apiKey: key,
             endpoint: nil,
-            modelName: "gpt-4o"
+            modelName: "gpt-4.1-mini"
         )
 
         XCTAssertEqual(provider.name, "OpenAI")
@@ -83,7 +83,7 @@ final class LLMProviderIntegrationTests: XCTestCase {
                 providerType: .openai,
                 apiKey: nil,
                 endpoint: nil,
-                modelName: "gpt-4o"
+                modelName: "gpt-4.1-mini"
             )
         ) { error in
             XCTAssertTrue(error is LLMError)
@@ -121,13 +121,13 @@ final class LLMProviderIntegrationTests: XCTestCase {
             providerType: .openai,
             apiKey: key,
             endpoint: nil,
-            modelName: "gpt-4o"
+            modelName: "gpt-4.1-mini"
         )
 
         let result = try await provider.processText(
             "Helo wrld, ths is a tset.",
             prompt: "Fix the spelling errors in this text. Return only the corrected text:\n{text}",
-            model: "gpt-4o"
+            model: "gpt-4.1-mini"
         )
 
         XCTAssertFalse(result.isEmpty, "Response should not be empty")
@@ -170,7 +170,7 @@ final class LLMProviderIntegrationTests: XCTestCase {
             providerType: .openai,
             apiKey: key,
             endpoint: nil,
-            modelName: "gpt-4o"
+            modelName: "gpt-4.1-mini"
         )
 
         let testImage = createTestImageWithText("Hello TRex")
@@ -178,7 +178,7 @@ final class LLMProviderIntegrationTests: XCTestCase {
         let result = try await provider.performOCR(
             image: testImage,
             prompt: nil,
-            model: "gpt-4o"
+            model: "gpt-4.1-mini"
         )
 
         XCTAssertFalse(result.isEmpty, "OCR result should not be empty")
@@ -226,7 +226,7 @@ final class LLMProviderIntegrationTests: XCTestCase {
             providerType: .openai,
             apiKey: key,
             endpoint: nil,
-            modelName: "gpt-4o"
+            modelName: "gpt-4.1-mini"
         )
 
         let connected = await provider.checkConnectivity()

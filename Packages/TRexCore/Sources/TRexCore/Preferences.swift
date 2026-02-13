@@ -421,8 +421,8 @@ public class Preferences: ObservableObject {
         llmPostProcessProvider = Preferences.getValue(key: .LLMPostProcessProvider) as? String ?? "OpenAI"
         llmPostProcessAPIKey = Preferences.getValue(key: .LLMPostProcessAPIKey) as? String ?? ""
         llmPostProcessCustomEndpoint = Preferences.getValue(key: .LLMPostProcessCustomEndpoint) as? String ?? ""
-        llmOCRModel = Preferences.getValue(key: .LLMOCRModel) as? String ?? "gpt-4o"
-        llmPostProcessModel = Preferences.getValue(key: .LLMPostProcessModel) as? String ?? "gpt-4o"
+        llmOCRModel = Preferences.getValue(key: .LLMOCRModel) as? String ?? "gpt-4.1-mini"
+        llmPostProcessModel = Preferences.getValue(key: .LLMPostProcessModel) as? String ?? "gpt-4.1-mini"
         llmEnableOCR = Preferences.getValue(key: .LLMEnableOCR) as? Bool ?? false
         llmEnablePostProcessing = Preferences.getValue(key: .LLMEnablePostProcessing) as? Bool ?? false
         llmOCRPrompt = Preferences.getValue(key: .LLMOCRPrompt) as? String ?? "Extract all visible text from this image. Preserve the layout and formatting as much as possible. Return only the extracted text without any additional commentary."

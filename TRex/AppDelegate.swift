@@ -187,10 +187,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    func showOnboardingIfNeeded() {
+    @MainActor func showOnboardingIfNeeded() {
         guard preferences.needsOnboarding else { return }
-        
-        onboardingWindowController = NSWindowController()
+        showOnboarding()
+    }
+
+    @MainActor func showOnboarding() {
+        // If onboarding window is already open, just bring it to front
+        if let controller = onboardingWindowController, controller.window != nil {
+            controller.showWindow(self)
+            controller.window?.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
 
         let myWindow = NSWindow(
             contentRect: .init(origin: .zero, size: CGSize(width: 900, height: 700)),

@@ -7,8 +7,8 @@ final class LLMConfigurationTests: XCTestCase {
 
         XCTAssertEqual(config.ocrProvider, .openai)
         XCTAssertEqual(config.postProcessProvider, .openai)
-        XCTAssertEqual(config.ocrModel, "gpt-4o")
-        XCTAssertEqual(config.postProcessModel, "gpt-4o")
+        XCTAssertEqual(config.ocrModel, "gpt-4.1-mini")
+        XCTAssertEqual(config.postProcessModel, "gpt-4.1-mini")
         XCTAssertFalse(config.enableLLMOCR)
         XCTAssertFalse(config.enablePostProcessing)
         XCTAssertTrue(config.fallbackToBuiltInOCR)

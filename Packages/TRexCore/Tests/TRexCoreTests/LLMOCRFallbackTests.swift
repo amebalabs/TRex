@@ -34,7 +34,7 @@ final class LLMOCRFallbackTests: XCTestCase {
         let config = LLMConfiguration(
             ocrProvider: .openai,
             ocrAPIKey: "sk-invalid-key-that-will-fail",
-            ocrModel: "gpt-4o",
+            ocrModel: "gpt-4.1-mini",
             enableLLMOCR: true,
             fallbackToBuiltInOCR: true
         )
@@ -65,7 +65,7 @@ final class LLMOCRFallbackTests: XCTestCase {
         let config = LLMConfiguration(
             ocrProvider: .openai,
             ocrAPIKey: "sk-invalid-key-that-will-fail",
-            ocrModel: "gpt-4o",
+            ocrModel: "gpt-4.1-mini",
             enableLLMOCR: true,
             fallbackToBuiltInOCR: false
         )
@@ -93,7 +93,7 @@ final class LLMOCRFallbackTests: XCTestCase {
         let config = LLMConfiguration(
             ocrProvider: .openai,
             ocrAPIKey: "sk-invalid-key-that-will-fail",
-            ocrModel: "gpt-4o",
+            ocrModel: "gpt-4.1-mini",
             enableLLMOCR: true,
             fallbackToBuiltInOCR: false
         )

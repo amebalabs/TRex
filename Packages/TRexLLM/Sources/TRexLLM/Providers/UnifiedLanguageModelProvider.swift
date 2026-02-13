@@ -19,7 +19,7 @@ public class UnifiedLanguageModelProvider: LLMProvider {
             }
 
             self.name = "OpenAI"
-            self.supportedModels = ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
+            self.supportedModels = ["gpt-5.2", "gpt-4.1-mini", "gpt-4-turbo", "gpt-4"]
 
             // Use custom endpoint if provided (for OpenAI-compatible services)
             if let customEndpoint = endpoint, !customEndpoint.isEmpty {
@@ -41,7 +41,7 @@ public class UnifiedLanguageModelProvider: LLMProvider {
             }
 
             self.name = "Anthropic"
-            self.supportedModels = ["claude-sonnet-4-5-20250929", "claude-sonnet-4-20250514", "claude-haiku-3-5-20241022"]
+            self.supportedModels = ["claude-sonnet-4-5-20250929", "claude-haiku-4-5", "claude-sonnet-4-20250514"]
 
             self.model = AnthropicLanguageModel(
                 apiKey: key,

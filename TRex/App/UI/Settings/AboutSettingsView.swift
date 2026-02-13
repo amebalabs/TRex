@@ -3,7 +3,8 @@ import TRexCore
 
 struct AboutSettingsView: View {
     @EnvironmentObject var preferences: Preferences
-    
+    @EnvironmentObject var appDelegate: AppDelegate
+
     var body: some View {
         VStack {
             HStack {
@@ -27,6 +28,9 @@ struct AboutSettingsView: View {
             Divider()
             HStack {
                 Spacer()
+                Button("Show Onboarding", action: {
+                    appDelegate.showOnboarding()
+                })
                 Button("Visit our Website", action: {
                     NSWorkspace.shared.open(URL(string: "https://ameba.co")!)
                 })
