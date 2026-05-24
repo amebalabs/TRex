@@ -210,6 +210,96 @@ jobs:
           path: .cli-cache
           key: trex-cli-${{ github.run_id }}-${{ github.run_attempt }}
 
+  # Validates Intel support (#69) by exercising the build on a real Intel runner.
+  # macos-13 is x86_64; macos-14+ are Apple Silicon.
+  intel-smoke-test:
+    name: Intel (x86_64) Smoke Test
+    needs: build
+    runs-on: macos-13
+    steps:
+      - name: Confirm runner is Intel
+        run: |
+          ARCH=$(uname -m)
+          echo "Runner architecture: $ARCH"
+          if [ "$ARCH" != "x86_64" ]; then
+            echo "❌ Expected an Intel (x86_64) runner but got '$ARCH'."
+            echo "This job must run on Intel to validate Intel support (see #69)."
+            exit 1
+          fi
+
+      - name: Download Unsigned App
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-Unsigned
+          path: .
+
+      - name: Restore CLI Binary from Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cli-cache
+          key: trex-cli-${{ github.run_id }}-${{ github.run_attempt }}
+          fail-on-cache-miss: true
+
+      - name: Unpack App Bundle
+        run: ditto -x -k "${{ env.APP_NAME }}.app.zip" .
+
+      - name: Verify every embedded binary includes x86_64
+        run: |
+          APP="${{ env.APP_NAME }}.app"
+          FAIL=0
+          while IFS= read -r f; do
+            if file "$f" | grep -q "Mach-O"; then
+              ARCHS=$(lipo -archs "$f")
+              printf '%-60s %s\n' "${f#$APP/}" "$ARCHS"
+              echo "$ARCHS" | grep -qw x86_64 || { echo "   ^^^ missing x86_64"; FAIL=1; }
+            fi
+          done < <(find "$APP" -type f \( -perm +111 -o -name "*.dylib" -o -name "*.framework" \) | sort)
+          if [ "$FAIL" != 0 ]; then
+            echo "❌ One or more embedded binaries lack an x86_64 slice (would crash on Intel)"
+            exit 1
+          fi
+          echo "✅ All embedded binaries include an x86_64 slice"
+
+      - name: Launch app on Intel
+        run: |
+          APP_BIN="${{ env.APP_NAME }}.app/Contents/MacOS/${{ env.APP_NAME }}"
+          "$APP_BIN" > app_launch.log 2>&1 &
+          APP_PID=$!
+          sleep 8
+          if kill -0 "$APP_PID" 2>/dev/null; then
+            echo "✅ App launched and is running natively on Intel"
+            kill "$APP_PID" 2>/dev/null || true
+            wait "$APP_PID" 2>/dev/null || true
+          else
+            wait "$APP_PID" 2>/dev/null; CODE=$?
+            echo "App process exited early (code $CODE). Output:"
+            cat app_launch.log || true
+            # A missing x86_64 slice makes the kernel reject the binary outright;
+            # that is the exact #69 failure and must fail the job. Other early
+            # exits (e.g. headless GUI quirks) are reported but not treated as
+            # an architecture failure.
+            if grep -qi "bad CPU type" app_launch.log; then
+              echo "❌ Kernel rejected the binary on Intel — x86_64 slice missing"
+              exit 1
+            fi
+            echo "⚠️ App did not stay running, but not due to a missing arch slice."
+          fi
+
+      - name: Run CLI on Intel
+        run: |
+          CLI=".cli-cache/trex"
+          chmod +x "$CLI"
+          echo "CLI architectures: $(lipo -archs "$CLI")"
+          # The runner is Intel, so a successful run proves the x86_64 slice
+          # executes natively (and that the bundled Tesseract/Leptonica x86_64
+          # native code loads).
+          if "$CLI" --help; then
+            echo "✅ CLI ran natively on Intel"
+          else
+            echo "❌ CLI failed to run on Intel"
+            exit 1
+          fi
+
   sign:
     needs: build
     runs-on: macos-latest
@@ -371,7 +461,7 @@ jobs:
           key: trex-cli-notarized-${{ github.run_id }}-${{ github.run_attempt }}
 
   release:
-    needs: [notarize, verify-release-notes]
+    needs: [notarize, verify-release-notes, intel-smoke-test]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: macos-latest
     steps:
