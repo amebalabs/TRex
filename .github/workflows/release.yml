@@ -100,11 +100,14 @@ jobs:
           MARKETING_VERSION: ${{ steps.get_versions.outputs.VERSION }}
           CURRENT_PROJECT_VERSION: ${{ steps.get_versions.outputs.BUILD_NUMBER }}
         run: |
+          # Build universal (arm64 + x86_64) so the app launches on Intel Macs.
+          # TesseractSwift now ships universal xcframeworks, lifting the prior
+          # arm64-only constraint.
           xcodebuild \
             -scheme "${{ env.APP_NAME }}" \
             -configuration Release \
             -derivedDataPath build \
-            -arch arm64 \
+            -arch arm64 -arch x86_64 \
             -skipMacroValidation \
             -skipPackagePluginValidation \
             ONLY_ACTIVE_ARCH=NO \
@@ -117,13 +120,13 @@ jobs:
           MARKETING_VERSION: ${{ steps.get_versions.outputs.VERSION }}
           CURRENT_PROJECT_VERSION: ${{ steps.get_versions.outputs.BUILD_NUMBER }}
         run: |
-          # Build CLI as arm64-only due to TesseractSwift dependency lacking x86_64 support
-          # Intel Macs can run arm64 CLI via Rosetta 2
+          # Build universal (arm64 + x86_64). TesseractSwift now ships universal
+          # xcframeworks, so the CLI no longer needs to be arm64-only.
           xcodebuild \
             -scheme "TRex CLI" \
             -configuration Release \
             -derivedDataPath build-cli \
-            -arch arm64 \
+            -arch arm64 -arch x86_64 \
             -skipMacroValidation \
             -skipPackagePluginValidation \
             ONLY_ACTIVE_ARCH=NO \
@@ -138,12 +141,14 @@ jobs:
           ARCHS=$(lipo -archs "$APP_BINARY")
           echo "Found architectures: $ARCHS"
 
-          # Verify arm64 is present
-          if ! echo "$ARCHS" | grep -q "arm64"; then
-            echo "❌ Error: arm64 architecture missing from app binary"
-            exit 1
-          fi
-          echo "✅ App binary built successfully"
+          # The app must be universal so it launches on both Apple Silicon and Intel.
+          for arch in arm64 x86_64; do
+            if ! echo "$ARCHS" | grep -qw "$arch"; then
+              echo "❌ Error: $arch architecture missing from app binary"
+              exit 1
+            fi
+          done
+          echo "✅ App binary is universal (arm64 + x86_64)"
           file "$APP_BINARY"
 
       - name: Prepare CLI Binary
@@ -177,13 +182,15 @@ jobs:
           ARCHS=$(lipo -archs "$CACHE_CLI_PATH")
           echo "Found architectures: $ARCHS"
 
-          # Verify arm64 is present (CLI is arm64-only due to TesseractSwift)
-          if ! echo "$ARCHS" | grep -q "arm64"; then
-            echo "❌ Error: arm64 architecture missing from CLI binary"
-            exit 1
-          fi
+          # The CLI must be universal so it runs natively on Apple Silicon and Intel.
+          for arch in arm64 x86_64; do
+            if ! echo "$ARCHS" | grep -qw "$arch"; then
+              echo "❌ Error: $arch architecture missing from CLI binary"
+              exit 1
+            fi
+          done
 
-          echo "✅ CLI binary is arm64 (Intel Macs can run via Rosetta 2)"
+          echo "✅ CLI binary is universal (arm64 + x86_64)"
 
       - name: Package App Bundle
         run: |
