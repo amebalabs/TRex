@@ -211,11 +211,15 @@ jobs:
           key: trex-cli-${{ github.run_id }}-${{ github.run_attempt }}
 
   # Validates Intel support (#69) by exercising the build on a real Intel runner.
-  # macos-13 is x86_64; macos-14+ are Apple Silicon.
+  # macos-15-intel is GitHub's last Intel (x86_64) image; the other macos-*
+  # images are Apple Silicon. (macos-13, the previous Intel image, was retired
+  # in December 2025.) The timeout fails fast if the Intel label stops being
+  # schedulable rather than hanging for the 6-hour default.
   intel-smoke-test:
     name: Intel (x86_64) Smoke Test
     needs: build
-    runs-on: macos-13
+    runs-on: macos-15-intel
+    timeout-minutes: 20
     steps:
       - name: Confirm runner is Intel
         run: |
