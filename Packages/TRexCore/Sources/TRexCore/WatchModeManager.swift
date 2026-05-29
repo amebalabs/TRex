@@ -165,6 +165,9 @@ public final class WatchModeManager: ObservableObject {
     }
 
     private func pollTick() async {
+        guard TRex.shared.beginCaptureTransaction() else { return }
+        defer { TRex.shared.endCaptureTransaction() }
+
         guard let rect = currentRect else { return }
 
         guard let image = await captureRect(rect) else {
