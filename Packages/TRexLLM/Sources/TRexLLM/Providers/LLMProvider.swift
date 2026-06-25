@@ -2,7 +2,7 @@ import Foundation
 import AppKit
 
 /// Protocol for LLM providers
-public protocol LLMProvider {
+public protocol LLMProvider: Sendable {
     /// Provider name
     var name: String { get }
 

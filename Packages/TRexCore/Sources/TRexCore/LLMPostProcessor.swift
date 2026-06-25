@@ -3,6 +3,7 @@ import OSLog
 import TRexLLM
 
 /// Post-processes OCR text using LLM
+@MainActor
 public class LLMPostProcessor {
     private let logger = Logger(subsystem: "com.ameba.TRex", category: "LLMPostProcessor")
     private var provider: LLMProvider?

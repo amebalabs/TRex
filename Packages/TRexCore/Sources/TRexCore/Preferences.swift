@@ -47,6 +47,7 @@ public class Preferences: ObservableObject {
         case CaptureHistoryMaxEntries
         case WatchModePollingInterval
         case WatchModeDefaultOutputMode
+        case FreezeScreenDuringSelection
     }
 
     public enum MenuBarIcon: String, CaseIterable {
@@ -349,6 +350,12 @@ public class Preferences: ObservableObject {
         }
     }
 
+    @Published public var freezeScreenDuringSelection: Bool {
+        didSet {
+            Preferences.setValue(value: freezeScreenDuringSelection, key: .FreezeScreenDuringSelection)
+        }
+    }
+
     init() {
         needsOnboarding = Preferences.getValue(key: .NeedsOnboarding) as? Bool ?? true
         captureSound = Preferences.getValue(key: .CaptureSound) as? Bool ?? true
@@ -446,6 +453,7 @@ public class Preferences: ObservableObject {
         } else {
             watchModeDefaultOutputMode = .appendToClipboard
         }
+        freezeScreenDuringSelection = Preferences.getValue(key: .FreezeScreenDuringSelection) as? Bool ?? true
     }
 
     static func removeAll() {

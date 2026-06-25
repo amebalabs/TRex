@@ -371,6 +371,11 @@ public class TRex: NSObject {
     /// Launch `screencapture -i` interactively and return the captured image.
     /// Returns nil if the user cancelled (pressed Escape) or if the capture failed.
     private func captureScreenInteractively() async -> NSImage? {
+        logger.info("📸 captureScreenInteractively — freezeEnabled=\(self.preferences.freezeScreenDuringSelection, privacy: .public)")
+        if preferences.freezeScreenDuringSelection {
+            return await FrozenScreenSelectionOverlay.selectRegion()
+        }
+
         let filePath = makeScreenshotFilePath()
         let process = Process()
         process.executableURL = screenCaptureURL
