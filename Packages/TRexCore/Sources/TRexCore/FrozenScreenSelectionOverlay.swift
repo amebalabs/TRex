@@ -286,20 +286,34 @@ private final class SelectionView: NSView {
         )
     }
 
+    private func boundedPoint(from event: NSEvent) -> NSPoint {
+        let point = convert(event.locationInWindow, from: nil)
+        return NSPoint(
+            x: min(max(point.x, bounds.minX), bounds.maxX),
+            y: min(max(point.y, bounds.minY), bounds.maxY)
+        )
+    }
+
     override func mouseDown(with event: NSEvent) {
-        let pt = convert(event.locationInWindow, from: nil)
+        let pt = boundedPoint(from: event)
         dragStart = pt
         dragCurrent = pt
         needsDisplay = true
     }
 
     override func mouseDragged(with event: NSEvent) {
-        let pt = convert(event.locationInWindow, from: nil)
+        let pt = boundedPoint(from: event)
         dragCurrent = pt
         needsDisplay = true
     }
 
     override func mouseUp(with event: NSEvent) {
+        dragCurrent = boundedPoint(from: event)
+        needsDisplay = true
+        finishSelection()
+    }
+
+    private func finishSelection() {
         guard let rect = currentSelectionRect(), rect.width > 2, rect.height > 2 else {
             dragStart = nil
             dragCurrent = nil
@@ -315,15 +329,23 @@ private final class SelectionView: NSView {
         let scaleX = imageWidth / viewWidth
         let scaleY = imageHeight / viewHeight
 
+        let imageBounds = CGRect(x: 0, y: 0, width: imageWidth, height: imageHeight)
         let cropRect = CGRect(
             x: rect.minX * scaleX,
             y: (viewHeight - rect.maxY) * scaleY,
             width: rect.width * scaleX,
             height: rect.height * scaleY
-        ).integral
+        )
+        .integral
+        .intersection(imageBounds)
 
         dragStart = nil
         dragCurrent = nil
+
+        guard !cropRect.isNull, cropRect.width > 0, cropRect.height > 0 else {
+            coordinator?.finish(with: nil)
+            return
+        }
 
         guard let cropped = screenshot.cropping(to: cropRect) else {
             coordinator?.finish(with: nil)
