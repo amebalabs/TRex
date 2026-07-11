@@ -112,6 +112,64 @@ final class LLMProviderIntegrationTests: XCTestCase {
         }
     }
 
+    // MARK: - Custom (OpenAI-compatible) Provider
+
+    func testCustomProviderInitialization() throws {
+        // LM Studio / Ollama / vLLM speak the OpenAI dialect; the custom
+        // provider must initialize against an OpenAI-compatible endpoint.
+        let provider = try UnifiedLanguageModelProvider(
+            providerType: .custom,
+            apiKey: nil,
+            endpoint: "http://localhost:1234/v1",
+            modelName: "local-model"
+        )
+
+        XCTAssertEqual(provider.name, "Custom (OpenAI-compatible)")
+    }
+
+    func testCustomProviderInitializesWithoutEndpoint() throws {
+        // A bare configuration should fall back to a local default rather
+        // than failing to construct.
+        let provider = try UnifiedLanguageModelProvider(
+            providerType: .custom,
+            apiKey: nil,
+            endpoint: nil,
+            modelName: "local-model"
+        )
+
+        XCTAssertEqual(provider.name, "Custom (OpenAI-compatible)")
+    }
+
+    func testCustomProviderInitializesWithAPIKey() throws {
+        // Hosted OpenAI-compatible services (OpenRouter, hosted vLLM) require
+        // a key, so it must be accepted when provided.
+        let provider = try UnifiedLanguageModelProvider(
+            providerType: .custom,
+            apiKey: "sk-test-key",
+            endpoint: "https://openrouter.ai/api/v1",
+            modelName: "meta-llama/llama-3.2-3b-instruct"
+        )
+
+        XCTAssertEqual(provider.name, "Custom (OpenAI-compatible)")
+    }
+
+    func testCustomProviderRejectsMalformedEndpoint() {
+        XCTAssertThrowsError(
+            try UnifiedLanguageModelProvider(
+                providerType: .custom,
+                apiKey: nil,
+                endpoint: "http://has space/v1",
+                modelName: "local-model"
+            )
+        ) { error in
+            if case LLMError.invalidEndpoint = error {
+                // Expected
+            } else {
+                XCTFail("Expected invalidEndpoint error, got: \(error)")
+            }
+        }
+    }
+
     // MARK: - Text Processing (OpenAI)
 
     func testOpenAITextProcessing() async throws {

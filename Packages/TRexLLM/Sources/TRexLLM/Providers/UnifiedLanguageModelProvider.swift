@@ -49,20 +49,29 @@ public final class UnifiedLanguageModelProvider: LLMProvider, @unchecked Sendabl
             )
 
         case .custom:
-            self.name = "Ollama"
-            self.supportedModels = ["llama3.2", "llama3.2-vision", "qwen3", "mistral"]
+            self.name = "Custom (OpenAI-compatible)"
+            self.supportedModels = ["llama3.2", "qwen3", "mistral"]
 
+            // OpenAI-compatible servers (LM Studio, Ollama, vLLM, etc.) expose
+            // a /chat/completions endpoint. Default to Ollama's local OpenAI
+            // bridge so a bare install still talks to a local server.
+            let baseURL: URL
             if let customEndpoint = endpoint, !customEndpoint.isEmpty {
-                self.model = OllamaLanguageModel(
-                    baseURL: URL(string: customEndpoint)!,
-                    model: modelName
-                )
+                guard let url = URL(string: customEndpoint) else {
+                    throw LLMError.invalidEndpoint
+                }
+                baseURL = url
             } else {
-                // Default Ollama endpoint
-                self.model = OllamaLanguageModel(
-                    model: modelName
-                )
+                baseURL = URL(string: "http://localhost:11434/v1")!
             }
+
+            // Local servers ignore the key; remote ones (OpenRouter, hosted
+            // vLLM) require it, so forward whatever the user configured.
+            self.model = OpenAILanguageModel(
+                baseURL: baseURL,
+                apiKey: apiKey ?? "",
+                model: modelName
+            )
 
         case .apple:
             self.name = "Apple Foundation Models"
