@@ -1,13 +1,13 @@
 {
-  "originHash" : "1ab93f3778cef10af16415c3ec67c03a65a6dc9ae6915eaee39c5e8fcbaf88d6",
+  "originHash" : "3d34faee26cad2a1b0bb5c27b2ae5f2de8a9926bee5328263c4ff2a75a6de078",
   "pins" : [
     {
       "identity" : "anylanguagemodel",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mattt/AnyLanguageModel.git",
+      "location" : "https://github.com/huggingface/AnyLanguageModel.git",
       "state" : {
-        "revision" : "18b1e1b4755143767e5c8f0066b59f009f601232",
-        "version" : "0.4.0"
+        "revision" : "f22b78e6b10f67e7d46c67dc59a8a35bc259fbce",
+        "version" : "0.9.0"
       }
     },
     {
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-syntax.git",
       "state" : {
-        "revision" : "0687f71944021d616d34d922343dcef086855920",
-        "version" : "600.0.1"
+        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
+        "version" : "602.0.0"
       }
     }
   ],
