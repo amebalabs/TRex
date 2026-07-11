@@ -28,6 +28,7 @@ public final class WatchModeManager: ObservableObject {
     private var lastImageHash: Data?
     private var pollTask: Task<Void, Never>?
     private var isPaused = false
+    private var clipboardAccumulator = ""
 
     private let preferences = Preferences.shared
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.ameba.TRex", category: "WatchMode")
@@ -74,6 +75,7 @@ public final class WatchModeManager: ObservableObject {
         preferences.watchModePollingInterval = pollingInterval
 
         lastImageHash = nil
+        resetClipboardAccumulator()
         captureCount = 0
         isPaused = false
         isCapturing = true
@@ -163,6 +165,9 @@ public final class WatchModeManager: ObservableObject {
     }
 
     private func pollTick() async {
+        guard TRex.shared.beginCaptureTransaction() else { return }
+        defer { TRex.shared.endCaptureTransaction() }
+
         guard let rect = currentRect else { return }
 
         guard let image = await captureRect(rect) else {
@@ -284,15 +289,20 @@ public final class WatchModeManager: ObservableObject {
 
     private func appendToClipboard(_ text: String) {
         let pasteboard = NSPasteboard.general
-        let existing = pasteboard.string(forType: .string) ?? ""
         let combined: String
-        if existing.isEmpty {
+        if clipboardAccumulator.isEmpty {
             combined = text
         } else {
-            combined = existing + "\n---\n" + text
+            combined = clipboardAccumulator + "\n---\n" + text
         }
         pasteboard.clearContents()
-        pasteboard.setString(combined, forType: .string)
+        if pasteboard.setString(combined, forType: .string) {
+            clipboardAccumulator = combined
+        }
+    }
+
+    private func resetClipboardAccumulator() {
+        clipboardAccumulator = ""
     }
 
     /// Resolve and validate the output file path.
