@@ -3,7 +3,7 @@ import AppKit
 import AnyLanguageModel
 
 /// Unified provider using AnyLanguageModel for all backends
-public class UnifiedLanguageModelProvider: LLMProvider {
+public final class UnifiedLanguageModelProvider: LLMProvider, @unchecked Sendable {
     public var name: String
     public var supportedModels: [String]
 

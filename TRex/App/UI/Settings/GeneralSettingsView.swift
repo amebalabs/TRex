@@ -20,6 +20,10 @@ struct GeneralSettingsView: View {
                        secondLabel: "Play Sounds",
                        state: $preferences.captureSound,
                        width: width)
+            ToggleView(label: "Capture",
+                       secondLabel: "Freeze screen during selection",
+                       state: $preferences.freezeScreenDuringSelection,
+                       width: width)
             ToggleView(label: "Notifications",
                        secondLabel: "Show Recognized Text",
                        state: $preferences.resultNotification,
@@ -148,7 +152,7 @@ struct GeneralSettingsView: View {
     /// - Menu bar icon shown adds the icon grid row (~80pt).
     /// - Non-MAS builds add CLI install + updates sections (~80pt).
     private var settingsHeight: CGFloat {
-        var height: CGFloat = 210
+        var height: CGFloat = 240
         if !preferences.tesseractEnabled {
             height += 60
         }
