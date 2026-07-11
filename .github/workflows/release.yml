@@ -61,12 +61,32 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate Update Feeds
+        run: |
+          xmllint --noout docs/appcast.xml docs/appcast_beta.xml
+
+          PROD_BUILD=$(xmllint --xpath 'string((//*[local-name()="version"])[1])' docs/appcast.xml)
+          BETA_BUILD=$(xmllint --xpath 'string((//*[local-name()="version"])[1])' docs/appcast_beta.xml)
+          PROD_VERSION=$(xmllint --xpath 'string((//*[local-name()="shortVersionString"])[1])' docs/appcast.xml)
+          BETA_VERSION=$(xmllint --xpath 'string((//*[local-name()="shortVersionString"])[1])' docs/appcast_beta.xml)
+
+          if ! [[ "$PROD_BUILD" =~ ^[0-9]+$ && "$BETA_BUILD" =~ ^[0-9]+$ ]]; then
+            echo "Error: Appcast build numbers must be integers"
+            exit 1
+          fi
+
+          if [ "$BETA_BUILD" -lt "$PROD_BUILD" ]; then
+            if ! ruby -rrubygems -e 'exit Gem::Version.new(ARGV[0]) > Gem::Version.new(ARGV[1]) ? 0 : 1' "$BETA_VERSION" "$PROD_VERSION"; then
+              echo "Error: Beta feed ${BETA_VERSION} (${BETA_BUILD}) is behind production ${PROD_VERSION} (${PROD_BUILD})"
+              exit 1
+            fi
+          fi
+
       - name: Get Version Numbers
         id: get_versions
         run: |
           # Get build number from commit count
           BUILD_NUMBER=$(git rev-list --count HEAD)
-          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
 
           # Initialize version variables
           VERSION="0.0.0"
@@ -76,8 +96,58 @@ jobs:
           if [ "${GITHUB_REF_TYPE}" = "tag" ] && [[ "${GITHUB_REF_NAME}" == v* ]]; then
             VERSION=${GITHUB_REF_NAME#v}
             IS_RELEASE=true
+
+            # Sparkle compares build numbers, so release builds must be newer than
+            # every item already offered by either update feed. Read origin/main
+            # instead of the tag checkout because release tags may come from branches.
+            git fetch origin main
+            PROD_BUILD=$(git show origin/main:docs/appcast.xml | xmllint --xpath 'string((//*[local-name()="version"])[1])' -)
+            BETA_BUILD=$(git show origin/main:docs/appcast_beta.xml | xmllint --xpath 'string((//*[local-name()="version"])[1])' -)
+            PROD_VERSION=$(git show origin/main:docs/appcast.xml | xmllint --xpath 'string((//*[local-name()="shortVersionString"])[1])' -)
+            BETA_VERSION=$(git show origin/main:docs/appcast_beta.xml | xmllint --xpath 'string((//*[local-name()="shortVersionString"])[1])' -)
+
+            if ! [[ "$PROD_BUILD" =~ ^[0-9]+$ && "$BETA_BUILD" =~ ^[0-9]+$ ]]; then
+              echo "Error: Published appcast build numbers must be integers"
+              exit 1
+            fi
+
+            LATEST_BUILD=$PROD_BUILD
+            if [ "$BETA_BUILD" -gt "$LATEST_BUILD" ]; then
+              LATEST_BUILD=$BETA_BUILD
+            fi
+
+            # Reuse a published build number when rerunning the same release.
+            # The appcast update step preserves a newer beta item during a
+            # production rerun, so this cannot regress the beta train.
+            PUBLISHED_BUILD=0
+            if [ "$PROD_VERSION" = "$VERSION" ]; then
+              PUBLISHED_BUILD=$PROD_BUILD
+            fi
+            if [ "$BETA_VERSION" = "$VERSION" ] && [ "$BETA_BUILD" -gt "$PUBLISHED_BUILD" ]; then
+              PUBLISHED_BUILD=$BETA_BUILD
+            fi
+
+            if [ "$PUBLISHED_BUILD" -eq 0 ]; then
+              if echo "$VERSION" | grep -qi 'beta'; then
+                PUBLISHED_CHANNEL_VERSION=$BETA_VERSION
+              else
+                PUBLISHED_CHANNEL_VERSION=$PROD_VERSION
+              fi
+
+              if ! ruby -rrubygems -e 'exit Gem::Version.new(ARGV[0]) > Gem::Version.new(ARGV[1]) ? 0 : 1' "$VERSION" "$PUBLISHED_CHANNEL_VERSION"; then
+                echo "Error: Refusing stale release ${VERSION}; channel already publishes ${PUBLISHED_CHANNEL_VERSION}"
+                exit 1
+              fi
+            fi
+
+            if [ "$PUBLISHED_BUILD" -gt 0 ]; then
+              BUILD_NUMBER=$PUBLISHED_BUILD
+            elif [ "$BUILD_NUMBER" -le "$LATEST_BUILD" ]; then
+              BUILD_NUMBER=$((LATEST_BUILD + 1))
+            fi
           fi
 
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "IS_RELEASE=$IS_RELEASE" >> $GITHUB_OUTPUT
 
@@ -565,31 +635,22 @@ jobs:
 
       - name: Update Appcast
         run: |
-          # Determine appcast file based on beta flag
-          APPCAST_NAME="appcast"
-          if [ "${IS_BETA}" = "true" ]; then
-            APPCAST_NAME="appcast_beta.xml"
-          else
-            APPCAST_NAME="appcast.xml"
-          fi
-          APPCAST_FILE="docs/${APPCAST_NAME}"
+          write_appcast() {
+            local appcast_file="$1"
+            local feed_url="$2"
+            local channel_label="$3"
 
-          # Debug logs
-          echo "Updating appcast: $APPCAST_FILE"
-          echo "Using URL:" $( [ "${IS_BETA}" = "true" ] && echo "${BETA_FEED_URL}" || echo "${PROD_FEED_URL}" )
-          echo "Using signature: ${{ steps.generate_signature.outputs.signature }}"
-          echo "ZIP_SHA: ${ZIP_SHA}"
-          echo "BUILD_NUMBER: ${BUILD_NUMBER}"
-          echo "VERSION: ${VERSION}"
+            echo "Updating appcast: ${appcast_file}"
+            echo "Using URL: ${feed_url}"
 
-          # Use unindented heredoc for proper XML formatting
-          cat > "$APPCAST_FILE" <<-EOF
+            # Use unindented heredoc for proper XML formatting
+            cat > "$appcast_file" <<-EOF
           <?xml version="1.0" encoding="utf-8"?>
           <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
             <channel>
-              <title>${APP_NAME} $([ "${IS_BETA}" = "true" ] && echo "Beta " )Appcast</title>
-              <link>$([ "${IS_BETA}" = "true" ] && echo "${BETA_FEED_URL}" || echo "${PROD_FEED_URL}")</link>
-              <description>${APP_NAME} $([ "${IS_BETA}" = "true" ] && echo "Beta " )Updates</description>
+              <title>${APP_NAME}${channel_label} Appcast</title>
+              <link>${feed_url}</link>
+              <description>${APP_NAME}${channel_label} Updates</description>
               <language>en</language>
               <item>
                 <title>${APP_NAME} ${VERSION}</title>
@@ -609,9 +670,59 @@ jobs:
             </channel>
           </rss>
           EOF
+          }
 
-          # Validate the XML
-          xmllint --noout "$APPCAST_FILE" || { echo "Error: Invalid XML format in appcast"; exit 1; }
+          echo "Using signature: ${{ steps.generate_signature.outputs.signature }}"
+          echo "ZIP_SHA: ${ZIP_SHA}"
+          echo "BUILD_NUMBER: ${BUILD_NUMBER}"
+          echo "VERSION: ${VERSION}"
+
+          UPDATED_APPCASTS=()
+          if [ "${IS_BETA}" = "true" ]; then
+            # Beta releases are offered only to users on the beta train.
+            write_appcast "docs/appcast_beta.xml" "${BETA_FEED_URL}" " Beta"
+            UPDATED_APPCASTS+=("docs/appcast_beta.xml")
+          else
+            # Production releases go to both feeds so beta users are never left behind.
+            # If an existing production tag is rerun after a newer beta was
+            # published, keep that newer beta item instead of rolling it back.
+            git fetch origin main
+            PUBLISHED_PROD_BUILD=$(git show origin/main:docs/appcast.xml | xmllint --xpath 'string((//*[local-name()="version"])[1])' -)
+            PUBLISHED_BETA_BUILD=$(git show origin/main:docs/appcast_beta.xml | xmllint --xpath 'string((//*[local-name()="version"])[1])' -)
+            PUBLISHED_PROD_VERSION=$(git show origin/main:docs/appcast.xml | xmllint --xpath 'string((//*[local-name()="shortVersionString"])[1])' -)
+            PUBLISHED_BETA_VERSION=$(git show origin/main:docs/appcast_beta.xml | xmllint --xpath 'string((//*[local-name()="shortVersionString"])[1])' -)
+
+            if ! [[ "$PUBLISHED_PROD_BUILD" =~ ^[0-9]+$ && "$PUBLISHED_BETA_BUILD" =~ ^[0-9]+$ ]]; then
+              echo "Error: Published appcast build numbers must be integers"
+              exit 1
+            fi
+
+            write_appcast "docs/appcast.xml" "${PROD_FEED_URL}" ""
+            UPDATED_APPCASTS+=("docs/appcast.xml")
+
+            PRESERVE_BETA=false
+            if ruby -rrubygems -e 'exit Gem::Version.new(ARGV[0]) > Gem::Version.new(ARGV[1]) ? 0 : 1' "$PUBLISHED_BETA_VERSION" "$VERSION"; then
+              PRESERVE_BETA=true
+            elif [ "$VERSION" = "$PUBLISHED_PROD_VERSION" ] && [ "$PUBLISHED_BETA_BUILD" -gt "$PUBLISHED_PROD_BUILD" ]; then
+              PRESERVE_BETA=true
+            fi
+
+            if [ "$PRESERVE_BETA" = "true" ]; then
+              echo "Preserving newer beta feed ${PUBLISHED_BETA_VERSION} (${PUBLISHED_BETA_BUILD})"
+              git show origin/main:docs/appcast_beta.xml > docs/appcast_beta.xml
+              UPDATED_APPCASTS+=("docs/appcast_beta.xml")
+            else
+              write_appcast "docs/appcast_beta.xml" "${BETA_FEED_URL}" " Beta"
+              UPDATED_APPCASTS+=("docs/appcast_beta.xml")
+            fi
+          fi
+
+          for appcast_file in "${UPDATED_APPCASTS[@]}"; do
+            xmllint --noout "$appcast_file" || {
+              echo "Error: Invalid XML format in ${appcast_file}"
+              exit 1
+            }
+          done
 
       - name: Update CHANGELOG.md
         run: |
