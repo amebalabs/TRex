@@ -276,6 +276,9 @@ public class TRex: NSObject {
     }
 
     private func captureSingle(_ mode: InvocationMode, imagePath: String? = nil) async {
+        guard beginCaptureTransaction() else { return }
+        defer { endCaptureTransaction() }
+
         currentInvocationMode = mode
 
         guard let ocrResult = await getText(imagePath) else { return }
@@ -301,15 +304,12 @@ public class TRex: NSObject {
     private static let maxMultiRegionCaptures = 50
 
     private func captureMultiRegion(_ mode: InvocationMode) async {
-        currentInvocationMode = mode
         var allTexts: [String] = []
 
-        guard !isCaptureInProgress else {
-            logger.warning("⚠️ Capture already in progress, returning early")
-            return
-        }
-        isCaptureInProgress = true
-        defer { isCaptureInProgress = false }
+        guard beginCaptureTransaction() else { return }
+        defer { endCaptureTransaction() }
+
+        currentInvocationMode = mode
 
         while allTexts.count < Self.maxMultiRegionCaptures {
             guard let nsImage = await captureScreenInteractively() else {
@@ -436,13 +436,6 @@ public class TRex: NSObject {
         logger.info("🚀 getText called - starting OCR process")
         logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-        guard !isCaptureInProgress else {
-            logger.warning("⚠️ Capture already in progress, returning early")
-            return nil
-        }
-        isCaptureInProgress = true
-        defer { isCaptureInProgress = false }
-
         guard let nsImage = await getImage(imagePath) else {
             logger.error("❌ Failed to get image")
             return nil
@@ -454,6 +447,21 @@ public class TRex: NSObject {
         }
 
         return await recognizeImage(cgImage)
+    }
+
+    @discardableResult
+    func beginCaptureTransaction() -> Bool {
+        guard !isCaptureInProgress else {
+            logger.warning("⚠️ Capture already in progress, returning early")
+            return false
+        }
+
+        isCaptureInProgress = true
+        return true
+    }
+
+    func endCaptureTransaction() {
+        isCaptureInProgress = false
     }
 
     /// Run OCR on a CGImage for watch mode. Delegates to the standard recognition pipeline
