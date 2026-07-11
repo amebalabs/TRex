@@ -232,7 +232,13 @@ private struct ProviderConfigSection: View {
     var onChange: () -> Void
 
     private var needsAPIKey: Bool {
-        provider != "Custom" && provider != "Apple"
+        provider != "Apple"
+    }
+
+    /// Custom (OpenAI-compatible) servers may run locally without auth, so the
+    /// key is optional there; hosted providers require it.
+    private var apiKeyIsOptional: Bool {
+        provider == "Custom"
     }
 
     private var needsModel: Bool {
@@ -275,7 +281,7 @@ private struct ProviderConfigSection: View {
                 SettingsFormRow(label: "API Key") {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 4) {
-                            SecureField("Enter API key", text: $apiKey)
+                            SecureField(apiKeyIsOptional ? "API key (optional)" : "Enter API key", text: $apiKey)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .onChange(of: apiKey) { _ in
                                     onChange()
