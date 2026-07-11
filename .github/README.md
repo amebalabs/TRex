@@ -89,7 +89,14 @@ Every feature in TRex works offline, no internet is needed.
 
 ### Raycast
 
-[Download official Raycast Commands](https://github.com/amebalabs/TRex/tree/main/Resources/Raycast/TRex%20Commands)
+[Download the TRex repository as a ZIP](https://github.com/amebalabs/TRex/archive/refs/heads/main.zip), then:
+
+1. Unzip the download.
+2. Open **Raycast Settings → Script Commands**.
+3. Click **Add Script Directory** and select `Resources/Raycast/TRex Commands` from the unzipped folder.
+4. Search Raycast for “Capture Text” to run or assign shortcuts to the TRex commands.
+
+You can also [browse the command files](https://github.com/amebalabs/TRex/tree/main/Resources/Raycast/TRex%20Commands) or read [Raycast's Script Commands guide](https://manual.raycast.com/script-commands).
 
 ![Raycast](https://github.com/amebalabs/TRex/blob/main/Resources/raycast.png)
 
