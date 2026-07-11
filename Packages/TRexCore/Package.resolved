@@ -1,13 +1,13 @@
 {
-  "originHash" : "f6072e2d5fa0bb86369258ff0dc0163854e50548e73fa993cc3b47c81668fcf5",
+  "originHash" : "ca0abfe9779d8511b9a470a4f15b72d9ec29b7d44edf690d10c527b2668d8207",
   "pins" : [
     {
       "identity" : "anylanguagemodel",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mattt/AnyLanguageModel.git",
+      "location" : "https://github.com/huggingface/AnyLanguageModel.git",
       "state" : {
-        "revision" : "bfee8f6198996d3094d1db521f6ab7b7965c5a54",
-        "version" : "0.3.3"
+        "revision" : "f22b78e6b10f67e7d46c67dc59a8a35bc259fbce",
+        "version" : "0.9.0"
       }
     },
     {
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sparkle-project/Sparkle",
       "state" : {
-        "revision" : "06beff60e3b609a485290e4d5d2d1e2eedb1e55d",
-        "version" : "2.7.3"
+        "revision" : "b6496a74a087257ef5e6da1c5b29a447a60f5bd7",
+        "version" : "2.9.4"
       }
     },
     {
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser.git",
       "state" : {
-        "revision" : "309a47b2b1d9b5e991f36961c983ecec72275be3",
-        "version" : "1.6.1"
+        "revision" : "6a52f3251125d74daf04fcbd5e6f08a75d074382",
+        "version" : "1.8.2"
       }
     },
     {
@@ -78,8 +78,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-syntax.git",
       "state" : {
-        "revision" : "0687f71944021d616d34d922343dcef086855920",
-        "version" : "600.0.1"
+        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
+        "version" : "602.0.0"
       }
     },
     {

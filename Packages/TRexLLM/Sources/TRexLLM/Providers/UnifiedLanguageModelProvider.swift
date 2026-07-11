@@ -4,6 +4,12 @@ import AnyLanguageModel
 
 /// Unified provider using AnyLanguageModel for all backends
 public final class UnifiedLanguageModelProvider: LLMProvider, @unchecked Sendable {
+    struct PreparedOCRRequest {
+        let prompt: String
+        let imageData: Data
+        let mimeType: String
+    }
+
     public var name: String
     public var supportedModels: [String]
 
@@ -87,16 +93,46 @@ public final class UnifiedLanguageModelProvider: LLMProvider, @unchecked Sendabl
         self.session = LanguageModelSession(model: model)
     }
 
-    /// Perform OCR using vision-capable LLM
-    ///
-    /// AnyLanguageModel does not currently expose a vision/image API.
-    /// LLM-based OCR is handled by LLMOCREngine which makes direct provider API calls.
+    init(model: any LanguageModel) {
+        self.name = "Test"
+        self.supportedModels = []
+        self.model = model
+        self.session = LanguageModelSession(model: model)
+    }
+
+    /// Perform OCR using a vision-capable LLM.
     public func performOCR(
         image: NSImage,
         prompt: String?,
         model: String
     ) async throws -> String {
-        throw LLMError.unsupportedOperation("Vision OCR is not supported through AnyLanguageModel. Use LLMOCREngine for direct API-based vision OCR.")
+        let request = try Self.prepareOCRRequest(image: image, prompt: prompt)
+        let imageSegment = Transcript.ImageSegment(
+            data: request.imageData,
+            mimeType: request.mimeType
+        )
+        let ocrSession = LanguageModelSession(model: self.model)
+        let response = try await ocrSession.respond(
+            to: request.prompt,
+            image: imageSegment
+        )
+        return response.content
+    }
+
+    static func prepareOCRRequest(image: NSImage, prompt: String?) throws -> PreparedOCRRequest {
+        let trimmedPrompt = prompt?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolvedPrompt: String
+        if let trimmedPrompt, !trimmedPrompt.isEmpty {
+            resolvedPrompt = trimmedPrompt
+        } else {
+            resolvedPrompt = PromptTemplates.defaultOCRPrompt
+        }
+
+        return PreparedOCRRequest(
+            prompt: resolvedPrompt,
+            imageData: try ImagePreprocessor().preprocess(image),
+            mimeType: "image/jpeg"
+        )
     }
 
     /// Process text with LLM

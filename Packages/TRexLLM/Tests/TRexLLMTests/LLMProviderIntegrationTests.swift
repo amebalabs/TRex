@@ -49,6 +49,29 @@ final class LLMProviderIntegrationTests: XCTestCase {
         return image
     }
 
+    private func createVerticalJapaneseTestImage(_ text: String) -> NSImage {
+        let size = NSSize(width: 160, height: 320)
+        let image = NSImage(size: size)
+        image.lockFocus()
+
+        NSColor.white.setFill()
+        NSRect(origin: .zero, size: size).fill()
+
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 36),
+            .foregroundColor: NSColor.black,
+        ]
+        for (index, character) in text.enumerated() {
+            String(character).draw(
+                at: NSPoint(x: 60, y: 250 - CGFloat(index * 55)),
+                withAttributes: attributes
+            )
+        }
+
+        image.unlockFocus()
+        return image
+    }
+
     // MARK: - Provider Initialization
 
     func testOpenAIProviderInitialization() throws {
@@ -231,7 +254,8 @@ final class LLMProviderIntegrationTests: XCTestCase {
             modelName: "gpt-4.1-mini"
         )
 
-        let testImage = createTestImageWithText("Hello TRex")
+        let expectedText = "縦書き"
+        let testImage = createVerticalJapaneseTestImage(expectedText)
 
         let result = try await provider.performOCR(
             image: testImage,
@@ -240,10 +264,9 @@ final class LLMProviderIntegrationTests: XCTestCase {
         )
 
         XCTAssertFalse(result.isEmpty, "OCR result should not be empty")
-        let lowered = result.lowercased()
         XCTAssertTrue(
-            lowered.contains("hello") || lowered.contains("trex"),
-            "OCR should recognize text from image, got: \(result)"
+            result.contains("縦") || result.contains("書") || result.contains("き"),
+            "OCR should recognize vertical Japanese text, got: \(result)"
         )
     }
 
@@ -259,7 +282,8 @@ final class LLMProviderIntegrationTests: XCTestCase {
             modelName: "claude-sonnet-4-5-20250929"
         )
 
-        let testImage = createTestImageWithText("Hello TRex")
+        let expectedText = "縦書き"
+        let testImage = createVerticalJapaneseTestImage(expectedText)
 
         let result = try await provider.performOCR(
             image: testImage,
@@ -268,10 +292,9 @@ final class LLMProviderIntegrationTests: XCTestCase {
         )
 
         XCTAssertFalse(result.isEmpty, "OCR result should not be empty")
-        let lowered = result.lowercased()
         XCTAssertTrue(
-            lowered.contains("hello") || lowered.contains("trex"),
-            "OCR should recognize text from image, got: \(result)"
+            result.contains("縦") || result.contains("書") || result.contains("き"),
+            "OCR should recognize vertical Japanese text, got: \(result)"
         )
     }
 

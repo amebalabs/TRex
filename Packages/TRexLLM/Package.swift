@@ -13,7 +13,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/mattt/AnyLanguageModel.git", from: "0.3.0")
+        .package(url: "https://github.com/huggingface/AnyLanguageModel.git", from: "0.8.0")
     ],
     targets: [
         .target(
@@ -24,7 +24,10 @@ let package = Package(
         ),
         .testTarget(
             name: "TRexLLMTests",
-            dependencies: ["TRexLLM"]
+            dependencies: [
+                "TRexLLM",
+                .product(name: "AnyLanguageModel", package: "AnyLanguageModel"),
+            ]
         ),
     ]
 )
