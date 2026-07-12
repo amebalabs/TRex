@@ -222,11 +222,9 @@ class MenubarItem: NSObject {
         NSWorkspace.shared.open(url)
     }
 
-    @objc func copyHistoryEntry(_ sender: NSMenuItem) {
+    @MainActor @objc func copyHistoryEntry(_ sender: NSMenuItem) {
         if let text = sender.representedObject as? String {
-            let pasteboard = NSPasteboard.general
-            pasteboard.clearContents()
-            pasteboard.setString(text, forType: .string)
+            _ = PasteboardWriter.replaceString(text)
         }
     }
 
