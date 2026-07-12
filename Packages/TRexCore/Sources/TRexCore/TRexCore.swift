@@ -324,7 +324,12 @@ public class TRex: NSObject {
         currentInvocationMode = mode
 
         guard let ocrResult = await getText(imagePath) else { return }
-        guard var text = await recognizeAndProcessOCR(from: ocrResult) else { return }
+        guard var text = await recognizeAndProcessOCR(from: ocrResult),
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            logger.warning("⚠️ OCR returned no text; preserving the existing clipboard contents")
+            return
+        }
 
         // Apply LLM post-processing if enabled (runs after table detection)
         if preferences.llmEnablePostProcessing, let postProcessor = llmPostProcessor {
@@ -570,7 +575,8 @@ public class TRex: NSObject {
         // If automatic detection is enabled and we're not using Tesseract, use Vision directly
         if preferences.automaticLanguageDetection && !useTesseract && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 13 {
             logger.info("🛤️ OCR Path: Vision with AUTOMATIC language detection")
-            return await performVisionOCR(cgImage: cgImage)
+            let result = await performVisionOCR(cgImage: cgImage)
+            return await recoverEmptyOCRResult(result, cgImage: cgImage, languages: languages, attemptedEngineID: "vision")
         }
 
         // If LLM OCR is enabled and available, use it
@@ -580,27 +586,76 @@ public class TRex: NSObject {
             processingState.set(true)
             let result = await performOCR(with: llmEngine, cgImage: cgImage, languages: languages)
             processingState.set(false)
-            return result
+            return await recoverEmptyOCRResult(result, cgImage: cgImage, languages: languages, attemptedEngineID: llmEngine.identifier)
         }
 
         // If Tesseract is disabled, only use Vision
         if !useTesseract {
             logger.info("🛤️ OCR Path: Using Apple Vision (Tesseract disabled)")
             if let visionEngine = OCRManager.shared.engines.first(where: { $0.identifier == "vision" }) {
-                return await performOCR(with: visionEngine, cgImage: cgImage, languages: languages)
+                let result = await performOCR(with: visionEngine, cgImage: cgImage, languages: languages)
+                return await recoverEmptyOCRResult(result, cgImage: cgImage, languages: languages, attemptedEngineID: visionEngine.identifier)
             } else {
                 logger.warning("⚠️ Vision engine not found, falling back to legacy path")
-                return await performVisionOCR(cgImage: cgImage)
+                let result = await performVisionOCR(cgImage: cgImage)
+                return await recoverEmptyOCRResult(result, cgImage: cgImage, languages: languages, attemptedEngineID: "vision")
             }
         }
 
         if let engine = OCRManager.shared.findEngine(for: languages) {
             logger.info("🛤️ OCR Path: Using \(engine.name, privacy: .public) engine with explicit languages")
-            return await performOCR(with: engine, cgImage: cgImage, languages: languages)
+            let result = await performOCR(with: engine, cgImage: cgImage, languages: languages)
+            return await recoverEmptyOCRResult(result, cgImage: cgImage, languages: languages, attemptedEngineID: engine.identifier)
         } else {
             logger.warning("🛤️ OCR Path: No suitable OCR engine found for languages, falling back to Vision")
-            return await performVisionOCR(cgImage: cgImage)
+            let result = await performVisionOCR(cgImage: cgImage)
+            return await recoverEmptyOCRResult(result, cgImage: cgImage, languages: languages, attemptedEngineID: "vision")
         }
+    }
+
+    /// Vision can complete successfully with zero observations on newer macOS releases.
+    /// Do not let that erase the user's clipboard; retry with the bundled Tesseract engine.
+    private func recoverEmptyOCRResult(
+        _ result: OCRResult?,
+        cgImage: CGImage,
+        languages: [String],
+        attemptedEngineID: String
+    ) async -> OCRResult? {
+        if let result, !result.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return result
+        }
+
+        guard Self.shouldAttemptTesseractFallback(
+            attemptedEngineID: attemptedEngineID,
+            tesseractEnabled: preferences.tesseractEnabled
+        ),
+              let tesseractEngine = OCRManager.shared.engines.first(where: { $0.identifier == "tesseract" })
+        else {
+            logger.warning("⚠️ OCR returned no text and no alternate engine is available")
+            return nil
+        }
+
+        let fallbackLanguages = languages.isEmpty
+            ? [LanguageCodeMapper.standardize(preferences.recognitionLanguageCode)]
+            : languages
+        logger.warning("⚠️ \(attemptedEngineID, privacy: .public) returned no text; retrying with Tesseract")
+        let fallback = await performOCR(with: tesseractEngine, cgImage: cgImage, languages: fallbackLanguages)
+
+        guard let fallback,
+              !fallback.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            logger.warning("⚠️ Tesseract fallback also returned no text")
+            return nil
+        }
+
+        return fallback
+    }
+
+    nonisolated static func shouldAttemptTesseractFallback(
+        attemptedEngineID: String,
+        tesseractEnabled: Bool
+    ) -> Bool {
+        tesseractEnabled && attemptedEngineID != "tesseract"
     }
     
     
@@ -675,6 +730,11 @@ public class TRex: NSObject {
 
     @MainActor
     func processDetectedText(_ text: String, ocrResult: OCRResult? = nil) {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            logger.warning("⚠️ Refusing to replace the clipboard with empty OCR output")
+            return
+        }
+
         showNotification(text: text)
 
         // Save to capture history (GUI only)

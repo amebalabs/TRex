@@ -104,8 +104,32 @@ public final class TesseractOCREngine: @unchecked Sendable, OCREngine {
     }
 }
 
-private extension TesseractOCREngine {
-    func recognizeSynchronously(
+extension TesseractOCREngine {
+    /// TesseractSwift can return an empty result for grayscale TIFF images read from
+    /// NSPasteboard. Render every input into a standard 8-bit RGBA bitmap first.
+    nonisolated static func makeTesseractCompatibleImage(from image: CGImage) throws -> CGImage {
+        let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
+        guard let context = CGContext(
+            data: nil,
+            width: image.width,
+            height: image.height,
+            bitsPerComponent: 8,
+            bytesPerRow: image.width * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: bitmapInfo
+        ) else {
+            throw OCRError.imageProcessingFailed("Unable to create an RGBA bitmap for Tesseract")
+        }
+
+        context.interpolationQuality = .high
+        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        guard let normalizedImage = context.makeImage() else {
+            throw OCRError.imageProcessingFailed("Unable to render an RGBA bitmap for Tesseract")
+        }
+        return normalizedImage
+    }
+
+    private func recognizeSynchronously(
         image: CGImage,
         requestedLanguages: [String],
         tesseractCodes: [String],
@@ -122,7 +146,8 @@ private extension TesseractOCREngine {
         defer { tesseractEngine.clear() }
 
         tesseractEngine.setPageSegmentationMode(recognitionLevel == .accurate ? .auto : .sparseText)
-        let text = try tesseractEngine.recognize(cgImage: image)
+        let normalizedImage = try Self.makeTesseractCompatibleImage(from: image)
+        let text = try tesseractEngine.recognize(cgImage: normalizedImage)
         let confidence = Float(tesseractEngine.confidence()) / 100.0
 
         return OCRResult(
@@ -134,7 +159,7 @@ private extension TesseractOCREngine {
         )
     }
 
-    func languageFileURL(forTesseractCode code: String) -> URL {
+    private func languageFileURL(forTesseractCode code: String) -> URL {
         tessdataPath.appendingPathComponent("\(code).traineddata")
     }
 }
