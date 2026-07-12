@@ -3,6 +3,17 @@ import XCTest
 @testable import TRexCore
 
 final class TableDetectionTests: XCTestCase {
+    @MainActor
+    func testSingleFlightGateRejectsOverlapUntilCurrentWorkEnds() {
+        let gate = SingleFlightGate()
+
+        XCTAssertTrue(gate.begin())
+        XCTAssertFalse(gate.begin())
+
+        gate.end()
+        XCTAssertTrue(gate.begin())
+    }
+
     func testMarkdownEscapesPipesAndNormalizesUnevenRows() {
         let table = DetectedTable(
             headers: ["Name", "Status"],

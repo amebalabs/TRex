@@ -446,7 +446,7 @@ public class Preferences: ObservableObject {
         captureHistoryEnabled = Preferences.getValue(key: .CaptureHistoryEnabled) as? Bool ?? true
         let storedMaxEntries = Preferences.getValue(key: .CaptureHistoryMaxEntries) as? Int ?? 100
         captureHistoryMaxEntries = Self.clampHistoryEntries(storedMaxEntries)
-        tableDetectionEnabled = Preferences.getValue(key: .TableDetectionEnabled) as? Bool ?? true
+        tableDetectionEnabled = Preferences.getValue(key: .TableDetectionEnabled) as? Bool ?? false
         if let rawFormat = Preferences.getValue(key: .TableOutputFormat) as? String,
            let format = TableOutputFormat(rawValue: rawFormat) {
             tableOutputFormat = format
