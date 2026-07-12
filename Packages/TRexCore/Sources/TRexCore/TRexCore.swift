@@ -121,14 +121,37 @@ public class TRex: NSObject {
     }
 
     var hasAutomationsConfigured: Bool {
-        !preferences.autoOpenProvidedURL.isEmpty || !preferences.autoRunShortcut.isEmpty
+        Self.hasConfiguredAutomation(
+            autoOpenProvidedURL: preferences.autoOpenProvidedURL,
+            autoRunShortcut: preferences.autoRunShortcut
+        )
     }
 
     var invocationRequiresAutomation: Bool {
-        currentInvocationMode == .captureClipboardAndTriggerAutomation ||
-            currentInvocationMode == .captureScreenAndTriggerAutomation ||
-            currentInvocationMode == .captureFromFileAndTriggerAutomation ||
-            currentInvocationMode == .captureMultiRegionAndTriggerAutomation
+        Self.invocationRequiresAutomation(currentInvocationMode)
+    }
+
+    nonisolated static func hasConfiguredAutomation(autoOpenProvidedURL: String, autoRunShortcut: String) -> Bool {
+        !autoOpenProvidedURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+            !autoRunShortcut.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    nonisolated static func invocationRequiresAutomation(_ mode: InvocationMode) -> Bool {
+        mode == .captureClipboardAndTriggerAutomation ||
+            mode == .captureScreenAndTriggerAutomation ||
+            mode == .captureFromFileAndTriggerAutomation ||
+            mode == .captureMultiRegionAndTriggerAutomation
+    }
+
+    nonisolated static func shouldRouteToAutomation(
+        mode: InvocationMode,
+        autoOpenProvidedURL: String,
+        autoRunShortcut: String
+    ) -> Bool {
+        invocationRequiresAutomation(mode) && hasConfiguredAutomation(
+            autoOpenProvidedURL: autoOpenProvidedURL,
+            autoRunShortcut: autoRunShortcut
+        )
     }
 
     // MARK: - LLM Integration
@@ -687,7 +710,11 @@ public class TRex: NSObject {
         }
 
         // Choose between automation and clipboard
-        guard invocationRequiresAutomation, hasAutomationsConfigured else {
+        guard Self.shouldRouteToAutomation(
+            mode: currentInvocationMode,
+            autoOpenProvidedURL: preferences.autoOpenProvidedURL,
+            autoRunShortcut: preferences.autoRunShortcut
+        ) else {
             let pasteBoard = NSPasteboard.general
             pasteBoard.clearContents()
             pasteBoard.setString(text, forType: .string)
