@@ -66,8 +66,7 @@ public class ShortcutsManager: ObservableObject {
     }
 
     public func runShortcut(inputText: String) {
-        let shortcut = currentShortcut
-        guard !shortcut.isEmpty else { return }
+        guard let shortcut = Self.normalizedShortcutName(currentShortcut) else { return }
         guard isShortcutsAvailable() else { return }
         let inputURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("trex-shortcut-\(UUID().uuidString).txt")
@@ -94,6 +93,11 @@ public class ShortcutsManager: ObservableObject {
 
             process.waitUntilExit()
         }
+    }
+
+    nonisolated static func normalizedShortcutName(_ name: String) -> String? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     public func viewCurrentShortcut() {

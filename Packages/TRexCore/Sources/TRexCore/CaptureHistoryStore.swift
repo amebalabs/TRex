@@ -45,8 +45,10 @@ public final class CaptureHistoryStore: ObservableObject {
     private let historyFileURL: URL
     private var saveTask: Task<Void, Never>?
 
-    public init() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+    /// - Parameter storageRoot: Optional Application Support root used for persistence.
+    ///   Tests can supply an isolated temporary root to avoid touching user history.
+    public init(storageRoot: URL? = nil) {
+        let appSupport = storageRoot ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let historyDir = appSupport.appendingPathComponent("TRex/History", isDirectory: true)
         self.historyDirectoryURL = historyDir
         self.thumbnailsDirectoryURL = historyDir.appendingPathComponent("thumbnails", isDirectory: true)
@@ -60,6 +62,11 @@ public final class CaptureHistoryStore: ObservableObject {
 
     /// Add a new history entry from captured text and an optional OCR result.
     public func addEntry(text: String, ocrResult: OCRResult? = nil, maxEntries: Int = 100) {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            logger.warning("Ignoring empty capture-history entry")
+            return
+        }
+
         let maxEntries = max(1, maxEntries)
         let entryID = UUID()
         var thumbnailFilename: String?
@@ -110,6 +117,11 @@ public final class CaptureHistoryStore: ObservableObject {
             }
         }
         saveAsync()
+    }
+
+    /// Await the currently queued persistence write. Internal for deterministic tests.
+    func waitForPendingSave() async {
+        await saveTask?.value
     }
 
     /// Resolve the file URL for an entry's thumbnail.
