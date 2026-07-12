@@ -77,6 +77,21 @@ private final class ContinuationRace<Value: Sendable>: @unchecked Sendable {
     }
 }
 
+@MainActor
+final class SingleFlightGate {
+    private var isActive = false
+
+    func begin() -> Bool {
+        guard !isActive else { return false }
+        isActive = true
+        return true
+    }
+
+    func end() {
+        isActive = false
+    }
+}
+
 /// Observable state for LLM processing activity, used to drive menu bar animations.
 /// All access is confined to the main actor to ensure thread-safe UI updates.
 @MainActor
@@ -98,6 +113,7 @@ public class TRex: NSObject {
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.ameba.TRex", category: "TRexCore")
     private var llmEngine: LLMOCREngine?
     private var llmPostProcessor: LLMPostProcessor?
+    private let visionTableDetectionGate = SingleFlightGate()
     public let llmProcessingState = LLMProcessingState()
     public let captureHistoryStore = CaptureHistoryStore()
     public let watchModeManager = WatchModeManager()
@@ -235,17 +251,34 @@ public class TRex: NSObject {
         {text}
         """
 
-    /// Detect tables in the captured content and format them.
+    private static let tableDetectionTimeout: TimeInterval = 3
+
     /// Detect tables in the captured content and format them.
     /// Returns combined text with formatted tables, or nil if no tables were detected.
     /// Tries Vision document recognition first (macOS 26+), then falls back to LLM.
     private func detectAndFormatTables(ocrText: String, capturedImage: CGImage?) async -> String? {
         let format = preferences.tableOutputFormat
 
-        if #available(macOS 26, *),
-           let cgImage = capturedImage,
-           let visionResult = await detectTablesViaVision(in: cgImage, format: format) {
-            return visionResult
+        if #available(macOS 26, *), let cgImage = capturedImage {
+            guard visionTableDetectionGate.begin() else {
+                logger.warning("⏭️ Table detection is still finishing a previous request; using the original OCR text")
+                return nil
+            }
+
+            do {
+                let visionResult = try await withTimeout(seconds: Self.tableDetectionTimeout) {
+                    await self.runVisionTableDetection(in: cgImage, format: format)
+                }
+                if let visionResult {
+                    return visionResult
+                }
+            } catch TimeoutError.timedOut {
+                logger.warning("⏱️ Table detection timed out; using the original OCR text")
+                return nil
+            } catch {
+                logger.warning("⚠️ Table detection failed: \(error.localizedDescription, privacy: .public); using the original OCR text")
+                return nil
+            }
         }
 
         // Fall back to the configured post-processor when Vision is unavailable,
@@ -255,6 +288,12 @@ public class TRex: NSObject {
         }
 
         return nil
+    }
+
+    @available(macOS 26, *)
+    private func runVisionTableDetection(in cgImage: CGImage, format: TableOutputFormat) async -> String? {
+        defer { visionTableDetectionGate.end() }
+        return await detectTablesViaVision(in: cgImage, format: format)
     }
 
     /// Use Vision's RecognizeDocumentsRequest (macOS 26+) for structural table detection.
