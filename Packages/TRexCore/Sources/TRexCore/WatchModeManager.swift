@@ -294,19 +294,23 @@ public final class WatchModeManager: ObservableObject {
     }
 
     private func appendToClipboard(_ text: String) -> Bool {
+        guard let combined = Self.combinedClipboardText(existing: clipboardAccumulator, next: text) else {
+            logger.warning("Ignoring empty watch-mode OCR output")
+            return false
+        }
+
         let pasteboard = NSPasteboard.general
-        let combined: String
-        if clipboardAccumulator.isEmpty {
-            combined = text
-        } else {
-            combined = clipboardAccumulator + "\n---\n" + text
+        guard PasteboardWriter.replaceString(combined, in: pasteboard) else {
+            logger.error("Failed to write watch-mode output to clipboard")
+            return false
         }
-        pasteboard.clearContents()
-        if pasteboard.setString(combined, forType: .string) {
-            clipboardAccumulator = combined
-            return true
-        }
-        return false
+        clipboardAccumulator = combined
+        return true
+    }
+
+    nonisolated static func combinedClipboardText(existing: String, next: String) -> String? {
+        guard !next.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        return existing.isEmpty ? next : existing + "\n---\n" + next
     }
 
     private func resetClipboardAccumulator() {
