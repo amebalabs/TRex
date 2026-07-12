@@ -689,8 +689,10 @@ public class TRex: NSObject {
         // Choose between automation and clipboard
         guard invocationRequiresAutomation, hasAutomationsConfigured else {
             let pasteBoard = NSPasteboard.general
-            pasteBoard.clearContents()
-            pasteBoard.setString(text, forType: .string)
+            guard PasteboardWriter.replaceString(text, in: pasteBoard) else {
+                logger.error("❌ Failed to write OCR text to the clipboard")
+                return
+            }
             // output to STDOUT for CLI
             if BundleIdentifiers.isCLI {
                 print(text)
