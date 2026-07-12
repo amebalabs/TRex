@@ -81,21 +81,41 @@ public class ImagePreprocessor {
     }
 
     private func reduceSize(_ image: CGImage, targetSize: Int) throws -> Data {
-        var quality: CGFloat = 0.85
+        var workingImage = image
 
-        while quality > 0.3 {
-            if let data = convertToJPEG(image, quality: quality), data.count <= targetSize {
-                return data
+        while max(workingImage.width, workingImage.height) >= 256 {
+            var quality: CGFloat = 0.8
+            while quality >= 0.3 {
+                if let data = convertToJPEG(workingImage, quality: quality), data.count <= targetSize {
+                    return data
+                }
+                quality -= 0.1
             }
-            quality -= 0.05
+
+            guard let smallerImage = resize(workingImage, scale: 0.8) else { break }
+            workingImage = smallerImage
         }
 
-        // Last resort: use minimum quality
-        guard let data = convertToJPEG(image, quality: 0.3) else {
-            throw LLMError.imageProcessingFailed
-        }
+        throw LLMError.imageProcessingFailed
+    }
 
-        return data
+    private func resize(_ image: CGImage, scale: CGFloat) -> CGImage? {
+        let width = max(1, Int(CGFloat(image.width) * scale))
+        let height = max(1, Int(CGFloat(image.height) * scale))
+        guard let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            return nil
+        }
+        context.interpolationQuality = .high
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return context.makeImage()
     }
 
     /// Convert image data to base64 string

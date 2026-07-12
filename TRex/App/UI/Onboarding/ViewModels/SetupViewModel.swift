@@ -46,28 +46,37 @@ class SetupViewModel: ObservableObject {
     func checkScreenRecordingPermission() {
         screenRecordingPermission = CGPreflightScreenCaptureAccess()
         
-        if activeSection == .permissions {
+        if activeSection == .permissions, !screenRecordingPermission {
             startPermissionMonitoring()
+        } else {
+            stopPermissionMonitoring()
         }
     }
     
     func openSystemPreferences() {
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") else { return }
+        NSWorkspace.shared.open(url)
     }
     
     private func startPermissionMonitoring() {
         permissionTimer?.invalidate()
-        permissionTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+        permissionTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             let newStatus = CGPreflightScreenCaptureAccess()
-            if newStatus != self.screenRecordingPermission {
-                withAnimation(Animation.brandSpring) {
-                    self.screenRecordingPermission = newStatus
+            Task { @MainActor in
+                guard let self else { return }
+                if newStatus != self.screenRecordingPermission {
+                    withAnimation(Animation.brandSpring) {
+                        self.screenRecordingPermission = newStatus
+                    }
+                }
+                if newStatus {
+                    self.stopPermissionMonitoring()
                 }
             }
         }
     }
     
-    private func stopPermissionMonitoring() {
+    func stopPermissionMonitoring() {
         permissionTimer?.invalidate()
         permissionTimer = nil
     }

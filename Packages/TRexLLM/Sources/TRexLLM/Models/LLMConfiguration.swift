@@ -1,7 +1,7 @@
 import Foundation
 
 /// Configuration for LLM integration
-public struct LLMConfiguration: Codable {
+public struct LLMConfiguration: Codable, Sendable {
     // OCR Provider settings
     public var ocrProvider: LLMProviderType
     public var ocrAPIKey: String?
@@ -100,7 +100,7 @@ public struct LLMConfiguration: Codable {
 }
 
 /// LLM provider types
-public enum LLMProviderType: String, Codable, CaseIterable {
+public enum LLMProviderType: String, Codable, CaseIterable, Sendable {
     case openai = "OpenAI"
     case anthropic = "Anthropic"
     case custom = "Custom"

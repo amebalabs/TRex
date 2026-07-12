@@ -52,7 +52,11 @@ struct PermissionsSection: View {
             VStack(alignment: .leading, spacing: 15) {
                 PrivacyPoint(icon: "lock.fill", text: "Your privacy is protected", color: .green)
                 PrivacyPoint(icon: "hand.raised.fill", text: "Only captures when you trigger", color: .blue)
-                PrivacyPoint(icon: "externaldrive.fill", text: "No data stored or transmitted", color: .purple)
+                PrivacyPoint(
+                    icon: "externaldrive.fill",
+                    text: "Captures stay on your Mac unless you enable LLM features",
+                    color: .purple
+                )
             }
         }
     }

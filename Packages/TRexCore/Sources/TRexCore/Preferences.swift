@@ -79,8 +79,11 @@ public class Preferences: ObservableObject {
             case .Option6:
                 image = NSImage(systemSymbolName: "text.cursor", accessibilityDescription: nil)?.withSymbolConfiguration(imageConfig)
             }
-            image?.isTemplate = true
-            return image!
+            let resolvedImage = image
+                ?? NSImage(systemSymbolName: "text.viewfinder", accessibilityDescription: "TRex")
+                ?? NSImage(size: NSSize(width: 20, height: 20))
+            resolvedImage.isTemplate = true
+            return resolvedImage
         }
     }
 
@@ -425,7 +428,12 @@ public class Preferences: ObservableObject {
         llmOCRProvider = Preferences.getValue(key: .LLMOCRProvider) as? String ?? "OpenAI"
         llmOCRAPIKey = Preferences.getValue(key: .LLMOCRAPIKey) as? String ?? ""
         llmOCRCustomEndpoint = Preferences.getValue(key: .LLMOCRCustomEndpoint) as? String ?? ""
-        llmPostProcessProvider = Preferences.getValue(key: .LLMPostProcessProvider) as? String ?? "OpenAI"
+        let storedPostProcessProvider = Preferences.getValue(key: .LLMPostProcessProvider) as? String ?? "OpenAI"
+        if storedPostProcessProvider == "Apple", #unavailable(macOS 26.0) {
+            llmPostProcessProvider = "OpenAI"
+        } else {
+            llmPostProcessProvider = storedPostProcessProvider
+        }
         llmPostProcessAPIKey = Preferences.getValue(key: .LLMPostProcessAPIKey) as? String ?? ""
         llmPostProcessCustomEndpoint = Preferences.getValue(key: .LLMPostProcessCustomEndpoint) as? String ?? ""
         llmOCRModel = Preferences.getValue(key: .LLMOCRModel) as? String ?? "gpt-4.1-mini"

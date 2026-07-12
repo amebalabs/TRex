@@ -193,6 +193,21 @@ final class LLMProviderIntegrationTests: XCTestCase {
         }
     }
 
+    func testOpenAIProviderRejectsMalformedCustomEndpoint() {
+        XCTAssertThrowsError(
+            try UnifiedLanguageModelProvider(
+                providerType: .openai,
+                apiKey: "test-key",
+                endpoint: "relative/path",
+                modelName: "gpt-4.1-mini"
+            )
+        ) { error in
+            guard case LLMError.invalidEndpoint = error else {
+                return XCTFail("Expected invalidEndpoint error, got: \(error)")
+            }
+        }
+    }
+
     // MARK: - Text Processing (OpenAI)
 
     func testOpenAITextProcessing() async throws {

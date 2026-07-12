@@ -46,6 +46,6 @@ final class ImagePreprocessorTests: XCTestCase {
         let data = try preprocessor.preprocess(image)
 
         // The preprocessed image should be smaller than 2MB target
-        XCTAssertLessThan(data.count, 2_500_000)
+        XCTAssertLessThanOrEqual(data.count, 2_097_152)
     }
 }

@@ -24,11 +24,6 @@ runs:
         echo "This action only works on macOS."
         exit 1
 
-    - name: Install dependencies
-      shell: bash
-      run: |
-        brew install zip
-
     - name: Create temporary directory
       id: tmp
       shell: bash
@@ -55,8 +50,9 @@ runs:
           --output-format json \
           | tee "${{ steps.tmp.outputs.path }}/notarization_output.json"
 
-        if ! grep -q "Accepted" "${{ steps.tmp.outputs.path }}/notarization_output.json"; then
-          echo "Notarization failed"
+        STATUS=$(jq -r '.status // empty' "${{ steps.tmp.outputs.path }}/notarization_output.json")
+        if [ "$STATUS" != "Accepted" ]; then
+          echo "Notarization failed with status: ${STATUS:-unknown}"
           exit 1
         fi
 
@@ -65,3 +61,8 @@ runs:
       run: |
         xcrun stapler staple "${{ inputs.app-path }}"
         xcrun stapler validate "${{ inputs.app-path }}"
+
+    - name: Cleanup
+      if: always()
+      shell: bash
+      run: rm -rf "${{ steps.tmp.outputs.path }}"

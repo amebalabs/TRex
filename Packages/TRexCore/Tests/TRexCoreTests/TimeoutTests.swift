@@ -25,4 +25,24 @@ final class TimeoutTests: XCTestCase {
             }
         }
     }
+
+    func testWithTimeoutDoesNotWaitForUncooperativeOperation() async {
+        let clock = ContinuousClock()
+        let start = clock.now
+
+        do {
+            _ = try await withTimeout(seconds: 0.05) {
+                await withCheckedContinuation { continuation in
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 0.5) {
+                        continuation.resume(returning: "late")
+                    }
+                }
+            }
+            XCTFail("Expected timeout")
+        } catch TimeoutError.timedOut {
+            XCTAssertLessThan(start.duration(to: clock.now), .milliseconds(250))
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
 }

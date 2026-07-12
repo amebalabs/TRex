@@ -8,6 +8,7 @@ import Sparkle
 
 // TesseractWrapper bridge removed - now using TesseractSwift directly in TRexCore
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var menuBarItem: MenubarItem?
     var trex = TRex.shared
@@ -15,7 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var cancellable: Set<AnyCancellable> = []
     var onboardingWindowController: NSWindowController?
     var historyWindowController: NSWindowController?
-    let bundleID = Bundle.main.bundleIdentifier!
+    let bundleID = Bundle.main.bundleIdentifier ?? "com.ameba.TRex"
     #if !MAC_APP_STORE
     var softwareUpdater: SPUUpdater!
     #endif
@@ -48,8 +49,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
         setupShortcuts()
 
-        // Initialize LLM if enabled
+        #if !MAC_APP_STORE
+        // The App Store target does not expose third-party LLM controls, so it
+        // must not activate settings persisted by a direct-download install.
         trex.initializeLLM()
+        #endif
 
         showOnboardingIfNeeded()
     }
@@ -177,6 +181,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         window.center()
 
         let controller = NSWindowController(window: window)
+        window.setFrameAutosaveName("CaptureHistoryWindow")
         controller.contentViewController = NSHostingController(
             rootView: CaptureHistoryView(store: trex.captureHistoryStore)
         )
@@ -202,7 +207,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
 
         let myWindow = NSWindow(
-            contentRect: .init(origin: .zero, size: CGSize(width: 900, height: 700)),
+            contentRect: .init(origin: .zero, size: CGSize(width: 1000, height: 800)),
             styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
             backing: .buffered,
             defer: false

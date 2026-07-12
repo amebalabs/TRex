@@ -181,20 +181,24 @@ public final class WatchModeManager: ObservableObject {
             return // No change detected
         }
 
-        lastImageHash = hash
         logger.info("Change detected in watched region (capture #\(self.captureCount + 1, privacy: .public))")
 
         // Run OCR on the captured image
         guard let ocrResult = await TRex.shared.recognizeImageForWatchMode(image) else {
             logger.warning("OCR returned no result for watched region")
+            lastImageHash = hash
             return
         }
 
         let text = ocrResult.text
-        guard !text.isEmpty else { return }
+        guard !text.isEmpty else {
+            lastImageHash = hash
+            return
+        }
 
+        guard handleOutput(text) else { return }
+        lastImageHash = hash
         captureCount += 1
-        handleOutput(text)
     }
 
     // MARK: - Screen Capture
@@ -276,18 +280,20 @@ public final class WatchModeManager: ObservableObject {
 
     // MARK: - Output Handlers
 
-    private func handleOutput(_ text: String) {
+    @discardableResult
+    private func handleOutput(_ text: String) -> Bool {
         switch outputMode {
         case .appendToClipboard:
-            appendToClipboard(text)
+            return appendToClipboard(text)
         case .appendToFile:
-            appendToFile(text)
+            return appendToFile(text)
         case .notificationStream:
             showNotification(text)
+            return true
         }
     }
 
-    private func appendToClipboard(_ text: String) {
+    private func appendToClipboard(_ text: String) -> Bool {
         let pasteboard = NSPasteboard.general
         let combined: String
         if clipboardAccumulator.isEmpty {
@@ -298,7 +304,9 @@ public final class WatchModeManager: ObservableObject {
         pasteboard.clearContents()
         if pasteboard.setString(combined, forType: .string) {
             clipboardAccumulator = combined
+            return true
         }
+        return false
     }
 
     private func resetClipboardAccumulator() {
@@ -308,25 +316,28 @@ public final class WatchModeManager: ObservableObject {
     /// Resolve and validate the output file path.
     /// Paths from external sources (e.g. URL scheme) are restricted to user-writable
     /// locations under the user's home directory to prevent path injection.
-    private static func sanitizedOutputURL(from path: String?) -> URL? {
+    static func sanitizedOutputURL(from path: String?) -> URL? {
         guard let path, !path.isEmpty else { return nil }
 
         let fileURL = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
             .standardizedFileURL
+            .resolvingSymlinksInPath()
 
         // Reject paths outside the user's home directory
-        let home = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL
-        guard fileURL.path.hasPrefix(home.path) else {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+            .standardizedFileURL
+            .resolvingSymlinksInPath()
+        guard fileURL.path.hasPrefix(home.path + "/") else {
             return nil
         }
 
         return fileURL
     }
 
-    private func appendToFile(_ text: String) {
+    private func appendToFile(_ text: String) -> Bool {
         guard let validURL = Self.sanitizedOutputURL(from: outputFilePath) else {
             logger.error("No valid output file path configured for watch mode")
-            return
+            return false
         }
 
         let timestamp = ISO8601DateFormatter().string(from: Date())
@@ -343,8 +354,10 @@ public final class WatchModeManager: ObservableObject {
             } else {
                 try entry.write(to: validURL, atomically: true, encoding: .utf8)
             }
+            return true
         } catch {
             logger.error("Failed to write to watch mode output file: \(error.localizedDescription, privacy: .public)")
+            return false
         }
     }
 

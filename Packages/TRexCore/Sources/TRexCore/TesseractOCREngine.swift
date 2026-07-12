@@ -6,6 +6,7 @@ import Vision
 public final class TesseractOCREngine: @unchecked Sendable, OCREngine {
     private let tessdataPath: URL
     private let tesseractEngine: TesseractEngine
+    private let recognitionLock = NSLock()
     private let languageDownloader = LanguageDownloader.shared
     
     public init() {
@@ -61,31 +62,11 @@ public final class TesseractOCREngine: @unchecked Sendable, OCREngine {
             }
         }
 
-        // Initialize Tesseract with combined language codes (e.g. "eng+spa")
-        let initializationCode = tesseractCodes.joined(separator: "+")
-        try tesseractEngine.initialize(language: initializationCode)
-        
-        // Set page segmentation mode based on recognition level
-        if recognitionLevel == .accurate {
-            tesseractEngine.setPageSegmentationMode(.auto)
-        } else {
-            tesseractEngine.setPageSegmentationMode(.sparseText)
-        }
-        
-        // Perform OCR
-        let text = try tesseractEngine.recognize(cgImage: image)
-        let confidence = Float(tesseractEngine.confidence()) / 100.0
-        
-        // Clear for memory efficiency
-        tesseractEngine.clear()
-        
-        // Return result
-        return OCRResult(
-            text: text,
-            confidence: confidence,
-            recognizedLanguages: requestedLanguages,
-            engineName: "Tesseract",
-            recognitionLevel: "standard"
+        return try recognizeSynchronously(
+            image: image,
+            requestedLanguages: requestedLanguages,
+            tesseractCodes: tesseractCodes,
+            recognitionLevel: recognitionLevel
         )
     }
     
@@ -124,6 +105,35 @@ public final class TesseractOCREngine: @unchecked Sendable, OCREngine {
 }
 
 private extension TesseractOCREngine {
+    func recognizeSynchronously(
+        image: CGImage,
+        requestedLanguages: [String],
+        tesseractCodes: [String],
+        recognitionLevel: VNRequestTextRecognitionLevel
+    ) throws -> OCRResult {
+        // TesseractEngine is stateful. Serializing initialization, recognition,
+        // confidence reads, and cleanup prevents overlapping captures from
+        // corrupting its native state.
+        recognitionLock.lock()
+        defer { recognitionLock.unlock() }
+
+        let initializationCode = tesseractCodes.joined(separator: "+")
+        try tesseractEngine.initialize(language: initializationCode)
+        defer { tesseractEngine.clear() }
+
+        tesseractEngine.setPageSegmentationMode(recognitionLevel == .accurate ? .auto : .sparseText)
+        let text = try tesseractEngine.recognize(cgImage: image)
+        let confidence = Float(tesseractEngine.confidence()) / 100.0
+
+        return OCRResult(
+            text: text,
+            confidence: confidence,
+            recognizedLanguages: requestedLanguages,
+            engineName: "Tesseract",
+            recognitionLevel: recognitionLevel == .accurate ? "accurate" : "fast"
+        )
+    }
+
     func languageFileURL(forTesseractCode code: String) -> URL {
         tessdataPath.appendingPathComponent("\(code).traineddata")
     }

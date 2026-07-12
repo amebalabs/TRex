@@ -39,6 +39,12 @@ struct trex: AsyncParsableCommand {
 
         let mode: InvocationMode
         var imagePath: String?
+        var temporaryInputURL: URL?
+        defer {
+            if let temporaryInputURL {
+                try? FileManager.default.removeItem(at: temporaryInputURL)
+            }
+        }
 
         if clipboard {
             mode = automation ? .captureClipboardAndTriggerAutomation : .captureClipboard
@@ -49,14 +55,16 @@ struct trex: AsyncParsableCommand {
             guard !data.isEmpty else {
                 throw CLIError.stdinEmpty
             }
-            let tempPath = NSTemporaryDirectory() + "trex-stdin-\(UUID().uuidString).png"
+            let tempURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("trex-stdin-\(UUID().uuidString).png")
             do {
-                try data.write(to: URL(fileURLWithPath: tempPath))
+                try data.write(to: tempURL)
             } catch {
-                throw CLIError.tempFileWriteFailed(path: tempPath, underlying: error)
+                throw CLIError.tempFileWriteFailed(path: tempURL.path, underlying: error)
             }
             mode = automation ? .captureFromFileAndTriggerAutomation : .captureFromFile
-            imagePath = tempPath
+            imagePath = tempURL.path
+            temporaryInputURL = tempURL
         } else {
             mode = automation ? .captureScreenAndTriggerAutomation : .captureScreen
         }

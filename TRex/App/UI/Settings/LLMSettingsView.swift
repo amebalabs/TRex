@@ -78,7 +78,7 @@ struct LLMSettingsView: View {
 
                                 Toggle("", isOn: $preferences.llmFallbackToBuiltIn)
                                     .toggleStyle(SwitchToggleStyle())
-                                    .onChange(of: preferences.llmFallbackToBuiltIn) { _ in
+                                    .onChange(of: preferences.llmFallbackToBuiltIn) {
                                         TRex.shared.initializeLLM()
                                     }
                             }
@@ -212,7 +212,7 @@ private struct SettingsCardHeader: View {
 
             Toggle("", isOn: $isOn)
                 .toggleStyle(SwitchToggleStyle())
-                .onChange(of: isOn) { _ in
+                .onChange(of: isOn) {
                     onChange()
                 }
         }
@@ -254,11 +254,13 @@ private struct ProviderConfigSection: View {
                     Text("Anthropic").tag("Anthropic")
                     Text("Custom").tag("Custom")
                     if includeApple {
-                        Text("Apple").tag("Apple")
+                        if #available(macOS 26.0, *) {
+                            Text("Apple").tag("Apple")
+                        }
                     }
                 }
                 .pickerStyle(SegmentedPickerStyle())
-                .onChange(of: provider) { _ in
+                .onChange(of: provider) {
                     onChange()
                 }
             }
@@ -269,7 +271,7 @@ private struct ProviderConfigSection: View {
                     Image(systemName: "apple.logo")
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
-                    Text("On-device Apple Intelligence (requires macOS 15.1+)")
+                    Text("On-device Apple Foundation Models (requires macOS 26+)")
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
@@ -283,7 +285,7 @@ private struct ProviderConfigSection: View {
                         HStack(spacing: 4) {
                             SecureField(apiKeyIsOptional ? "API key (optional)" : "Enter API key", text: $apiKey)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .onChange(of: apiKey) { _ in
+                                .onChange(of: apiKey) {
                                     onChange()
                                 }
 
@@ -311,7 +313,7 @@ private struct ProviderConfigSection: View {
                     VStack(alignment: .leading, spacing: 4) {
                         TextField("http://localhost:11434/v1", text: $customEndpoint)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .onChange(of: customEndpoint) { _ in
+                            .onChange(of: customEndpoint) {
                                 onChange()
                             }
 
@@ -327,7 +329,7 @@ private struct ProviderConfigSection: View {
                 SettingsFormRow(label: "Model") {
                     TextField(modelPlaceholder, text: $model)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .onChange(of: model) { _ in
+                        .onChange(of: model) {
                             onChange()
                         }
                 }

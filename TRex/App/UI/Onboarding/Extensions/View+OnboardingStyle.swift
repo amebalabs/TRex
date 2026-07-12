@@ -27,11 +27,20 @@ extension View {
     }
     
     func fadeInAnimation(delay: TimeInterval = 0) -> some View {
-        self
-            .opacity(0)
+        modifier(FadeInModifier(delay: delay))
+    }
+}
+
+private struct FadeInModifier: ViewModifier {
+    let delay: TimeInterval
+    @State private var isVisible = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(isVisible ? 1 : 0)
             .onAppear {
                 withAnimation(Animation.brandEaseOut(delay: delay)) {
-                    self.opacity(1)
+                    isVisible = true
                 }
             }
     }

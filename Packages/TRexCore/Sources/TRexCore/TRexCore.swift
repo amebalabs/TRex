@@ -22,19 +22,58 @@ enum TimeoutError: Error {
 
 // Async timeout utility
 func withTimeout<T: Sendable>(seconds: TimeInterval, operation: @escaping @Sendable () async throws -> T) async throws -> T {
-    try await withThrowingTaskGroup(of: T.self) { group in
-        group.addTask {
-            try await operation()
-        }
+    guard seconds.isFinite, seconds > 0 else {
+        throw TimeoutError.timedOut
+    }
 
-        group.addTask {
-            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-            throw TimeoutError.timedOut
-        }
+    let operationTask = Task { try await operation() }
+    let timeoutTask = Task<T, Error> {
+        try await Task.sleep(for: .seconds(seconds))
+        throw TimeoutError.timedOut
+    }
 
-        let result = try await group.next()!
-        group.cancelAll()
-        return result
+    return try await withTaskCancellationHandler {
+        try await withCheckedThrowingContinuation { continuation in
+            let race = ContinuationRace(continuation)
+
+            Task {
+                do {
+                    race.resume(with: .success(try await operationTask.value))
+                } catch {
+                    race.resume(with: .failure(error))
+                }
+                timeoutTask.cancel()
+            }
+
+            Task {
+                do {
+                    race.resume(with: .success(try await timeoutTask.value))
+                } catch {
+                    race.resume(with: .failure(error))
+                }
+                operationTask.cancel()
+            }
+        }
+    } onCancel: {
+        operationTask.cancel()
+        timeoutTask.cancel()
+    }
+}
+
+private final class ContinuationRace<Value: Sendable>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<Value, Error>?
+
+    init(_ continuation: CheckedContinuation<Value, Error>) {
+        self.continuation = continuation
+    }
+
+    func resume(with result: Result<Value, Error>) {
+        lock.lock()
+        let continuation = self.continuation
+        self.continuation = nil
+        lock.unlock()
+        continuation?.resume(with: result)
     }
 }
 
@@ -203,12 +242,15 @@ public class TRex: NSObject {
     private func detectAndFormatTables(ocrText: String, capturedImage: CGImage?) async -> String? {
         let format = preferences.tableOutputFormat
 
-        if #available(macOS 26, *), let cgImage = capturedImage {
-            return await detectTablesViaVision(in: cgImage, format: format)
+        if #available(macOS 26, *),
+           let cgImage = capturedImage,
+           let visionResult = await detectTablesViaVision(in: cgImage, format: format) {
+            return visionResult
         }
 
-        // Pre-macOS 26: use LLM for table detection only if LLM OCR is enabled
-        if preferences.llmEnableOCR {
+        // Fall back to the configured post-processor when Vision is unavailable,
+        // fails, or finds no tables. This does not require LLM OCR to be enabled.
+        if llmPostProcessor != nil {
             return await detectTablesViaLLM(ocrText: ocrText, format: format)
         }
 
@@ -254,12 +296,12 @@ public class TRex: NSObject {
 
         logger.info("📊 Using LLM for table detection (Vision unavailable fallback)")
         let processingState = llmProcessingState
-        await processingState.set(true)
+        processingState.set(true)
         let prompt = Self.tableDetectionPrompt
             .replacingOccurrences(of: "{format}", with: format.rawValue)
             .replacingOccurrences(of: "{text}", with: ocrText)
         let result = await postProcessor.processSilently(ocrText, prompt: prompt)
-        await processingState.set(false)
+        processingState.set(false)
 
         // Only return if the LLM actually modified the text (i.e. found tables)
         guard result != ocrText else { return nil }
@@ -288,14 +330,14 @@ public class TRex: NSObject {
         if preferences.llmEnablePostProcessing, let postProcessor = llmPostProcessor {
             logger.info("📝 Applying LLM post-processing...")
             let processingState = llmProcessingState
-            await processingState.set(true)
+            processingState.set(true)
             let metadata = ocrResult.contextDescription()
             text = await postProcessor.processSilently(text, metadata: metadata)
-            await processingState.set(false)
+            processingState.set(false)
             logger.info("✅ Post-processing complete")
         }
 
-        await processDetectedText(text, ocrResult: ocrResult)
+        processDetectedText(text, ocrResult: ocrResult)
     }
 
     /// Capture multiple screen regions in a loop, OCR each one, and combine results.
@@ -334,13 +376,13 @@ public class TRex: NSObject {
         // Apply LLM post-processing once on the combined text
         if preferences.llmEnablePostProcessing, let postProcessor = llmPostProcessor {
             let processingState = llmProcessingState
-            await processingState.set(true)
+            processingState.set(true)
             let metadata = "Multi-region capture (\(allTexts.count) regions)"
             combined = await postProcessor.processSilently(combined, metadata: metadata)
-            await processingState.set(false)
+            processingState.set(false)
         }
 
-        await processDetectedText(combined)
+        processDetectedText(combined)
     }
 
     /// Run OCR on a CGImage and apply table detection if enabled.
@@ -523,8 +565,10 @@ public class TRex: NSObject {
             logger.info("🔤 Languages array: [\(languages.joined(separator: ", "), privacy: .public)]")
         }
 
+        let useTesseract = preferences.tesseractEnabled && !preferences.tesseractLanguages.isEmpty
+
         // If automatic detection is enabled and we're not using Tesseract, use Vision directly
-        if preferences.automaticLanguageDetection && !preferences.tesseractEnabled && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 13 {
+        if preferences.automaticLanguageDetection && !useTesseract && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 13 {
             logger.info("🛤️ OCR Path: Vision with AUTOMATIC language detection")
             return await performVisionOCR(cgImage: cgImage)
         }
@@ -533,14 +577,14 @@ public class TRex: NSObject {
         if preferences.llmEnabled && preferences.llmEnableOCR, let llmEngine = llmEngine {
             logger.info("🛤️ OCR Path: Using LLM OCR engine")
             let processingState = llmProcessingState
-            await processingState.set(true)
+            processingState.set(true)
             let result = await performOCR(with: llmEngine, cgImage: cgImage, languages: languages)
-            await processingState.set(false)
+            processingState.set(false)
             return result
         }
 
         // If Tesseract is disabled, only use Vision
-        if !preferences.tesseractEnabled {
+        if !useTesseract {
             logger.info("🛤️ OCR Path: Using Apple Vision (Tesseract disabled)")
             if let visionEngine = OCRManager.shared.engines.first(where: { $0.identifier == "vision" }) {
                 return await performOCR(with: visionEngine, cgImage: cgImage, languages: languages)
@@ -597,25 +641,35 @@ public class TRex: NSObject {
     }
 
     private func performVisionOCR(cgImage: CGImage) async -> OCRResult? {
-        logger.info("🔧 performVisionOCR (legacy path) called")
-        return await withCheckedContinuation { continuation in
-            detectText(in: cgImage) { text in
-                if let text = text {
-                    self.logger.info("✅ Legacy Vision OCR successful, result length: \(text.count, privacy: .public)")
-                    let result = OCRResult(
-                        text: text,
-                        confidence: 0.0, // Legacy path doesn't provide confidence
-                        recognizedLanguages: [self.preferences.recognitionLanguageCode],
-                        engineName: "Apple Vision (Legacy)",
-                        recognitionLevel: "accurate",
-                        sourceImage: cgImage
-                    )
-                    continuation.resume(returning: result)
-                } else {
-                    self.logger.warning("⚠️ Legacy Vision OCR returned no text")
-                    continuation.resume(returning: nil)
-                }
+        logger.info("🔧 performVisionOCR called")
+        let automaticallyDetectsLanguage = preferences.automaticLanguageDetection
+        let languages = automaticallyDetectsLanguage
+            ? []
+            : [LanguageCodeMapper.standardize(preferences.recognitionLanguageCode)]
+
+        do {
+            var result = try await VisionOCREngine().recognizeText(
+                in: cgImage,
+                languages: languages,
+                recognitionLevel: .accurate,
+                customWords: preferences.customWordsList,
+                automaticallyDetectsLanguage: automaticallyDetectsLanguage
+            )
+            if preferences.ignoreLineBreaks {
+                result = result.with(text: result.text.replacingOccurrences(of: "\n", with: " "))
             }
+            guard !result.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                logger.info("Vision OCR found no text")
+                return nil
+            }
+            result = result.with(sourceImage: cgImage)
+            if preferences.autoOpenCapturedURL {
+                detectAndOpenURL(text: result.text)
+            }
+            return result
+        } catch {
+            logger.error("Vision OCR failed: \(error.localizedDescription, privacy: .public)")
+            return nil
         }
     }
 
@@ -662,22 +716,31 @@ public class TRex: NSObject {
         return
     }
 
-    private func detectAndOpenURL(text: String) {
+    static func detectedURLs(in text: String) -> [URL] {
         let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
-        let matches = detector?.matches(in: text, options: [], range: NSRange(location: 0, length: text.count))
+        let matches = detector?.matches(
+            in: text,
+            options: [],
+            range: NSRange(location: 0, length: text.utf16.count)
+        ) ?? []
 
-        matches?.forEach { match in
+        return matches.compactMap { match in
             guard let range = Range(match.range, in: text),
                   case let urlStr = String(text[range]),
                   let url = URL(string: urlStr)
-            else { return }
+            else { return nil }
             if url.scheme == nil,
                case let urlStr = "https://\(url.absoluteString)",
                let newUrl = URL(string: urlStr)
             {
-                NSWorkspace.shared.open(newUrl)
-                return
+                return newUrl
             }
+            return url
+        }
+    }
+
+    private func detectAndOpenURL(text: String) {
+        Self.detectedURLs(in: text).forEach { url in
             NSWorkspace.shared.open(url)
         }
     }
@@ -696,85 +759,6 @@ public class TRex: NSObject {
         }.joined(separator: " ")
     }
 
-    func detectText(in image: CGImage, completionHandler: @escaping (String?) -> Void) {
-        logger.info("🔍 detectText (legacy Vision path) called")
-        logger.info("  → Image size: \(image.width, privacy: .public)x\(image.height, privacy: .public)")
-
-        let request = VNRecognizeTextRequest { request, error in
-            if let error = error {
-                self.logger.error("❌ Vision text detection failed: \(error.localizedDescription, privacy: .public)")
-                completionHandler(nil)
-                return
-            }
-
-            guard let result = self.handleDetectionResults(results: request.results) else {
-                self.logger.warning("⚠️ No results from handleDetectionResults")
-                completionHandler(nil)
-                return
-            }
-
-            self.logger.info("✅ Legacy Vision path succeeded: \(result.count, privacy: .public) characters")
-
-            if self.preferences.autoOpenCapturedURL {
-                self.detectAndOpenURL(text: result)
-            }
-            completionHandler(result)
-        }
-
-        // Configure language detection
-        if preferences.automaticLanguageDetection, #available(macOS 13.0, *) {
-            logger.info("🌍 Vision: Automatic language detection ENABLED")
-            request.automaticallyDetectsLanguage = true
-            // Don't set recognitionLanguages when using automatic detection
-        } else {
-            let normalizedLanguage = LanguageCodeMapper.standardize(preferences.recognitionLanguageCode)
-            logger.info("🔤 Vision: Using specific language: \(self.preferences.recognitionLanguageCode, privacy: .public) → normalized to: \(normalizedLanguage, privacy: .public)")
-            request.automaticallyDetectsLanguage = false
-            request.recognitionLanguages = [normalizedLanguage]
-        }
-
-        request.usesLanguageCorrection = true
-        request.recognitionLevel = .accurate
-        request.customWords = preferences.customWordsList
-
-        logger.debug("🔧 Vision request configuration:")
-        logger.debug("  → recognitionLevel: accurate")
-        logger.debug("  → usesLanguageCorrection: true")
-        logger.debug("  → customWords count: \(self.preferences.customWordsList.count, privacy: .public)")
-
-        performDetection(request: request, image: image)
-    }
-
-    private func performDetection(request: VNRecognizeTextRequest, image: CGImage) {
-        let requests = [request]
-
-        let handler = VNImageRequestHandler(cgImage: image, orientation: .up, options: [:])
-
-        do {
-            try handler.perform(requests)
-        } catch {
-            logger.error("Vision handler failed: \(error.localizedDescription, privacy: .public)")
-        }
-    }
-
-    private func handleDetectionResults(results: [Any]?) -> String? {
-        guard let results = results, results.count > 0 else {
-            return nil
-        }
-
-        var output: String = ""
-        for result in results {
-            if let observation = result as? VNRecognizedTextObservation {
-                for text in observation.topCandidates(1) {
-                    if !output.isEmpty {
-                        output.append(preferences.ignoreLineBreaks ? " " : "\n")
-                    }
-                    output.append(text.string)
-                }
-            }
-        }
-        return output
-    }
 }
 
 // MARK: Notifications
