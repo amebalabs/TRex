@@ -84,7 +84,15 @@ public final class RegionSelectionOverlay {
     }
 
     private static func screenScale(for point: CGPoint) -> CGFloat {
-        if let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }) {
+        // CGEvent locations use the global display coordinate system (origin at
+        // the top-left of the main display), unlike NSScreen.frame. Compare
+        // against CGDisplayBounds so vertically arranged displays map correctly.
+        if let screen = NSScreen.screens.first(where: { screen in
+            guard let displayID = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID else {
+                return false
+            }
+            return CGDisplayBounds(displayID).contains(point)
+        }) {
             return screen.backingScaleFactor
         }
         return NSScreen.main?.backingScaleFactor ?? 2.0

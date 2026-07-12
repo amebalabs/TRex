@@ -60,6 +60,7 @@ public final class CaptureHistoryStore: ObservableObject {
 
     /// Add a new history entry from captured text and an optional OCR result.
     public func addEntry(text: String, ocrResult: OCRResult? = nil, maxEntries: Int = 100) {
+        let maxEntries = max(1, maxEntries)
         let entryID = UUID()
         var thumbnailFilename: String?
 

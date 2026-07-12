@@ -22,24 +22,39 @@ public struct DetectedTable: Sendable {
     public func toMarkdown() -> String {
         var lines: [String] = []
 
-        let columnCount = headers?.count ?? rows.first?.count ?? 0
+        let columnCount = max(headers?.count ?? 0, rows.map(\.count).max() ?? 0)
         guard columnCount > 0 else { return "" }
+
+        func markdownCell(_ value: String) -> String {
+            value
+                .replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "|", with: "\\|")
+                .replacingOccurrences(of: "\r\n", with: "<br>")
+                .replacingOccurrences(of: "\n", with: "<br>")
+                .replacingOccurrences(of: "\r", with: "<br>")
+        }
+
+        func normalizedRow(_ values: [String]) -> [String] {
+            (0..<columnCount).map { index in
+                index < values.count ? markdownCell(values[index]) : ""
+            }
+        }
 
         // Calculate column widths
         var widths = Array(repeating: 3, count: columnCount)
         if let headers = headers {
-            for (i, cell) in headers.enumerated() where i < columnCount {
+            for (i, cell) in normalizedRow(headers).enumerated() {
                 widths[i] = max(widths[i], cell.count)
             }
         }
         for row in rows {
-            for (i, cell) in row.enumerated() where i < columnCount {
+            for (i, cell) in normalizedRow(row).enumerated() {
                 widths[i] = max(widths[i], cell.count)
             }
         }
 
         // Header row (use empty headers when none are provided)
-        let headerCells = headers ?? Array(repeating: "", count: columnCount)
+        let headerCells = normalizedRow(headers ?? [])
         let headerRow = headerCells.enumerated().map { i, cell in
             cell.padding(toLength: widths[i], withPad: " ", startingAt: 0)
         }
@@ -51,16 +66,8 @@ public struct DetectedTable: Sendable {
 
         // Data rows (skip first if it was the header)
         for row in rows {
-            let paddedCells = row.enumerated().map { i, cell -> String in
-                if i < columnCount {
-                    return cell.padding(toLength: widths[i], withPad: " ", startingAt: 0)
-                }
-                return cell
-            }
-            // Pad row if it has fewer cells than columns
-            var cells = paddedCells
-            while cells.count < columnCount {
-                cells.append(String(repeating: " ", count: widths[cells.count]))
+            let cells = normalizedRow(row).enumerated().map { index, cell in
+                cell.padding(toLength: widths[index], withPad: " ", startingAt: 0)
             }
             lines.append("| " + cells.joined(separator: " | ") + " |")
         }
@@ -141,7 +148,7 @@ public struct DetectedTable: Sendable {
     // MARK: - Private helpers
 
     private func escapeCSVField(_ field: String) -> String {
-        if field.contains(",") || field.contains("\"") || field.contains("\n") {
+        if field.contains(",") || field.contains("\"") || field.contains("\n") || field.contains("\r") {
             return "\"" + field.replacingOccurrences(of: "\"", with: "\"\"") + "\""
         }
         return field
@@ -151,6 +158,7 @@ public struct DetectedTable: Sendable {
         return field
             .replacingOccurrences(of: "\t", with: " ")
             .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
     }
 }
 

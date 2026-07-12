@@ -6,10 +6,13 @@ import os
 public final class NetworkChecker: Sendable {
     private let monitor: NWPathMonitor
     private let queue = DispatchQueue(label: "com.trex.llm.network")
-    private let _isConnected: OSAllocatedUnfairLock<Bool>
+    private let _isConnected: OSAllocatedUnfairLock<Bool?>
 
     public init() {
-        _isConnected = OSAllocatedUnfairLock(initialState: false)
+        // NWPathMonitor reports asynchronously. Treat the initial unknown state
+        // optimistically so an OCR request made immediately after launch is not
+        // incorrectly rejected before the first path update arrives.
+        _isConnected = OSAllocatedUnfairLock(initialState: nil)
         monitor = NWPathMonitor()
         let isConnected = _isConnected
         monitor.pathUpdateHandler = { path in
@@ -25,7 +28,7 @@ public final class NetworkChecker: Sendable {
     /// Check if network is available
     /// - Returns: True if network is available
     public func isNetworkAvailable() -> Bool {
-        return _isConnected.withLock { $0 }
+        return _isConnected.withLock { $0 ?? true }
     }
 
     /// Check connectivity to a specific host
@@ -33,7 +36,7 @@ public final class NetworkChecker: Sendable {
     /// - Returns: True if host is reachable
     public func checkConnectivity(to url: URL) async -> Bool {
         // Quick check if network is available at all
-        guard _isConnected.withLock({ $0 }) else {
+        guard _isConnected.withLock({ $0 ?? true }) else {
             return false
         }
 

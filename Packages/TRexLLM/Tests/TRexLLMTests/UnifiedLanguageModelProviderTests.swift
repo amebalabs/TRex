@@ -46,6 +46,32 @@ final class UnifiedLanguageModelProviderTests: XCTestCase {
         XCTAssertEqual(summaries.map(\.imageCount), [1, 1])
     }
 
+    func testProcessTextUsesFreshSessionForEachCapture() async throws {
+        let recorder = TranscriptRecorder()
+        let provider = UnifiedLanguageModelProvider(model: RecordingLanguageModel(recorder: recorder))
+
+        _ = try await provider.processText("first", prompt: "Clean: {text}", model: "test")
+        _ = try await provider.processText("second", prompt: "Clean: {text}", model: "test")
+
+        let summaries = await recorder.summaries
+        XCTAssertEqual(summaries.map(\.entryCount), [1, 1])
+        XCTAssertEqual(summaries.map(\.imageCount), [0, 0])
+    }
+
+    func testEndpointValidationRequiresAbsoluteHTTPURL() {
+        XCTAssertEqual(
+            UnifiedLanguageModelProvider.validatedEndpoint("http://localhost:11434/v1")?.absoluteString,
+            "http://localhost:11434/v1"
+        )
+        XCTAssertEqual(
+            UnifiedLanguageModelProvider.validatedEndpoint("https://example.com/v1")?.absoluteString,
+            "https://example.com/v1"
+        )
+        XCTAssertNil(UnifiedLanguageModelProvider.validatedEndpoint("relative/path"))
+        XCTAssertNil(UnifiedLanguageModelProvider.validatedEndpoint("file:///tmp/socket"))
+        XCTAssertNil(UnifiedLanguageModelProvider.validatedEndpoint("http://has space/v1"))
+    }
+
     private func makeTestImage() -> NSImage {
         let size = NSSize(width: 120, height: 80)
         let image = NSImage(size: size)

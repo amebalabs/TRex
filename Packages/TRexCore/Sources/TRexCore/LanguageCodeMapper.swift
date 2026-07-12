@@ -8,26 +8,17 @@ public enum LanguageCodeMapper {
         let normalized = identifier.replacingOccurrences(of: "_", with: "-")
 
         // Parse components
-        var components = Locale.components(fromIdentifier: normalized)
-        if let language = components[NSLocale.Key.languageCode.rawValue] {
-            components[NSLocale.Key.languageCode.rawValue] = language.lowercased()
-        }
-        if let script = components[NSLocale.Key.scriptCode.rawValue] {
-            components[NSLocale.Key.scriptCode.rawValue] = script.capitalized
-        }
-        if let region = components[NSLocale.Key.countryCode.rawValue] {
-            components[NSLocale.Key.countryCode.rawValue] = region.uppercased()
-        }
+        let components = Locale.Components(identifier: normalized)
 
         // Build the identifier manually to ensure hyphen format
         var parts: [String] = []
-        if let language = components[NSLocale.Key.languageCode.rawValue] {
+        if let language = components.languageComponents.languageCode?.identifier {
             parts.append(language.lowercased())
         }
-        if let script = components[NSLocale.Key.scriptCode.rawValue] {
+        if let script = components.languageComponents.script?.identifier {
             parts.append(script.capitalized)
         }
-        if let region = components[NSLocale.Key.countryCode.rawValue] {
+        if let region = components.languageComponents.region?.identifier {
             parts.append(region.uppercased())
         }
 

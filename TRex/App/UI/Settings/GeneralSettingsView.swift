@@ -55,9 +55,14 @@ struct GeneralSettingsView: View {
                         .foregroundColor(Color(NSColor.controlBackgroundColor))
                     HStack {
                         ForEach(Preferences.MenuBarIcon.allCases, id: \.self) { item in
-                            MenuBarIconView(item: item, selected: $preferences.menuBarIcon).onTapGesture {
+                            Button {
                                 preferences.menuBarIcon = item
+                            } label: {
+                                MenuBarIconView(item: item, selected: $preferences.menuBarIcon)
                             }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Menu bar icon \(item.rawValue)")
+                            .accessibilityAddTraits(preferences.menuBarIcon == item ? .isSelected : [])
                         }
                     }
                 }.frame(height: 70)
@@ -320,8 +325,10 @@ struct CLIInstallRow: View {
         }
 
         // Fetch all releases to find matching version
-        let allReleasesURL = URL(string: "https://api.github.com/repos/amebalabs/TRex/releases")!
-        let (allData, _) = try await URLSession.shared.data(from: allReleasesURL)
+        guard let allReleasesURL = URL(string: "https://api.github.com/repos/amebalabs/TRex/releases") else {
+            throw CLIInstallError.invalidDownloadURL
+        }
+        let allData = try await downloadData(from: allReleasesURL)
         let allReleases = try JSONDecoder().decode([GitHubRelease].self, from: allData)
 
         // Find release matching current app version
@@ -359,18 +366,24 @@ struct CLIInstallRow: View {
         await MainActor.run { downloadProgress = 0.2 }
 
         // Download checksum file
-        let (checksumData, _) = try await URLSession.shared.data(from: URL(string: checksumAsset.browserDownloadURL)!)
-        let checksumString = String(data: checksumData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let expectedChecksum = checksumString.components(separatedBy: " ").first ?? ""
+        guard let checksumURL = URL(string: checksumAsset.browserDownloadURL),
+              let binaryURL = URL(string: cliAsset.browserDownloadURL) else {
+            throw CLIInstallError.invalidDownloadURL
+        }
 
-        guard !expectedChecksum.isEmpty else {
+        let checksumData = try await downloadData(from: checksumURL)
+        let checksumString = String(data: checksumData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let expectedChecksum = checksumString.split(whereSeparator: \.isWhitespace).first.map(String.init) ?? ""
+
+        guard expectedChecksum.count == 64,
+              expectedChecksum.allSatisfy(\.isHexDigit) else {
             throw CLIInstallError.invalidChecksum
         }
 
         await MainActor.run { downloadProgress = 0.4 }
 
         // Download CLI binary
-        let (binaryData, _) = try await URLSession.shared.data(from: URL(string: cliAsset.browserDownloadURL)!)
+        let binaryData = try await downloadData(from: binaryURL)
 
         await MainActor.run { downloadProgress = 0.6 }
 
@@ -378,45 +391,30 @@ struct CLIInstallRow: View {
         let computedChecksum = SHA256.hash(data: binaryData)
         let computedChecksumString = computedChecksum.compactMap { String(format: "%02x", $0) }.joined()
 
-        guard computedChecksumString == expectedChecksum else {
+        guard computedChecksumString.caseInsensitiveCompare(expectedChecksum) == .orderedSame else {
             throw CLIInstallError.checksumMismatch
         }
 
         await MainActor.run { downloadProgress = 0.8 }
 
-        // Create a uniquely named temp file to avoid conflicts
-        let tempDir = FileManager.default.temporaryDirectory
-        let uniqueFilename = "trex-\(UUID().uuidString)"
-        let tempURL = tempDir.appendingPathComponent(uniqueFilename)
-
-        // Ensure cleanup
-        defer {
-            try? FileManager.default.removeItem(at: tempURL)
-        }
-
-        // Write binary to temp location
-        try binaryData.write(to: tempURL, options: .atomic)
-
-        // Verify file exists before trying to install
-        guard FileManager.default.fileExists(atPath: tempURL.path) else {
-            throw CLIInstallError.installationFailed("Failed to write temporary file")
-        }
-
         // Create ~/.local/bin directory if it doesn't exist
         let installURL = URL(fileURLWithPath: installPath)
         let binDir = installURL.deletingLastPathComponent()
+        let stagedURL = binDir.appendingPathComponent(".trex-\(UUID().uuidString).tmp")
 
         try FileManager.default.createDirectory(at: binDir, withIntermediateDirectories: true, attributes: nil)
+        defer { try? FileManager.default.removeItem(at: stagedURL) }
 
-        // Copy binary to install location
-        // Remove existing file if present
+        // Stage and permission the replacement in the destination directory so
+        // replacing an existing CLI is atomic and never leaves a partial binary.
+        try binaryData.write(to: stagedURL, options: .atomic)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: stagedURL.path)
+
         if FileManager.default.fileExists(atPath: installPath) {
-            try FileManager.default.removeItem(atPath: installPath)
+            _ = try FileManager.default.replaceItemAt(installURL, withItemAt: stagedURL)
+        } else {
+            try FileManager.default.moveItem(at: stagedURL, to: installURL)
         }
-
-        try FileManager.default.copyItem(at: tempURL, to: installURL)
-
-        // Make executable (chmod +x)
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: installPath)
 
         // Verify installation succeeded
@@ -425,6 +423,15 @@ struct CLIInstallRow: View {
         }
 
         await MainActor.run { downloadProgress = 1.0 }
+    }
+
+    private func downloadData(from url: URL) async throws -> Data {
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw CLIInstallError.httpError((response as? HTTPURLResponse)?.statusCode ?? -1)
+        }
+        return data
     }
 }
 
@@ -438,6 +445,8 @@ enum CLIInstallError: LocalizedError {
     case noMatchingRelease(version: String)
     case noCliInRelease(version: String)
     case userCancelled
+    case invalidDownloadURL
+    case httpError(Int)
 
     var errorDescription: String? {
         switch self {
@@ -459,6 +468,10 @@ enum CLIInstallError: LocalizedError {
             return "Version \(version) doesn't include CLI. Please check for app updates."
         case .userCancelled:
             return "Installation cancelled by user"
+        case .invalidDownloadURL:
+            return "Release contains an invalid download URL"
+        case .httpError(let statusCode):
+            return "Download failed with HTTP status \(statusCode)"
         }
     }
 }

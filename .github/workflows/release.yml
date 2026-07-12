@@ -1,8 +1,6 @@
 name: Build and Release
 on:
   push:
-    branches-ignore:
-      - main
     tags:
       - "v*.*.*"
       - "v*.*.*-beta.*"
@@ -75,11 +73,12 @@ jobs:
             exit 1
           fi
 
+          # Sparkle orders releases by build number. A semantically newer beta
+          # with an older build number is still invisible to users who already
+          # installed the production build.
           if [ "$BETA_BUILD" -lt "$PROD_BUILD" ]; then
-            if ! ruby -rrubygems -e 'exit Gem::Version.new(ARGV[0]) > Gem::Version.new(ARGV[1]) ? 0 : 1' "$BETA_VERSION" "$PROD_VERSION"; then
-              echo "Error: Beta feed ${BETA_VERSION} (${BETA_BUILD}) is behind production ${PROD_VERSION} (${PROD_BUILD})"
-              exit 1
-            fi
+            echo "Error: Beta feed ${BETA_VERSION} (${BETA_BUILD}) is behind production ${PROD_VERSION} (${PROD_BUILD})"
+            exit 1
           fi
 
       - name: Get Version Numbers
@@ -376,6 +375,7 @@ jobs:
 
   sign:
     needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
@@ -436,6 +436,7 @@ jobs:
 
   notarize:
     needs: sign
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3

@@ -52,8 +52,11 @@ struct SetupView: View {
             animateContent = true
             preferences.recognitionLanguageCode = vm.selectedLanguageCode
         }
-        .onChange(of: vm.selectedLanguageCode) { newValue in
+        .onChange(of: vm.selectedLanguageCode) { _, newValue in
             preferences.recognitionLanguageCode = newValue
+        }
+        .onDisappear {
+            vm.stopPermissionMonitoring()
         }
     }
 }

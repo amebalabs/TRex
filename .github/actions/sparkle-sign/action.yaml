@@ -57,8 +57,10 @@ runs:
           exit 1
         fi
 
-        # Create temporary directory for keys
-        KEYS_DIR=$(mktemp -d)
+        # Keep key material under the action temp directory so the always-run
+        # cleanup step removes it even when decoding or signing fails.
+        KEYS_DIR="$TEMP_DIR/keys"
+        mkdir -p "$KEYS_DIR"
         echo "Created temp dir for keys: $KEYS_DIR"
 
         # Decode private key with error checking
@@ -94,9 +96,6 @@ runs:
           echo "Error: Empty signature generated"
           exit 1
         fi
-
-        # Clean up
-        rm -rf "$KEYS_DIR"
 
         # Set output
         echo "signature=$SIGNATURE" >> $GITHUB_OUTPUT

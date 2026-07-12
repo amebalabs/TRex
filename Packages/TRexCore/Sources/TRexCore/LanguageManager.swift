@@ -269,8 +269,8 @@ public class LanguageManager {
         }
         
         // Try base language code
-        let components = Locale.components(fromIdentifier: normalizedCode)
-        if let languageCode = components[NSLocale.Key.languageCode.rawValue], 
+        let components = Locale.Components(identifier: normalizedCode)
+        if let languageCode = components.languageComponents.languageCode?.identifier,
            let explicit = overrides[languageCode] {
             return explicit
         }
@@ -304,17 +304,7 @@ public class LanguageManager {
 
     /// Normalize codes like "cs_CZ" into "cs-CZ"
     private func normalizeIdentifier(_ code: String) -> String {
-        var components = Locale.components(fromIdentifier: code.replacingOccurrences(of: "_", with: "-"))
-        if let lang = components[NSLocale.Key.languageCode.rawValue] {
-            components[NSLocale.Key.languageCode.rawValue] = lang.lowercased()
-        }
-        if let script = components[NSLocale.Key.scriptCode.rawValue] {
-            components[NSLocale.Key.scriptCode.rawValue] = script.capitalized
-        }
-        if let region = components[NSLocale.Key.countryCode.rawValue] {
-            components[NSLocale.Key.countryCode.rawValue] = region.uppercased()
-        }
-        return Locale.identifier(fromComponents: components)
+        LanguageCodeMapper.standardize(code)
     }
     
     /// Get flag emoji for a language code

@@ -349,9 +349,6 @@ extension MenubarItem: NSMenuDelegate {
         historyItem.submenu = submenu
     }
 
-    func menuDidClose(_: NSMenu) {
-        NSApp.activate(ignoringOtherApps: true)
-    }
 }
 
 extension MenubarItem: NSWindowDelegate, NSDraggingDestination {
@@ -367,12 +364,14 @@ extension MenubarItem: NSWindowDelegate, NSDraggingDestination {
             filesURL = urls
         }
 
-        if !filesURL.isEmpty, let imagePath = filesURL.first?.path {
-            Task {
-                await trex.capture(.captureFromFile, imagePath: imagePath)
-            }
+        guard let imageURL = filesURL.first,
+              NSImage(contentsOf: imageURL) != nil else {
+            return false
         }
 
+        Task {
+            await trex.capture(.captureFromFile, imagePath: imageURL.path)
+        }
         return true
     }
 }

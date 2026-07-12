@@ -10,11 +10,10 @@ public final class UnifiedLanguageModelProvider: LLMProvider, @unchecked Sendabl
         let mimeType: String
     }
 
-    public var name: String
-    public var supportedModels: [String]
+    public let name: String
+    public let supportedModels: [String]
 
-    private var model: any LanguageModel
-    private var session: LanguageModelSession
+    private let model: any LanguageModel
 
     /// Initialize with provider type
     public init(providerType: LLMProviderType, apiKey: String?, endpoint: String?, modelName: String) throws {
@@ -29,8 +28,11 @@ public final class UnifiedLanguageModelProvider: LLMProvider, @unchecked Sendabl
 
             // Use custom endpoint if provided (for OpenAI-compatible services)
             if let customEndpoint = endpoint, !customEndpoint.isEmpty {
+                guard let baseURL = Self.validatedEndpoint(customEndpoint) else {
+                    throw LLMError.invalidEndpoint
+                }
                 self.model = OpenAILanguageModel(
-                    baseURL: URL(string: customEndpoint)!,
+                    baseURL: baseURL,
                     apiKey: key,
                     model: modelName
                 )
@@ -63,7 +65,7 @@ public final class UnifiedLanguageModelProvider: LLMProvider, @unchecked Sendabl
             // bridge so a bare install still talks to a local server.
             let baseURL: URL
             if let customEndpoint = endpoint, !customEndpoint.isEmpty {
-                guard let url = URL(string: customEndpoint) else {
+                guard let url = Self.validatedEndpoint(customEndpoint) else {
                     throw LLMError.invalidEndpoint
                 }
                 baseURL = url
@@ -86,18 +88,26 @@ public final class UnifiedLanguageModelProvider: LLMProvider, @unchecked Sendabl
             if #available(macOS 26.0, *) {
                 self.model = SystemLanguageModel.default
             } else {
-                throw LLMError.modelNotAvailable("Apple Intelligence requires macOS 15.1 (Sequoia) or later")
+                throw LLMError.modelNotAvailable("Apple Foundation Models require macOS 26 or later")
             }
         }
-
-        self.session = LanguageModelSession(model: model)
     }
 
     init(model: any LanguageModel) {
         self.name = "Test"
         self.supportedModels = []
         self.model = model
-        self.session = LanguageModelSession(model: model)
+    }
+
+    static func validatedEndpoint(_ value: String) -> URL? {
+        guard let components = URLComponents(string: value),
+              let scheme = components.scheme?.lowercased(),
+              scheme == "http" || scheme == "https",
+              components.host?.isEmpty == false,
+              let url = components.url else {
+            return nil
+        }
+        return url
     }
 
     /// Perform OCR using a vision-capable LLM.
@@ -141,13 +151,14 @@ public final class UnifiedLanguageModelProvider: LLMProvider, @unchecked Sendabl
         prompt: String,
         model: String
     ) async throws -> String {
-        // Replace {text} placeholder in prompt
-        let fullPrompt = prompt.replacingOccurrences(of: "{text}", with: text)
+        let trimmedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolvedPrompt = trimmedPrompt.isEmpty ? PromptTemplates.defaultPostProcessPrompt : trimmedPrompt
+        let fullPrompt = resolvedPrompt.replacingOccurrences(of: "{text}", with: text)
 
         // For Apple, use instructions-based approach
         if case .apple = self.getProviderType() {
             if #available(macOS 26.0, *) {
-                let instructions = Instructions(prompt)
+                let instructions = Instructions(resolvedPrompt.replacingOccurrences(of: "{text}", with: "the supplied text"))
                 let sessionWithInstructions = LanguageModelSession(
                     model: self.model,
                     instructions: instructions
@@ -155,12 +166,15 @@ public final class UnifiedLanguageModelProvider: LLMProvider, @unchecked Sendabl
                 let response = try await sessionWithInstructions.respond(to: Prompt(text))
                 return response.content
             } else {
-                throw LLMError.modelNotAvailable("Apple Intelligence requires macOS 15.1 (Sequoia) or later")
+                throw LLMError.modelNotAvailable("Apple Foundation Models require macOS 26 or later")
             }
         }
 
         // For other providers, use the full prompt directly
-        let response = try await session.respond(to: Prompt(fullPrompt))
+        // A fresh session prevents one capture's contents from leaking into the
+        // next request and avoids unbounded conversation context growth.
+        let textSession = LanguageModelSession(model: self.model)
+        let response = try await textSession.respond(to: Prompt(fullPrompt))
         return response.content
     }
 

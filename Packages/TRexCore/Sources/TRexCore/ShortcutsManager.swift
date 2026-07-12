@@ -11,11 +11,7 @@ public class ShortcutsManager: ObservableObject {
         Preferences.shared.autoRunShortcut
     }
 
-    nonisolated let shortcutInputPath: URL
-
     public init() {
-        let directory = NSTemporaryDirectory()
-        self.shortcutInputPath = NSURL.fileURL(withPathComponents: [directory, "shortcutInput"])!
         if #available(macOS 12, *) {
             getShortcuts()
         }
@@ -70,31 +66,33 @@ public class ShortcutsManager: ObservableObject {
     }
 
     public func runShortcut(inputText: String) {
-        guard !currentShortcut.isEmpty else { return }
+        let shortcut = currentShortcut
+        guard !shortcut.isEmpty else { return }
         guard isShortcutsAvailable() else { return }
+        let inputURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("trex-shortcut-\(UUID().uuidString).txt")
 
         Task.detached(priority: .utility) { [weak self] in
             guard let self = self else { return }
+            defer { try? FileManager.default.removeItem(at: inputURL) }
 
             do {
-                try inputText.write(toFile: self.shortcutInputPath.path, atomically: true, encoding: .utf8)
+                try inputText.write(to: inputURL, atomically: true, encoding: .utf8)
             } catch {
                 return
             }
 
             let process = Process()
             process.executableURL = self.shortcutsURL
-            process.arguments = ["run", "\(self.currentShortcut)", "-i", "\(self.shortcutInputPath.path)"]
+            process.arguments = ["run", shortcut, "-i", inputURL.path]
 
             do {
                 try process.run()
             } catch {
-                try? FileManager.default.removeItem(at: self.shortcutInputPath)
                 return
             }
 
             process.waitUntilExit()
-            try? FileManager.default.removeItem(at: self.shortcutInputPath)
         }
     }
 

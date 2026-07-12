@@ -4,7 +4,10 @@ import TRexCore
 
 struct SettingsView: View {
     private enum Tabs: Hashable {
-        case general, shortcuts, about, automation, customWords, tesseract, llm
+        case general, shortcuts, about, automation, customWords, tesseract
+        #if !MAC_APP_STORE
+        case llm
+        #endif
     }
 
     var body: some View {
@@ -44,11 +47,13 @@ struct SettingsView: View {
                     Label("Tesseract", systemImage: "text.viewfinder")
                 }
                 .tag(Tabs.tesseract)
-            LLMSettingsView()
-                .tabItem {
-                    Label("AI", systemImage: "sparkles")
-                }
-                .tag(Tabs.llm)
+            #if !MAC_APP_STORE
+                LLMSettingsView()
+                    .tabItem {
+                        Label("AI", systemImage: "sparkles")
+                    }
+                    .tag(Tabs.llm)
+            #endif
             AboutSettingsView()
                 .tabItem {
                     Label("About", systemImage: "info")

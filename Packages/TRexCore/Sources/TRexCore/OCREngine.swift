@@ -111,6 +111,9 @@ public final class OCRManager: Sendable {
 
     public func registerEngine(_ engine: OCREngine) {
         _engines.withLock { engines in
+            // Configuration changes can recreate an engine. Replace the old
+            // instance instead of accumulating duplicate entries indefinitely.
+            engines.removeAll { $0.identifier == engine.identifier }
             engines.append(engine)
             engines.sort { $0.priority > $1.priority }
         }
@@ -207,97 +210,78 @@ public final class VisionOCREngine: OCREngine {
     }
     
     public func recognizeText(in image: CGImage, languages: [String], recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult {
+        try await recognizeText(
+            in: image,
+            languages: languages,
+            recognitionLevel: recognitionLevel,
+            customWords: [],
+            automaticallyDetectsLanguage: languages.isEmpty
+        )
+    }
+
+    func recognizeText(
+        in image: CGImage,
+        languages: [String],
+        recognitionLevel: VNRequestTextRecognitionLevel,
+        customWords: [String],
+        automaticallyDetectsLanguage: Bool
+    ) async throws -> OCRResult {
         Self.logger.info("🔍 VisionOCREngine.recognizeText called")
         Self.logger.info("  → Languages: \(languages.joined(separator: ", "), privacy: .public)")
         let levelString = recognitionLevel == .accurate ? "accurate" : "fast"
         Self.logger.info("  → Recognition level: \(levelString, privacy: .public)")
         Self.logger.info("  → Image size: \(image.width, privacy: .public)x\(image.height, privacy: .public)")
 
-        // Enhance image contrast for better recognition
-        let enhancedImage = enhanceImageContrast(image)
-        Self.logger.debug("🎨 Image contrast enhanced")
-
         return try await withCheckedThrowingContinuation { continuation in
-            let request = VNRecognizeTextRequest { request, error in
-                if let error = error {
-                    Self.logger.error("❌ Vision request failed: \(error.localizedDescription, privacy: .public)")
-                    continuation.resume(throwing: error)
-                    return
+            // VNImageRequestHandler.perform is synchronous and can take several
+            // seconds. Keep it off the caller's executor (normally MainActor).
+            DispatchQueue.global(qos: .userInitiated).async {
+                let enhancedImage = Self.enhanceImageContrast(image)
+                Self.logger.debug("🎨 Image contrast enhanced")
+
+                let request = VNRecognizeTextRequest()
+                request.automaticallyDetectsLanguage = automaticallyDetectsLanguage
+                if !automaticallyDetectsLanguage {
+                    request.recognitionLanguages = languages
                 }
+                request.recognitionLevel = recognitionLevel
+                request.usesLanguageCorrection = true
+                request.minimumTextHeight = 0.0
+                request.customWords = customWords
 
-                guard let observations = request.results as? [VNRecognizedTextObservation] else {
-                    Self.logger.warning("⚠️ No observations returned from Vision")
-                    continuation.resume(returning: OCRResult(
-                        text: "",
-                        confidence: 0,
-                        recognizedLanguages: languages,
-                        engineName: "Apple Vision",
-                        recognitionLevel: levelString
-                    ))
-                    return
-                }
+                let handler = VNImageRequestHandler(cgImage: enhancedImage, orientation: .up)
 
-                Self.logger.info("📊 Vision returned \(observations.count, privacy: .public) text observations")
+                do {
+                    try handler.perform([request])
+                    let observations = request.results ?? []
+                    Self.logger.info("📊 Vision returned \(observations.count, privacy: .public) text observations")
 
-                var text = ""
-                var totalConfidence: Float = 0
-                var count = 0
+                    var text = ""
+                    var totalConfidence: Float = 0
+                    var count = 0
 
-                for (index, observation) in observations.enumerated() {
-                    let candidates = observation.topCandidates(3)
-                    if let topCandidate = candidates.first {
+                    for observation in observations {
+                        guard let topCandidate = observation.topCandidates(1).first else { continue }
                         if !text.isEmpty {
                             text.append("\n")
                         }
                         text.append(topCandidate.string)
                         totalConfidence += topCandidate.confidence
                         count += 1
-
-                        // Log first 5 observations with their top candidates
-                        if index < 5 {
-                            Self.logger.debug("  Line \(index, privacy: .public): '\(topCandidate.string, privacy: .public)' (confidence: \(String(format: "%.2f", topCandidate.confidence), privacy: .public))")
-                            if candidates.count > 1 {
-                                let alternates = candidates.dropFirst().map { "'\($0.string)' (\(String(format: "%.2f", $0.confidence)))" }.joined(separator: ", ")
-                                Self.logger.debug("    Alternates: \(alternates, privacy: .public)")
-                            }
-                        }
                     }
+
+                    let averageConfidence = count > 0 ? totalConfidence / Float(count) : 0
+                    continuation.resume(returning: OCRResult(
+                        text: text,
+                        confidence: averageConfidence,
+                        recognizedLanguages: languages,
+                        engineName: "Apple Vision",
+                        recognitionLevel: levelString
+                    ))
+                } catch {
+                    Self.logger.error("❌ Vision handler.perform failed: \(error.localizedDescription, privacy: .public)")
+                    continuation.resume(throwing: error)
                 }
-
-                let avgConfidence = count > 0 ? totalConfidence / Float(count) : 0
-                Self.logger.info("✅ Recognition complete: \(count, privacy: .public) lines, avg confidence: \(String(format: "%.2f", avgConfidence), privacy: .public)")
-                Self.logger.info("  → Total text length: \(text.count, privacy: .public) characters")
-
-                continuation.resume(returning: OCRResult(
-                    text: text,
-                    confidence: avgConfidence,
-                    recognizedLanguages: languages,
-                    engineName: "Apple Vision",
-                    recognitionLevel: levelString
-                ))
-            }
-
-            request.recognitionLanguages = languages
-            request.recognitionLevel = recognitionLevel
-            request.usesLanguageCorrection = true
-
-            // Improve recognition of individual characters and symbols
-            if #available(macOS 13.0, *) {
-                request.minimumTextHeight = 0.0  // Recognize even small text
-            }
-
-            Self.logger.debug("🔧 Vision request configured:")
-            Self.logger.debug("  → recognitionLanguages: \(request.recognitionLanguages.joined(separator: ", "), privacy: .public)")
-            Self.logger.debug("  → usesLanguageCorrection: \(request.usesLanguageCorrection, privacy: .public)")
-            Self.logger.debug("  → minimumTextHeight: 0.0 (recognize small text)")
-
-            let handler = VNImageRequestHandler(cgImage: enhancedImage, orientation: .up)
-
-            do {
-                try handler.perform([request])
-            } catch {
-                Self.logger.error("❌ Vision handler.perform failed: \(error.localizedDescription, privacy: .public)")
-                continuation.resume(throwing: error)
             }
         }
     }
@@ -420,7 +404,7 @@ public final class VisionOCREngine: OCREngine {
 
     // MARK: - Image Enhancement
 
-    private func enhanceImageContrast(_ image: CGImage) -> CGImage {
+    private static func enhanceImageContrast(_ image: CGImage) -> CGImage {
         let ciImage = CIImage(cgImage: image)
 
         // Apply contrast and brightness adjustments
