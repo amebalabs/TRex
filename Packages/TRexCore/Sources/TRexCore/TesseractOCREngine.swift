@@ -61,11 +61,21 @@ public final class TesseractOCREngine: @unchecked Sendable, OCREngine {
             }
         }
 
+        let languageString = tesseractCodes.joined(separator: "+")
         let recognition = try await engineCoordinator.recognize(
             image: image,
-            language: tesseractCodes.joined(separator: "+"),
+            language: languageString,
             recognitionLevel: recognitionLevel
         )
+
+        // Tesseract reports success even when it finds no text at all. Surface
+        // that as an error so callers can fall back or notify instead of
+        // silently delivering an empty capture (see issue #89).
+        guard !recognition.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw OCRError.recognitionFailed(
+                "Tesseract (\(languageString)) found no text in \(image.width)x\(image.height) image"
+            )
+        }
 
         return OCRResult(
             text: recognition.text,
@@ -132,8 +142,52 @@ private final class NativeTesseractEngineAdapter: TesseractEngineAdapter {
         recognitionLevel: VNRequestTextRecognitionLevel
     ) throws -> (text: String, confidence: Float) {
         engine.setPageSegmentationMode(recognitionLevel == .accurate ? .auto : .sparseText)
-        let text = try engine.recognize(cgImage: image)
+        // TesseractSwift's recognize(cgImage:) renders the image into a packed
+        // RGBA buffer but passes the source image's bytesPerRow as the stride.
+        // Screen captures usually have padded rows (or non-RGBA formats), so
+        // Tesseract reads sheared garbage and "succeeds" with empty text.
+        // Render into our own packed RGBA buffer and pass a matching stride.
+        let pixels = try Self.packedRGBAPixels(of: image)
+        let text = try engine.recognize(
+            imageData: pixels,
+            width: image.width,
+            height: image.height,
+            bytesPerPixel: 4,
+            bytesPerRow: image.width * 4
+        )
         return (text, Float(engine.confidence()) / 100)
+    }
+
+    private static func packedRGBAPixels(of image: CGImage) throws -> Data {
+        let width = image.width
+        let height = image.height
+        let bytesPerRow = width * 4
+        var pixelData = Data(count: height * bytesPerRow)
+
+        let rendered = pixelData.withUnsafeMutableBytes { buffer -> Bool in
+            guard let baseAddress = buffer.baseAddress,
+                  let context = CGContext(
+                      data: baseAddress,
+                      width: width,
+                      height: height,
+                      bitsPerComponent: 8,
+                      bytesPerRow: bytesPerRow,
+                      space: CGColorSpaceCreateDeviceRGB(),
+                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+                  )
+            else { return false }
+
+            context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+            return true
+        }
+
+        guard rendered else {
+            throw OCRError.imageProcessingFailed(
+                "Could not render \(width)x\(height) image into an RGBA buffer for Tesseract"
+            )
+        }
+
+        return pixelData
     }
 
     func clear() {
