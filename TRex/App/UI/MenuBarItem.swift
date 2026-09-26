@@ -224,7 +224,7 @@ class MenubarItem: NSObject {
 
     @MainActor @objc func copyHistoryEntry(_ sender: NSMenuItem) {
         if let text = sender.representedObject as? String {
-            _ = PasteboardWriter.replaceString(text)
+            _ = PasteboardWriter.replaceString(text, userInitiated: true)
         }
     }
 

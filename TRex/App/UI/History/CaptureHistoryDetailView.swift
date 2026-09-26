@@ -52,7 +52,7 @@ struct CaptureHistoryDetailView: View {
             // Actions
             HStack {
                 Button {
-                    _ = PasteboardWriter.replaceString(entry.text)
+                    _ = PasteboardWriter.replaceString(entry.text, userInitiated: true)
                 } label: {
                     Label("Copy to Clipboard", systemImage: "doc.on.doc")
                 }
