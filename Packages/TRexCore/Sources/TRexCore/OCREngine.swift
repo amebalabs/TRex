@@ -239,51 +239,89 @@ public final class VisionOCREngine: OCREngine {
                 let enhancedImage = Self.enhanceImageContrast(image)
                 Self.logger.debug("🎨 Image contrast enhanced")
 
-                let request = VNRecognizeTextRequest()
-                request.automaticallyDetectsLanguage = automaticallyDetectsLanguage
-                if !automaticallyDetectsLanguage {
-                    request.recognitionLanguages = languages
-                }
-                request.recognitionLevel = recognitionLevel
-                request.usesLanguageCorrection = true
-                request.minimumTextHeight = 0.0
-                request.customWords = customWords
-
-                let handler = VNImageRequestHandler(cgImage: enhancedImage, orientation: .up)
-
                 do {
-                    try handler.perform([request])
-                    let observations = request.results ?? []
-                    Self.logger.info("📊 Vision returned \(observations.count, privacy: .public) text observations")
-
-                    var text = ""
-                    var totalConfidence: Float = 0
-                    var count = 0
-
-                    for observation in observations {
-                        guard let topCandidate = observation.topCandidates(1).first else { continue }
-                        if !text.isEmpty {
-                            text.append("\n")
-                        }
-                        text.append(topCandidate.string)
-                        totalConfidence += topCandidate.confidence
-                        count += 1
+                    let result = try Self.performRecognition(
+                        on: enhancedImage,
+                        languages: languages,
+                        recognitionLevel: recognitionLevel,
+                        customWords: customWords,
+                        automaticallyDetectsLanguage: automaticallyDetectsLanguage
+                    )
+                    continuation.resume(returning: result)
+                } catch where recognitionLevel == .accurate {
+                    // The accurate recognition path can fail inside the Neural
+                    // Engine compiler on some macOS versions (e.g. E5RT error
+                    // code 13 on macOS 27). The fast path uses a different
+                    // model, so retry once with a fresh request and handler.
+                    Self.logger.error("❌ Vision handler.perform failed: \(error.localizedDescription, privacy: .public)")
+                    Self.logger.warning("🔁 Retrying Vision OCR at fast recognition level")
+                    do {
+                        let result = try Self.performRecognition(
+                            on: enhancedImage,
+                            languages: languages,
+                            recognitionLevel: .fast,
+                            customWords: customWords,
+                            automaticallyDetectsLanguage: automaticallyDetectsLanguage
+                        )
+                        continuation.resume(returning: result)
+                    } catch {
+                        Self.logger.error("❌ Vision fast-level retry failed: \(error.localizedDescription, privacy: .public)")
+                        continuation.resume(throwing: error)
                     }
-
-                    let averageConfidence = count > 0 ? totalConfidence / Float(count) : 0
-                    continuation.resume(returning: OCRResult(
-                        text: text,
-                        confidence: averageConfidence,
-                        recognizedLanguages: languages,
-                        engineName: "Apple Vision",
-                        recognitionLevel: levelString
-                    ))
                 } catch {
                     Self.logger.error("❌ Vision handler.perform failed: \(error.localizedDescription, privacy: .public)")
                     continuation.resume(throwing: error)
                 }
             }
         }
+    }
+
+    /// Build a fresh request/handler pair and perform text recognition synchronously.
+    private static func performRecognition(
+        on image: CGImage,
+        languages: [String],
+        recognitionLevel: VNRequestTextRecognitionLevel,
+        customWords: [String],
+        automaticallyDetectsLanguage: Bool
+    ) throws -> OCRResult {
+        let request = VNRecognizeTextRequest()
+        request.automaticallyDetectsLanguage = automaticallyDetectsLanguage
+        if !automaticallyDetectsLanguage {
+            request.recognitionLanguages = languages
+        }
+        request.recognitionLevel = recognitionLevel
+        request.usesLanguageCorrection = true
+        request.minimumTextHeight = 0.0
+        request.customWords = customWords
+
+        let handler = VNImageRequestHandler(cgImage: image, orientation: .up)
+
+        try handler.perform([request])
+        let observations = request.results ?? []
+        Self.logger.info("📊 Vision returned \(observations.count, privacy: .public) text observations")
+
+        var text = ""
+        var totalConfidence: Float = 0
+        var count = 0
+
+        for observation in observations {
+            guard let topCandidate = observation.topCandidates(1).first else { continue }
+            if !text.isEmpty {
+                text.append("\n")
+            }
+            text.append(topCandidate.string)
+            totalConfidence += topCandidate.confidence
+            count += 1
+        }
+
+        let averageConfidence = count > 0 ? totalConfidence / Float(count) : 0
+        return OCRResult(
+            text: text,
+            confidence: averageConfidence,
+            recognizedLanguages: languages,
+            engineName: "Apple Vision",
+            recognitionLevel: recognitionLevel == .accurate ? "accurate" : "fast"
+        )
     }
     
     public func recognizeText(in image: CGImage, recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult {

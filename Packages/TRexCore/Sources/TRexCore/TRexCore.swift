@@ -575,8 +575,10 @@ public class TRex: NSObject {
 
     /// Run OCR on a CGImage for watch mode. Delegates to the standard recognition pipeline
     /// and applies table detection if enabled. Does not modify clipboard or trigger automation.
+    /// Failure notifications are suppressed because watch mode polls repeatedly and would
+    /// otherwise spam the user; failures are logged instead.
     func recognizeImageForWatchMode(_ cgImage: CGImage) async -> OCRResult? {
-        guard let ocrResult = await recognizeImage(cgImage) else { return nil }
+        guard let ocrResult = await recognizeImage(cgImage, notifyOnFailure: false) else { return nil }
 
         // Apply table detection if enabled, returning a modified result
         if let processedText = await recognizeAndProcessOCR(from: ocrResult), processedText != ocrResult.text {
@@ -587,7 +589,7 @@ public class TRex: NSObject {
     }
 
     /// Run OCR on a CGImage: QR detection first, then engine selection and text recognition.
-    private func recognizeImage(_ cgImage: CGImage) async -> OCRResult? {
+    private func recognizeImage(_ cgImage: CGImage, notifyOnFailure: Bool = true) async -> OCRResult? {
         logger.info("📐 Image loaded: \(cgImage.width, privacy: .public)x\(cgImage.height, privacy: .public)")
 
         // Always check for QR codes first
@@ -632,7 +634,7 @@ public class TRex: NSObject {
         // If automatic detection is enabled and we're not using Tesseract, use Vision directly
         if preferences.automaticLanguageDetection && !useTesseract && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 13 {
             logger.info("🛤️ OCR Path: Vision with AUTOMATIC language detection")
-            return await performVisionOCR(cgImage: cgImage)
+            return await performVisionOCR(cgImage: cgImage, notifyOnFailure: notifyOnFailure)
         }
 
         // If LLM OCR is enabled and available, use it
@@ -640,7 +642,7 @@ public class TRex: NSObject {
             logger.info("🛤️ OCR Path: Using LLM OCR engine")
             let processingState = llmProcessingState
             processingState.set(true)
-            let result = await performOCR(with: llmEngine, cgImage: cgImage, languages: languages)
+            let result = await performOCR(with: llmEngine, cgImage: cgImage, languages: languages, notifyOnFailure: notifyOnFailure)
             processingState.set(false)
             return result
         }
@@ -649,24 +651,24 @@ public class TRex: NSObject {
         if !useTesseract {
             logger.info("🛤️ OCR Path: Using Apple Vision (Tesseract disabled)")
             if let visionEngine = OCRManager.shared.engines.first(where: { $0.identifier == "vision" }) {
-                return await performOCR(with: visionEngine, cgImage: cgImage, languages: languages)
+                return await performOCR(with: visionEngine, cgImage: cgImage, languages: languages, notifyOnFailure: notifyOnFailure)
             } else {
                 logger.warning("⚠️ Vision engine not found, falling back to legacy path")
-                return await performVisionOCR(cgImage: cgImage)
+                return await performVisionOCR(cgImage: cgImage, notifyOnFailure: notifyOnFailure)
             }
         }
 
         if let engine = OCRManager.shared.findEngine(for: languages) {
             logger.info("🛤️ OCR Path: Using \(engine.name, privacy: .public) engine with explicit languages")
-            return await performOCR(with: engine, cgImage: cgImage, languages: languages)
+            return await performOCR(with: engine, cgImage: cgImage, languages: languages, notifyOnFailure: notifyOnFailure)
         } else {
             logger.warning("🛤️ OCR Path: No suitable OCR engine found for languages, falling back to Vision")
-            return await performVisionOCR(cgImage: cgImage)
+            return await performVisionOCR(cgImage: cgImage, notifyOnFailure: notifyOnFailure)
         }
     }
-    
-    
-    private func performOCR(with engine: OCREngine, cgImage: CGImage, languages: [String]) async -> OCRResult? {
+
+
+    private func performOCR(with engine: OCREngine, cgImage: CGImage, languages: [String], notifyOnFailure: Bool = true) async -> OCRResult? {
         logger.info("🔧 performOCR called with engine: \(engine.name, privacy: .public)")
         do {
             // Use timeout utility for 5 second timeout
@@ -694,34 +696,150 @@ public class TRex: NSObject {
             return result
         } catch TimeoutError.timedOut {
             logger.error("⏱️ OCR timed out after 5 seconds, falling back to Vision")
-            return await performVisionOCR(cgImage: cgImage)
+            return await performVisionOCR(cgImage: cgImage, excludingEngineIdentifier: engine.identifier, notifyOnFailure: notifyOnFailure)
         } catch {
             logger.error("❌ \(engine.name, privacy: .public) failed with error: \(error.localizedDescription, privacy: .public)")
             logger.error("  → Falling back to Vision")
-            return await performVisionOCR(cgImage: cgImage)
+            return await performVisionOCR(cgImage: cgImage, excludingEngineIdentifier: engine.identifier, notifyOnFailure: notifyOnFailure)
         }
     }
 
-    private func performVisionOCR(cgImage: CGImage) async -> OCRResult? {
+    /// Upper bound for a single Vision recognition attempt. Vision can stall while the
+    /// system compiles its recognition model (observed on macOS 27); bounding the attempt
+    /// keeps the capture pipeline responsive and lets the fast-level retry take over.
+    private static let visionOCRTimeout: TimeInterval = 10.0
+
+    /// Upper bound for a fallback engine attempt after Vision has failed. LLM and
+    /// Tesseract engines can legitimately take longer than Vision.
+    private static let fallbackOCRTimeout: TimeInterval = 30.0
+
+    private func performVisionOCR(cgImage: CGImage, excludingEngineIdentifier: String? = nil, notifyOnFailure: Bool = true) async -> OCRResult? {
         logger.info("🔧 performVisionOCR called")
         let automaticallyDetectsLanguage = preferences.automaticLanguageDetection
         let languages = automaticallyDetectsLanguage
             ? []
             : [LanguageCodeMapper.standardize(preferences.recognitionLanguageCode)]
 
+        var result: OCRResult
         do {
-            var result = try await VisionOCREngine().recognizeText(
-                in: cgImage,
+            result = try await recognizeWithVision(
+                cgImage: cgImage,
                 languages: languages,
                 recognitionLevel: .accurate,
-                customWords: preferences.customWordsList,
                 automaticallyDetectsLanguage: automaticallyDetectsLanguage
             )
-            if preferences.ignoreLineBreaks {
-                result = result.with(text: result.text.replacingOccurrences(of: "\n", with: " "))
+        } catch {
+            logger.error("Vision OCR failed: \(error.localizedDescription, privacy: .public); retrying at fast recognition level")
+            do {
+                result = try await recognizeWithVision(
+                    cgImage: cgImage,
+                    languages: languages,
+                    recognitionLevel: .fast,
+                    automaticallyDetectsLanguage: automaticallyDetectsLanguage
+                )
+            } catch {
+                logger.error("Vision fast-level retry failed: \(error.localizedDescription, privacy: .public)")
+                return await recoverFromVisionFailure(
+                    cgImage: cgImage,
+                    languages: languages,
+                    excludingEngineIdentifier: excludingEngineIdentifier,
+                    notifyOnFailure: notifyOnFailure,
+                    underlyingError: error
+                )
+            }
+        }
+
+        if preferences.ignoreLineBreaks {
+            result = result.with(text: result.text.replacingOccurrences(of: "\n", with: " "))
+        }
+        guard !result.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            logger.info("Vision OCR found no text")
+            return nil
+        }
+        result = result.with(sourceImage: cgImage)
+        if preferences.autoOpenCapturedURL {
+            detectAndOpenURL(text: result.text)
+        }
+        return result
+    }
+
+    /// Run a single bounded Vision recognition attempt.
+    private func recognizeWithVision(
+        cgImage: CGImage,
+        languages: [String],
+        recognitionLevel: VNRequestTextRecognitionLevel,
+        automaticallyDetectsLanguage: Bool
+    ) async throws -> OCRResult {
+        let customWords = preferences.customWordsList
+        return try await withTimeout(seconds: Self.visionOCRTimeout) {
+            try await VisionOCREngine().recognizeText(
+                in: cgImage,
+                languages: languages,
+                recognitionLevel: recognitionLevel,
+                customWords: customWords,
+                automaticallyDetectsLanguage: automaticallyDetectsLanguage
+            )
+        }
+    }
+
+    /// Vision has failed even after the fast-level retry. Try another engine the user has
+    /// configured; if none is available (or it also fails), surface the error to the user
+    /// instead of failing silently.
+    private func recoverFromVisionFailure(
+        cgImage: CGImage,
+        languages: [String],
+        excludingEngineIdentifier: String?,
+        notifyOnFailure: Bool,
+        underlyingError: Error
+    ) async -> OCRResult? {
+        let fallbackIdentifier = Self.visionFallbackEngineIdentifier(
+            excluding: excludingEngineIdentifier,
+            llmOCRConfigured: preferences.llmEnabled && preferences.llmEnableOCR && llmEngine != nil,
+            tesseractConfigured: preferences.tesseractEnabled && !preferences.tesseractLanguages.isEmpty
+        )
+
+        if let fallbackIdentifier,
+           let engine = OCRManager.shared.engines.first(where: { $0.identifier == fallbackIdentifier }) {
+            logger.warning("🛟 Vision unavailable, falling back to \(engine.name, privacy: .public)")
+            if let result = await runFallbackOCR(engine: engine, cgImage: cgImage, languages: languages) {
+                return result
+            }
+        }
+
+        if notifyOnFailure {
+            notifyOCRFailure(underlyingError)
+        }
+        return nil
+    }
+
+    /// Decide which configured engine (if any) should handle recognition when Vision fails.
+    /// Mirrors the routing preferences used in `recognizeImage`.
+    nonisolated static func visionFallbackEngineIdentifier(
+        excluding excludedIdentifier: String?,
+        llmOCRConfigured: Bool,
+        tesseractConfigured: Bool
+    ) -> String? {
+        if llmOCRConfigured, excludedIdentifier != "llm" {
+            return "llm"
+        }
+        if tesseractConfigured, excludedIdentifier != "tesseract" {
+            return "tesseract"
+        }
+        return nil
+    }
+
+    /// Run a bounded recognition attempt on a fallback engine. Returns nil on failure.
+    func runFallbackOCR(engine: OCREngine, cgImage: CGImage, languages: [String]) async -> OCRResult? {
+        do {
+            var result = try await withTimeout(seconds: Self.fallbackOCRTimeout) {
+                try await engine.recognizeText(
+                    in: cgImage,
+                    languages: languages,
+                    recognitionLevel: .accurate
+                )
             }
             guard !result.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                logger.info("Vision OCR found no text")
+                logger.info("🛟 Fallback engine \(engine.name, privacy: .public) found no text")
                 return nil
             }
             result = result.with(sourceImage: cgImage)
@@ -730,9 +848,25 @@ public class TRex: NSObject {
             }
             return result
         } catch {
-            logger.error("Vision OCR failed: \(error.localizedDescription, privacy: .public)")
+            logger.error("🛟 Fallback engine \(engine.name, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
             return nil
         }
+    }
+
+    /// Surface an OCR failure to the user. Captures must never fail silently: the CLI
+    /// prints to stderr, the GUI posts a notification even if result notifications are off.
+    private func notifyOCRFailure(_ error: Error) {
+        let message = error is TimeoutError
+            ? "Text recognition timed out. Please try again."
+            : "Text recognition failed: \(error.localizedDescription)"
+        logger.error("🚨 \(message, privacy: .public)")
+
+        if BundleIdentifiers.isCLI {
+            FileHandle.standardError.write(Data((message + "\n").utf8))
+            return
+        }
+
+        showNotification(text: message, subtitle: "Capture failed", force: true)
     }
 
     @MainActor
@@ -847,22 +981,24 @@ extension TRex {
         }
     }
     
-    public func showNotification(text: String) {
-        guard preferences.resultNotification else { return }
+    /// Show a user notification. `force` bypasses the result-notification preference,
+    /// which is reserved for error reporting that must not fail silently.
+    public func showNotification(text: String, subtitle: String = "Captured text", force: Bool = false) {
+        guard preferences.resultNotification || force else { return }
         guard !BundleIdentifiers.isCLI else { return }
-        
+
         let notificationCenter = UNUserNotificationCenter.current()
-        
+
         // Set delegate to handle foreground notifications
         notificationCenter.delegate = NotificationDelegate.shared
-        
+
         // Request authorization if not already granted
         notificationCenter.requestAuthorization(options: [.alert, .sound]) { granted, error in
             guard granted else { return }
-            
+
             let content = UNMutableNotificationContent()
             content.title = "TRex"
-            content.subtitle = "Captured text"
+            content.subtitle = subtitle
             content.body = text
             content.sound = .default
             
