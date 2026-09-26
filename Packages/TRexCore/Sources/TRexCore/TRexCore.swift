@@ -170,6 +170,24 @@ public class TRex: NSObject {
         )
     }
 
+    /// Sends recognized text to the clipboard and, for CLI invocations, to stdout.
+    /// Standard output is emitted regardless of clipboard success so headless or
+    /// clipboard-restricted runs still receive the recognized text.
+    /// Returns whether the clipboard write succeeded.
+    @MainActor
+    static func emitCaptureOutput(
+        _ text: String,
+        isCLI: Bool,
+        writeToClipboard: @MainActor (String) -> Bool,
+        printLine: @MainActor (String) -> Void
+    ) -> Bool {
+        let wroteToClipboard = writeToClipboard(text)
+        if isCLI {
+            printLine(text)
+        }
+        return wroteToClipboard
+    }
+
     // MARK: - LLM Integration
 
     public func initializeLLM() {
@@ -754,14 +772,14 @@ public class TRex: NSObject {
             autoOpenProvidedURL: preferences.autoOpenProvidedURL,
             autoRunShortcut: preferences.autoRunShortcut
         ) else {
-            let pasteBoard = NSPasteboard.general
-            guard PasteboardWriter.replaceString(text, in: pasteBoard) else {
+            let wroteToClipboard = Self.emitCaptureOutput(
+                text,
+                isCLI: BundleIdentifiers.isCLI,
+                writeToClipboard: { PasteboardWriter.replaceString($0) },
+                printLine: { print($0) }
+            )
+            if !wroteToClipboard {
                 logger.error("❌ Failed to write OCR text to the clipboard")
-                return
-            }
-            // output to STDOUT for CLI
-            if BundleIdentifiers.isCLI {
-                print(text)
             }
             return
         }
