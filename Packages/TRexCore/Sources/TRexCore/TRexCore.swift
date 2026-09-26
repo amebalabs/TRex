@@ -703,6 +703,9 @@ public class TRex: NSObject {
 
     /// Vision can complete successfully with zero observations on newer macOS releases.
     /// Do not let that erase the user's clipboard; retry with the bundled Tesseract engine.
+    /// When no usable fallback exists, the original (possibly empty) result is carried
+    /// forward so document/table recognition can still inspect the captured image;
+    /// the pipeline's final empty-text handling decides whether to keep the clipboard.
     private func recoverEmptyOCRResult(
         _ result: OCRResult?,
         cgImage: CGImage,
@@ -719,8 +722,8 @@ public class TRex: NSObject {
         ),
               let tesseractEngine = OCRManager.shared.engines.first(where: { $0.identifier == "tesseract" })
         else {
-            logger.warning("⚠️ OCR returned no text and no alternate engine is available")
-            return nil
+            logger.warning("⚠️ OCR returned no text and no alternate engine is available; continuing with the empty result")
+            return result
         }
 
         let fallbackLanguages = languages.isEmpty
@@ -732,14 +735,11 @@ public class TRex: NSObject {
         // or posting a failure notification.
         let fallback = await runFallbackOCR(engine: tesseractEngine, cgImage: cgImage, languages: fallbackLanguages)
 
-        guard let fallback,
-              !fallback.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        else {
-            logger.warning("⚠️ Tesseract fallback also returned no text")
-            return nil
+        let recovered = Self.resolveEmptyOCRRecovery(original: result, fallback: fallback)
+        if recovered == nil || recovered?.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == true {
+            logger.warning("⚠️ Tesseract fallback also returned no text; continuing with the empty result")
         }
-
-        return fallback
+        return recovered
     }
 
     nonisolated static func shouldAttemptTesseractFallback(
@@ -747,6 +747,19 @@ public class TRex: NSObject {
         tesseractEnabled: Bool
     ) -> Bool {
         tesseractEnabled && attemptedEngineID != "tesseract"
+    }
+
+    /// Pick the result to carry forward after a Tesseract retry of an empty OCR attempt.
+    /// Prefers a non-empty fallback; otherwise keeps the original result — even when its
+    /// text is empty — so downstream document/table recognition still runs on the image.
+    nonisolated static func resolveEmptyOCRRecovery(
+        original: OCRResult?,
+        fallback: OCRResult?
+    ) -> OCRResult? {
+        if let fallback, !fallback.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return fallback
+        }
+        return original ?? fallback
     }
 
 
