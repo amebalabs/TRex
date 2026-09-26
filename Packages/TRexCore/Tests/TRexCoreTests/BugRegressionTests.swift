@@ -28,6 +28,30 @@ final class BugRegressionTests: XCTestCase {
         XCTAssertEqual(urls.map(\.absoluteString), ["https://example.com/account"])
     }
 
+    // capture() must report completion status so the CLI can exit
+    // with a proper exit code instead of hanging (issue #93).
+    @MainActor
+    func testCaptureReturnsFalseWhenImageFileIsMissing() async {
+        let trex = TRex()
+        let missingPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent("trex-missing-\(UUID().uuidString).png").path
+
+        let success = await trex.capture(.captureFromFile, imagePath: missingPath)
+
+        XCTAssertFalse(success)
+    }
+
+    @MainActor
+    func testCaptureReturnsFalseWhenCaptureAlreadyInProgress() async {
+        let trex = TRex()
+        XCTAssertTrue(trex.beginCaptureTransaction())
+        defer { trex.endCaptureTransaction() }
+
+        let success = await trex.capture(.captureFromFile, imagePath: "/dev/null")
+
+        XCTAssertFalse(success)
+    }
+
     @MainActor
     func testWatchOutputRejectsSiblingPathWithHomePrefix() {
         let home = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL
