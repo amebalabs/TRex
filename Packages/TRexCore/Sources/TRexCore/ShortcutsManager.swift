@@ -71,27 +71,26 @@ public class ShortcutsManager: ObservableObject {
         let inputURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("trex-shortcut-\(UUID().uuidString).txt")
 
-        Task.detached(priority: .utility) { [weak self] in
-            guard let self = self else { return }
-            defer { try? FileManager.default.removeItem(at: inputURL) }
+        // Write the input and spawn synchronously: the CLI exits as soon as
+        // capture completes, so the child process must exist before this
+        // method returns or the shortcut never runs.
+        do {
+            try inputText.write(to: inputURL, atomically: true, encoding: .utf8)
+        } catch {
+            return
+        }
 
-            do {
-                try inputText.write(to: inputURL, atomically: true, encoding: .utf8)
-            } catch {
-                return
-            }
+        let process = Process()
+        process.executableURL = shortcutsURL
+        process.arguments = ["run", shortcut, "-i", inputURL.path]
+        process.terminationHandler = { _ in
+            try? FileManager.default.removeItem(at: inputURL)
+        }
 
-            let process = Process()
-            process.executableURL = self.shortcutsURL
-            process.arguments = ["run", shortcut, "-i", inputURL.path]
-
-            do {
-                try process.run()
-            } catch {
-                return
-            }
-
-            process.waitUntilExit()
+        do {
+            try process.run()
+        } catch {
+            try? FileManager.default.removeItem(at: inputURL)
         }
     }
 

@@ -370,23 +370,30 @@ public class TRex: NSObject {
         return result
     }
 
-    public func capture(_ mode: InvocationMode, imagePath: String? = nil) async {
+    /// Returns true if text was captured and processed, false otherwise
+    /// (e.g. the user cancelled, no text was recognized, or a capture is already in progress).
+    @discardableResult
+    public func capture(_ mode: InvocationMode, imagePath: String? = nil) async -> Bool {
         switch mode {
         case .captureMultiRegion, .captureMultiRegionAndTriggerAutomation:
-            await captureMultiRegion(mode)
+            return await captureMultiRegion(mode)
         default:
-            await captureSingle(mode, imagePath: imagePath)
+            return await captureSingle(mode, imagePath: imagePath)
         }
     }
 
-    private func captureSingle(_ mode: InvocationMode, imagePath: String? = nil) async {
-        guard beginCaptureTransaction() else { return }
+    private func captureSingle(_ mode: InvocationMode, imagePath: String? = nil) async -> Bool {
+        guard beginCaptureTransaction() else { return false }
         defer { endCaptureTransaction() }
 
         currentInvocationMode = mode
 
-        guard let ocrResult = await getText(imagePath) else { return }
-        guard var text = await recognizeAndProcessOCR(from: ocrResult) else { return }
+        guard let ocrResult = await getText(imagePath) else { return false }
+        guard var text = await recognizeAndProcessOCR(from: ocrResult) else { return false }
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            logger.info("⚠️ No text recognized in capture")
+            return false
+        }
 
         // Apply LLM post-processing if enabled (runs after table detection)
         if preferences.llmEnablePostProcessing, let postProcessor = llmPostProcessor {
@@ -400,6 +407,7 @@ public class TRex: NSObject {
         }
 
         processDetectedText(text, ocrResult: ocrResult)
+        return true
     }
 
     /// Capture multiple screen regions in a loop, OCR each one, and combine results.
@@ -407,10 +415,10 @@ public class TRex: NSObject {
     /// or the maximum region limit is reached.
     private static let maxMultiRegionCaptures = 50
 
-    private func captureMultiRegion(_ mode: InvocationMode) async {
+    private func captureMultiRegion(_ mode: InvocationMode) async -> Bool {
         var allTexts: [String] = []
 
-        guard beginCaptureTransaction() else { return }
+        guard beginCaptureTransaction() else { return false }
         defer { endCaptureTransaction() }
 
         currentInvocationMode = mode
@@ -423,7 +431,9 @@ public class TRex: NSObject {
                 continue
             }
 
-            if let text = await recognizeAndProcessOCR(cgImage) {
+            if let text = await recognizeAndProcessOCR(cgImage),
+               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            {
                 allTexts.append(text)
             }
         }
@@ -432,7 +442,7 @@ public class TRex: NSObject {
             logger.warning("⚠️ Multi-region capture reached maximum of \(Self.maxMultiRegionCaptures, privacy: .public) regions")
         }
 
-        guard !allTexts.isEmpty else { return }
+        guard !allTexts.isEmpty else { return false }
         var combined = allTexts.joined(separator: "\n\n")
 
         // Apply LLM post-processing once on the combined text
@@ -445,6 +455,7 @@ public class TRex: NSObject {
         }
 
         processDetectedText(combined)
+        return true
     }
 
     /// Run OCR on a CGImage and apply table detection if enabled.

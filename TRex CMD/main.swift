@@ -69,15 +69,23 @@ struct trex: AsyncParsableCommand {
             mode = automation ? .captureScreenAndTriggerAutomation : .captureScreen
         }
 
-        await trexInstance.capture(mode, imagePath: imagePath)
+        let success = await trexInstance.capture(mode, imagePath: imagePath)
+        guard success else {
+            throw ExitCode.failure
+        }
     }
 }
 
 if #available(macOS 10.15, macCatalyst 13, iOS 13, tvOS 13, watchOS 6, *) {
     Task {
+        // main() exits the process itself on failure via exit(withError:);
+        // on success it returns here, so terminate explicitly.
         await trex.main()
+        Darwin.exit(EXIT_SUCCESS)
     }
-    dispatchMain()
+    // Keep the main thread alive and servicing the main run loop so
+    // @MainActor work runs until the capture task terminates the process.
+    RunLoop.main.run()
 } else {
     fatalError("This tool requires macOS 10.15 or later")
 }
