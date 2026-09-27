@@ -13,7 +13,7 @@ TRex is a macOS menu bar application that performs OCR (Optical Character Recogn
 xcodebuild -scheme TRex -configuration Release build
 
 # Build the CLI tool
-xcodebuild -scheme "TRex CMD" -configuration Release build
+xcodebuild -scheme "TRex CLI" -configuration Release build
 
 # Clean build
 xcodebuild -scheme TRex clean
@@ -56,17 +56,24 @@ The codebase follows a modular architecture:
 
 When modifying TRex:
 
-1. **Swift Version**: Use Swift 5.x syntax (project uses swift-tools-version 5.9, aim for Swift Concurrency best practices)
+1. **Swift Version**: Use Swift 5.x syntax (packages use swift-tools-version 6.1; the app targets build in Swift 5 language mode; aim for Swift Concurrency best practices)
 2. **UI Framework**: All UI should be built with SwiftUI
 3. **Minimum OS**: Ensure compatibility with macOS 14.0+ (Sonoma). Apple Intelligence features require macOS 15.1+
-4. **Dependencies**: Managed via Swift Package Manager (KeyboardShortcuts, LaunchAtLogin, AnyLanguageModel)
+4. **Dependencies**: Managed via Swift Package Manager — KeyboardShortcuts, Sparkle, swift-argument-parser (app/CLI), AnyLanguageModel (TRexLLM), TesseractSwift (TRexCore). LaunchAtLogin is vendored source (`TRex/LaunchAtLogin.swift`), not a package
 5. **Text Recognition**: Vision framework calls should handle multiple recognition levels
 6. **Error Handling**: OCR operations should gracefully handle failures and provide user feedback via notifications
 7. **Concurrency**: All code must be Swift 6 concurrency-safe (Sendable protocol, actor isolation)
 
 ## Testing
 
-The project currently has no test suite. When implementing tests, use XCTest framework following standard Swift testing patterns.
+Both packages have XCTest suites: `Packages/TRexCore/Tests/TRexCoreTests/` covers OCR routing, table detection, capture history, automation, timeouts, and bug regressions; `Packages/TRexLLM/Tests/TRexLLMTests/` covers providers, configuration, errors, and image preprocessing (some integration tests make real network calls). Run them with:
+
+```bash
+swift test --package-path Packages/TRexCore
+swift test --package-path Packages/TRexLLM
+```
+
+Follow the existing test patterns when adding coverage. Note: `swift test` may rewrite `Package.resolved` as a side effect — revert that churn rather than committing it. The app targets (`TRex/`, `TRex CMD/`) have no test targets.
 
 ## Distribution
 
@@ -87,32 +94,18 @@ The app registers and handles these URL schemes:
 
 ## Tesseract OCR Integration
 
-TRex now includes optional Tesseract OCR support for additional languages:
+TRex includes Tesseract OCR support for languages beyond Vision's built-in set, via the [TesseractSwift](https://github.com/amebalabs/TesseractSwift) Swift package (a TRexCore dependency — no separate build step):
 
-### Building Tesseract
-```bash
-# Build libraries (requires cmake, already done)
-./Scripts/build-tesseract.sh
-
-# Download core language files
-./Scripts/download-tessdata.sh
-```
+- Language data (`.traineddata`) is downloaded on demand by `LanguageDownloader` into `~/Library/Application Support/TRex/tessdata/`
+- `LanguageCodeMapper` translates BCP-47 codes (e.g. `en-US`) to Tesseract codes (e.g. `eng`)
+- Recognition runs through the actor-based `TesseractEngineCoordinator` for Swift 6 concurrency safety
 
 ### OCR Architecture
 - **OCREngine protocol** - Abstraction for OCR engines (Sendable for Swift 6)
 - **VisionOCREngine** - Apple Vision framework (default, 14 languages)
-- **TesseractOCREngine** - Tesseract OCR (100+ languages, currently stubbed)
+- **TesseractOCREngine** - Tesseract OCR (100+ languages via TesseractSwift)
 - **LLMOCREngine** - LLM-based vision OCR (supports all languages via GPT-4o, Claude, etc.)
 - **OCRManager** - Intelligent routing between engines (thread-safe singleton)
-
-### App Store Preparation
-Before submitting to App Store, run:
-```bash
-# In Xcode build phase or manually
-./Scripts/app-store-prepare.sh
-```
-
-Note: Tesseract integration is currently using a stub implementation. To enable full functionality, build the libraries using the provided scripts.
 
 ## LLM Integration
 
