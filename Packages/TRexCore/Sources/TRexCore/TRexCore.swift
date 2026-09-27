@@ -390,6 +390,10 @@ public class TRex: NSObject {
 
         guard let ocrResult = await getText(imagePath) else { return false }
         guard var text = await recognizeAndProcessOCR(from: ocrResult) else { return false }
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            logger.info("⚠️ No text recognized in capture")
+            return false
+        }
 
         // Apply LLM post-processing if enabled (runs after table detection)
         if preferences.llmEnablePostProcessing, let postProcessor = llmPostProcessor {
@@ -427,7 +431,9 @@ public class TRex: NSObject {
                 continue
             }
 
-            if let text = await recognizeAndProcessOCR(cgImage) {
+            if let text = await recognizeAndProcessOCR(cgImage),
+               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            {
                 allTexts.append(text)
             }
         }

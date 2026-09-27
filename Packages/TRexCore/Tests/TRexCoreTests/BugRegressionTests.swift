@@ -42,14 +42,57 @@ final class BugRegressionTests: XCTestCase {
     }
 
     @MainActor
-    func testCaptureReturnsFalseWhenCaptureAlreadyInProgress() async {
+    func testCaptureReturnsFalseWhenCaptureAlreadyInProgress() async throws {
         let trex = TRex()
+        // A readable image with real text ensures this test fails only if the
+        // in-progress guard is broken, not because the image can't be loaded.
+        let imagePath = try Self.writeTemporaryImage(text: "Hello TRex")
+        defer { try? FileManager.default.removeItem(atPath: imagePath) }
         XCTAssertTrue(trex.beginCaptureTransaction())
         defer { trex.endCaptureTransaction() }
 
-        let success = await trex.capture(.captureFromFile, imagePath: "/dev/null")
+        let success = await trex.capture(.captureFromFile, imagePath: imagePath)
 
         XCTAssertFalse(success)
+    }
+
+    @MainActor
+    func testCaptureReturnsFalseWhenNoTextRecognized() async throws {
+        let trex = TRex()
+        let imagePath = try Self.writeTemporaryImage(text: nil)
+        defer { try? FileManager.default.removeItem(atPath: imagePath) }
+
+        let success = await trex.capture(.captureFromFile, imagePath: imagePath)
+
+        XCTAssertFalse(success)
+    }
+
+    @MainActor
+    private static func writeTemporaryImage(text: String?) throws -> String {
+        let size = NSSize(width: 240, height: 80)
+        let image = NSImage(size: size)
+        image.lockFocus()
+        NSColor.white.setFill()
+        NSRect(origin: .zero, size: size).fill()
+        if let text {
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: NSFont.systemFont(ofSize: 32),
+                .foregroundColor: NSColor.black,
+            ]
+            (text as NSString).draw(at: NSPoint(x: 10, y: 20), withAttributes: attributes)
+        }
+        image.unlockFocus()
+
+        guard let tiff = image.tiffRepresentation,
+              let rep = NSBitmapImageRep(data: tiff),
+              let png = rep.representation(using: .png, properties: [:])
+        else {
+            throw NSError(domain: "BugRegressionTests", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to render test image"])
+        }
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("trex-test-\(UUID().uuidString).png")
+        try png.write(to: url)
+        return url.path
     }
 
     @MainActor
