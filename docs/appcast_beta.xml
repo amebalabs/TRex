@@ -6,18 +6,18 @@
     <description>TRex Beta Updates</description>
     <language>en</language>
     <item>
-      <title>TRex 2.0.1-beta.1</title>
-      <sparkle:version>166</sparkle:version>
-      <sparkle:shortVersionString>2.0.1-beta.1</sparkle:shortVersionString>
+      <title>TRex 2.0.1-beta.2</title>
+      <sparkle:version>177</sparkle:version>
+      <sparkle:shortVersionString>2.0.1-beta.2</sparkle:shortVersionString>
       <description><![CDATA[]]></description>
-      <pubDate>Sun, 12 Jul 2026 00:46:21 +0000</pubDate>
+      <pubDate>Sun, 27 Sep 2026 17:22:01 +0000</pubDate>
       <enclosure
-        url="https://github.com/amebalabs/TRex/releases/download/v2.0.1-beta.1/TRex-2.0.1-beta.1.zip"
-        sparkle:version="166"
-        sparkle:shortVersionString="2.0.1-beta.1"
+        url="https://github.com/amebalabs/TRex/releases/download/v2.0.1-beta.2/TRex-2.0.1-beta.2.zip"
+        sparkle:version="177"
+        sparkle:shortVersionString="2.0.1-beta.2"
         type="application/octet-stream"
-        sparkle:edSignature="N15s2CQz1sWEj1N9lG6maxhhxm5aTypJXOuwGHdTH8GWDFjDfN8zBrQqI1AtT8+ny5d/m+eQCRYZe+PHJBClDQ==" length="9083364"
-        sparkle:sha256="12b1a7b1cec485c3f965ff6eaa9647ea2e5377cc1d83187a6d650fafb2ac7e54"
+        sparkle:edSignature="rW9nQzoIvXMchzXQuuUxR9JLFzrCC1PqzqDMw374270JSqqWg96Ka3eLwss60jL0lOVKmfIVgDY25wm/giSVAg==" length="9119170"
+        sparkle:sha256="24ec77e28e6f23eb7f194414bef49fbd7ae573fbdc687dfedb3713b6a1b5f226"
       />
     </item>
   </channel>

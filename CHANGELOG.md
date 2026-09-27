@@ -1,3 +1,29 @@
+# v2.0.1-beta.2 (2026-09-27)
+
+# TRex v2.0.1 Beta 2 Release Notes
+
+This beta fixes OCR on macOS 27, restores the command-line workflow, and makes Tesseract recognition work correctly for every language.
+
+## Fixes
+
+- Fixed OCR failing or stalling on macOS 27: recognition now uses Apple's modern Vision API on macOS 15 and later, retries at the fast level when the accurate model fails, bounds every attempt with a timeout, and falls back to a configured Tesseract or AI engine instead of leaving the app stuck.
+- Fixed Tesseract reporting success while leaving the clipboard empty. The underlying image-handling bug in TesseractSwift is fixed upstream in 1.2.1, and recognition failures are now reported as errors instead of silent empty results. This also makes Bengali, Greek, and other Tesseract-only languages recognize correctly.
+- Fixed the `trex` command-line tool never exiting after a capture, which broke Alfred and scripting integrations. The CLI now exits with a proper status code, prints recognized text even when the clipboard write fails, and no longer races Shortcuts automation on exit.
+- Fixed failed clipboard writes erasing the previous clipboard contents. The previous contents are restored when possible, without triggering macOS pasteboard privacy prompts on automatic captures.
+- Fixed empty captures clearing the clipboard. Empty recognition results now still run table and document detection on the captured image before the capture is treated as empty.
+- Fixed watch mode repeatedly re-running OCR and AI requests on unchanged frames whose recognition produced no text.
+- Fixed OCR captures appearing unresponsive while recognition was running.
+- Fixed empty automation and capture history inputs being processed.
+
+## Improvements
+
+- Capture failures now show a notification instead of failing silently.
+- The Tesseract language list distinguishes languages that are installed from those available to download.
+
+## Testing
+
+- Added regression coverage for CLI exit behavior, Vision failure recovery and repeated recognition on macOS 27, Cyrillic support through the modern Vision API, clipboard restoration policy, watch-mode whitespace handling, padded-row and grayscale Tesseract recognition, empty-result recovery, and Bengali and Greek language exposure.
+
 # v2.0.1-beta.1 (2026-07-12)
 
 # TRex v2.0.1 Beta 1 Release Notes
