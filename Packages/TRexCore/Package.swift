@@ -14,7 +14,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/amebalabs/TesseractSwift.git", from: "1.2.0"),
+        .package(url: "https://github.com/amebalabs/TesseractSwift.git", from: "1.2.1"),
         .package(path: "../TRexLLM")
     ],
     targets: [

@@ -1,5 +1,5 @@
 {
-  "originHash" : "2c0e1eb8e07a1da97cf54a5b2252b51676e0c6d3f38af44ac3283e36b5540bd4",
+  "originHash" : "f46eef0d101f374b4058e3f0f275f92d7ba636f0e47fdf07dde4ad924c364a6c",
   "pins" : [
     {
       "identity" : "anylanguagemodel",
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/amebalabs/TesseractSwift.git",
       "state" : {
-        "revision" : "404092e4f24c7f344a68bf20118169b2b1ecbfd7",
-        "version" : "1.2.0"
+        "revision" : "2c0f55b72ea975cd8cd07b3317fe4437208e68f8",
+        "version" : "1.2.1"
       }
     }
   ],
