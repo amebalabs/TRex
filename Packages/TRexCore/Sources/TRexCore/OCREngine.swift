@@ -312,9 +312,11 @@ public final class VisionOCREngine: OCREngine {
                 customWords: customWords,
                 automaticallyDetectsLanguage: automaticallyDetectsLanguage
             )
-        } catch where recognitionLevel == .accurate {
+        } catch where recognitionLevel == .accurate && !(error is CancellationError) {
             // The accurate model can still fail inside the Neural Engine
             // compiler; the fast path uses a different model, so retry once.
+            // Cancellation (e.g. the caller's timeout) must not trigger a
+            // pointless retry in an abandoned task.
             Self.logger.error("❌ Vision perform failed: \(error.localizedDescription, privacy: .public)")
             Self.logger.warning("🔁 Retrying Vision OCR at fast recognition level")
             do {

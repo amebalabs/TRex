@@ -801,7 +801,13 @@ public class TRex: NSObject {
         if let fallbackIdentifier,
            let engine = OCRManager.shared.engines.first(where: { $0.identifier == fallbackIdentifier }) {
             logger.warning("🛟 Vision unavailable, falling back to \(engine.name, privacy: .public)")
-            if let result = await runFallbackOCR(engine: engine, cgImage: cgImage, languages: languages) {
+            // Tesseract needs the user's configured Tesseract languages; the Vision
+            // list is empty under automatic detection, which Tesseract would treat
+            // as English.
+            let fallbackLanguages = fallbackIdentifier == "tesseract"
+                ? preferences.tesseractLanguages.map { LanguageCodeMapper.fromTesseract($0) }
+                : languages
+            if let result = await runFallbackOCR(engine: engine, cgImage: cgImage, languages: fallbackLanguages) {
                 return result
             }
         }

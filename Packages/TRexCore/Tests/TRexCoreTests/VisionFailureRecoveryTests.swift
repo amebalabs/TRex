@@ -106,6 +106,8 @@ final class VisionFailureRecoveryTests: XCTestCase {
 
         let accurate = try await engine.recognizeText(in: image, languages: ["en-US"], recognitionLevel: .accurate)
         XCTAssertTrue(accurate.text.contains("Hello"), "Accurate level should recognize text, got: \(accurate.text)")
+        // The silent fast-level retry must not mask an accurate-level failure.
+        XCTAssertEqual(accurate.recognitionLevel, "accurate")
 
         let fast = try await engine.recognizeText(in: image, languages: ["en-US"], recognitionLevel: .fast)
         XCTAssertTrue(fast.text.contains("Hello"), "Fast level should recognize text, got: \(fast.text)")
@@ -128,6 +130,9 @@ final class VisionFailureRecoveryTests: XCTestCase {
                 result.text.contains("Attempt"),
                 "Recognition \(attempt) of 6 failed or returned wrong text: \(result.text)"
             )
+            // The silent fast-level retry must not mask the accurate-level
+            // first-succeeds-then-fails regression this test exists to catch.
+            XCTAssertEqual(result.recognitionLevel, "accurate", "Recognition \(attempt) fell back to fast")
         }
     }
 
