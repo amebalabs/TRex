@@ -424,6 +424,11 @@ public class TRex: NSObject {
             logger.info("✅ Post-processing complete")
         }
 
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            logger.warning("⚠️ Post-processing produced no text")
+            return false
+        }
+
         processDetectedText(text, ocrResult: ocrResult)
         return true
     }
@@ -470,6 +475,11 @@ public class TRex: NSObject {
             let metadata = "Multi-region capture (\(allTexts.count) regions)"
             combined = await postProcessor.processSilently(combined, metadata: metadata)
             processingState.set(false)
+        }
+
+        guard !combined.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            logger.warning("⚠️ Post-processing produced no text")
+            return false
         }
 
         processDetectedText(combined)
@@ -663,7 +673,8 @@ public class TRex: NSObject {
         // If automatic detection is enabled and we're not using Tesseract, use Vision directly
         if preferences.automaticLanguageDetection && !useTesseract && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 13 {
             logger.info("🛤️ OCR Path: Vision with AUTOMATIC language detection")
-            return await performVisionOCR(cgImage: cgImage, notifyOnFailure: notifyOnFailure)
+            let result = await performVisionOCR(cgImage: cgImage, notifyOnFailure: notifyOnFailure)
+            return await recoverEmptyOCRResult(result, cgImage: cgImage, languages: languages, attemptedEngineID: "vision")
         }
 
         // If LLM OCR is enabled and available, use it
@@ -673,27 +684,98 @@ public class TRex: NSObject {
             processingState.set(true)
             let result = await performOCR(with: llmEngine, cgImage: cgImage, languages: languages, notifyOnFailure: notifyOnFailure)
             processingState.set(false)
-            return result
+            return await recoverEmptyOCRResult(result, cgImage: cgImage, languages: languages, attemptedEngineID: llmEngine.identifier)
         }
 
         // If Tesseract is disabled, only use Vision
         if !useTesseract {
             logger.info("🛤️ OCR Path: Using Apple Vision (Tesseract disabled)")
             if let visionEngine = OCRManager.shared.engines.first(where: { $0.identifier == "vision" }) {
-                return await performOCR(with: visionEngine, cgImage: cgImage, languages: languages, notifyOnFailure: notifyOnFailure)
+                let result = await performOCR(with: visionEngine, cgImage: cgImage, languages: languages, notifyOnFailure: notifyOnFailure)
+                return await recoverEmptyOCRResult(result, cgImage: cgImage, languages: languages, attemptedEngineID: visionEngine.identifier)
             } else {
                 logger.warning("⚠️ Vision engine not found, falling back to legacy path")
-                return await performVisionOCR(cgImage: cgImage, notifyOnFailure: notifyOnFailure)
+                let result = await performVisionOCR(cgImage: cgImage, notifyOnFailure: notifyOnFailure)
+                return await recoverEmptyOCRResult(result, cgImage: cgImage, languages: languages, attemptedEngineID: "vision")
             }
         }
 
         if let engine = OCRManager.shared.findEngine(for: languages) {
             logger.info("🛤️ OCR Path: Using \(engine.name, privacy: .public) engine with explicit languages")
-            return await performOCR(with: engine, cgImage: cgImage, languages: languages, notifyOnFailure: notifyOnFailure)
+            let result = await performOCR(with: engine, cgImage: cgImage, languages: languages, notifyOnFailure: notifyOnFailure)
+            return await recoverEmptyOCRResult(result, cgImage: cgImage, languages: languages, attemptedEngineID: engine.identifier)
         } else {
             logger.warning("🛤️ OCR Path: No suitable OCR engine found for languages, falling back to Vision")
-            return await performVisionOCR(cgImage: cgImage, notifyOnFailure: notifyOnFailure)
+            let result = await performVisionOCR(cgImage: cgImage, notifyOnFailure: notifyOnFailure)
+            return await recoverEmptyOCRResult(result, cgImage: cgImage, languages: languages, attemptedEngineID: "vision")
         }
+    }
+
+    /// Vision can complete successfully with zero observations on newer macOS releases.
+    /// Do not let that erase the user's clipboard; retry with the bundled Tesseract engine.
+    /// When no usable fallback exists, the original (possibly empty) result is carried
+    /// forward so document/table recognition can still inspect the captured image;
+    /// the pipeline's final empty-text handling decides whether to keep the clipboard.
+    func recoverEmptyOCRResult(
+        _ result: OCRResult?,
+        cgImage: CGImage,
+        languages: [String],
+        attemptedEngineID: String
+    ) async -> OCRResult? {
+        // nil means the recognition itself failed; engine fallback has already
+        // run inside that path, so retrying Tesseract here would repeat an
+        // attempt (and could contradict an already-posted failure notification).
+        guard let result else { return nil }
+        if !result.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return result
+        }
+
+        guard Self.shouldAttemptTesseractFallback(
+            attemptedEngineID: attemptedEngineID,
+            tesseractEnabled: preferences.tesseractEnabled,
+            tesseractLanguagesConfigured: !preferences.tesseractLanguages.isEmpty
+        ),
+              let tesseractEngine = OCRManager.shared.engines.first(where: { $0.identifier == "tesseract" })
+        else {
+            logger.warning("⚠️ OCR returned no text and no alternate engine is available; continuing with the empty result")
+            return result
+        }
+
+        // Tesseract needs the user's configured Tesseract languages; the Vision
+        // list is empty under automatic detection.
+        let fallbackLanguages = preferences.tesseractLanguages.map { LanguageCodeMapper.fromTesseract($0) }
+        logger.warning("⚠️ \(attemptedEngineID, privacy: .public) returned no text; retrying with Tesseract")
+        // Tesseract throws when it finds no text; runFallbackOCR maps that (and
+        // any other engine failure) to nil without chaining into further engines
+        // or posting a failure notification.
+        let fallback = await runFallbackOCR(engine: tesseractEngine, cgImage: cgImage, languages: fallbackLanguages)
+
+        let recovered = Self.resolveEmptyOCRRecovery(original: result, fallback: fallback)
+        if recovered == nil || recovered?.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == true {
+            logger.warning("⚠️ Tesseract fallback also returned no text; continuing with the empty result")
+        }
+        return recovered
+    }
+
+    nonisolated static func shouldAttemptTesseractFallback(
+        attemptedEngineID: String,
+        tesseractEnabled: Bool,
+        tesseractLanguagesConfigured: Bool
+    ) -> Bool {
+        tesseractEnabled && tesseractLanguagesConfigured && attemptedEngineID != "tesseract"
+    }
+
+    /// Pick the result to carry forward after a Tesseract retry of an empty OCR attempt.
+    /// Prefers a non-empty fallback; otherwise keeps the original result — even when its
+    /// text is empty — so downstream document/table recognition still runs on the image.
+    nonisolated static func resolveEmptyOCRRecovery(
+        original: OCRResult?,
+        fallback: OCRResult?
+    ) -> OCRResult? {
+        if let fallback, !fallback.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return fallback
+        }
+        return original ?? fallback
     }
 
 
@@ -781,11 +863,14 @@ public class TRex: NSObject {
         if preferences.ignoreLineBreaks {
             result = result.with(text: result.text.replacingOccurrences(of: "\n", with: " "))
         }
+        result = result.with(sourceImage: cgImage)
+        // An empty result is carried forward (not nil) so the empty-OCR recovery
+        // and document/table recognition can still inspect the captured image;
+        // nil from this method always means the recognition itself failed.
         guard !result.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             logger.info("Vision OCR found no text")
-            return nil
+            return result
         }
-        result = result.with(sourceImage: cgImage)
         if preferences.autoOpenCapturedURL {
             detectAndOpenURL(text: result.text)
         }
@@ -906,6 +991,11 @@ public class TRex: NSObject {
 
     @MainActor
     func processDetectedText(_ text: String, ocrResult: OCRResult? = nil) {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            logger.warning("⚠️ Refusing to replace the clipboard with empty OCR output")
+            return
+        }
+
         showNotification(text: text)
 
         // Save to capture history (GUI only)

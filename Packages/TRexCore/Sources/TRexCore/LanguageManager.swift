@@ -47,6 +47,7 @@ public class LanguageManager {
 
         // Get downloaded Tesseract languages
         let downloadedTesseractLanguages = Set(tesseractEngine.availableLanguages())
+        let availableTesseractLanguages = Set(LanguageDownloader.allAvailableLanguages().map(\.code))
 
         // Add Vision languages
         for rawCode in visionLanguageCodes {
@@ -69,13 +70,14 @@ public class LanguageManager {
             let flagEmoji = getFlagEmoji(for: code)
             let tesseractCode = LanguageCodeMapper.toTesseract(code)
             let isDownloaded = downloadedTesseractLanguages.contains(tesseractCode)
+            let isAvailableInTesseract = availableTesseractLanguages.contains(tesseractCode)
 
             languages.append(Language(
                 code: code,
                 displayName: displayName,
                 flagEmoji: flagEmoji,
-                source: isDownloaded ? .both : .vision,
-                isDownloaded: true,
+                source: isAvailableInTesseract ? .both : .vision,
+                isDownloaded: isDownloaded,
                 fileSize: nil
             ))
             addedCodes.insert(code)
