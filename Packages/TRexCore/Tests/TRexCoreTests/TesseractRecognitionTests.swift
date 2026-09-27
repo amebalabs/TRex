@@ -9,10 +9,11 @@ import XCTest
 @testable import TRexCore
 
 /// Regression tests for issue #89: Tesseract reported "success" with empty text
-/// because TesseractSwift's recognize(cgImage:) passes the source image's
-/// bytesPerRow while rendering pixels into a packed buffer. Screen captures
-/// usually have padded rows, so every capture produced an empty result that
-/// was silently written to the clipboard.
+/// because TesseractSwift < 1.2.1's recognize(cgImage:) passed the source
+/// image's bytesPerRow while rendering pixels into a packed buffer. Screen
+/// captures usually have padded rows, so every capture produced an empty
+/// result that was silently written to the clipboard. Fixed upstream in
+/// 1.2.1; these tests guard against regressing.
 final class TesseractRecognitionTests: XCTestCase {
     private static let sampleText = "Hello World 123"
 
