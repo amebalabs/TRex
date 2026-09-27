@@ -52,9 +52,7 @@ struct CaptureHistoryDetailView: View {
             // Actions
             HStack {
                 Button {
-                    let pasteboard = NSPasteboard.general
-                    pasteboard.clearContents()
-                    pasteboard.setString(entry.text, forType: .string)
+                    _ = PasteboardWriter.replaceString(entry.text, userInitiated: true)
                 } label: {
                     Label("Copy to Clipboard", systemImage: "doc.on.doc")
                 }

@@ -191,7 +191,10 @@ public final class WatchModeManager: ObservableObject {
         }
 
         let text = ocrResult.text
-        guard !text.isEmpty else {
+        guard Self.hasRecognizedText(text) else {
+            // Whitespace-only output still marks the frame as processed;
+            // otherwise an unchanged frame would re-run OCR (and any remote
+            // LLM call) on every polling tick.
             lastImageHash = hash
             return
         }
@@ -294,19 +297,29 @@ public final class WatchModeManager: ObservableObject {
     }
 
     private func appendToClipboard(_ text: String) -> Bool {
+        guard let combined = Self.combinedClipboardText(existing: clipboardAccumulator, next: text) else {
+            logger.warning("Ignoring empty watch-mode OCR output")
+            return false
+        }
+
         let pasteboard = NSPasteboard.general
-        let combined: String
-        if clipboardAccumulator.isEmpty {
-            combined = text
-        } else {
-            combined = clipboardAccumulator + "\n---\n" + text
+        guard PasteboardWriter.replaceString(combined, in: pasteboard) else {
+            logger.error("Failed to write watch-mode output to clipboard")
+            return false
         }
-        pasteboard.clearContents()
-        if pasteboard.setString(combined, forType: .string) {
-            clipboardAccumulator = combined
-            return true
-        }
-        return false
+        clipboardAccumulator = combined
+        return true
+    }
+
+    /// Whether OCR output contains anything beyond whitespace. `pollTick` uses
+    /// this to decide if a frame produced meaningful text.
+    nonisolated static func hasRecognizedText(_ text: String) -> Bool {
+        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    nonisolated static func combinedClipboardText(existing: String, next: String) -> String? {
+        guard hasRecognizedText(next) else { return nil }
+        return existing.isEmpty ? next : existing + "\n---\n" + next
     }
 
     private func resetClipboardAccumulator() {
