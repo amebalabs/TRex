@@ -37,19 +37,32 @@ final class TesseractOCREngineTests: XCTestCase {
         XCTAssertFalse(
             TRex.shouldAttemptTesseractFallback(
                 attemptedEngineID: "vision",
-                tesseractEnabled: false
+                tesseractEnabled: false,
+                tesseractLanguagesConfigured: true
             )
         )
         XCTAssertFalse(
             TRex.shouldAttemptTesseractFallback(
                 attemptedEngineID: "tesseract",
-                tesseractEnabled: true
+                tesseractEnabled: true,
+                tesseractLanguagesConfigured: true
+            )
+        )
+        // Enabled but with every language unticked must not run Tesseract:
+        // recognition would fall back to a stale language code and could
+        // trigger a traineddata download mid-capture.
+        XCTAssertFalse(
+            TRex.shouldAttemptTesseractFallback(
+                attemptedEngineID: "vision",
+                tesseractEnabled: true,
+                tesseractLanguagesConfigured: false
             )
         )
         XCTAssertTrue(
             TRex.shouldAttemptTesseractFallback(
                 attemptedEngineID: "vision",
-                tesseractEnabled: true
+                tesseractEnabled: true,
+                tesseractLanguagesConfigured: true
             )
         )
     }
@@ -104,14 +117,54 @@ final class TesseractOCREngineTests: XCTestCase {
         XCTAssertTrue(recovered?.sourceImage === sourceImage)
     }
 
-    func testEmptyTesseractFallbackIsCarriedForwardWhenOriginalIsMissing() {
-        let sourceImage = makeGrayscaleImage(with: "table cells only")
-        let recovered = TRex.resolveEmptyOCRRecovery(
-            original: nil,
-            fallback: makeResult(text: "", engineName: "Tesseract", sourceImage: sourceImage)
-        )
+    // MARK: - recoverEmptyOCRResult (instance-level recovery)
 
-        XCTAssertEqual(recovered?.engineName, "Tesseract")
-        XCTAssertTrue(recovered?.sourceImage === sourceImage)
+    /// Preferences.shared persists to UserDefaults; restore the touched key so
+    /// tests never change the developer's real settings.
+    @MainActor
+    private func withTesseractEnabled<T>(_ enabled: Bool, _ body: () async -> T) async -> T {
+        let original = Preferences.shared.tesseractEnabled
+        Preferences.shared.tesseractEnabled = enabled
+        defer { Preferences.shared.tesseractEnabled = original }
+        return await body()
+    }
+
+    @MainActor
+    func testRecoveryCarriesEmptyResultForwardWhenTesseractIsUnavailable() async {
+        let trex = TRex()
+        let sourceImage = makeGrayscaleImage(with: "table cells only")
+        let original = makeResult(text: "", engineName: "Vision", sourceImage: sourceImage)
+
+        let recovered = await withTesseractEnabled(false) {
+            await trex.recoverEmptyOCRResult(
+                original,
+                cgImage: sourceImage,
+                languages: [],
+                attemptedEngineID: "vision"
+            )
+        }
+
+        XCTAssertEqual(recovered?.engineName, "Vision")
+        XCTAssertTrue(recovered?.sourceImage === sourceImage,
+                      "Carry-through must preserve the captured image for table detection")
+    }
+
+    @MainActor
+    func testRecoveryDoesNotRetryAfterHardRecognitionFailure() async {
+        let trex = TRex()
+        let image = makeGrayscaleImage(with: "irrelevant")
+
+        // nil means recognition failed and engine fallback already ran inside
+        // that path; recovery must not launch a second Tesseract attempt.
+        let recovered = await withTesseractEnabled(true) {
+            await trex.recoverEmptyOCRResult(
+                nil,
+                cgImage: image,
+                languages: [],
+                attemptedEngineID: "vision"
+            )
+        }
+
+        XCTAssertNil(recovered)
     }
 }

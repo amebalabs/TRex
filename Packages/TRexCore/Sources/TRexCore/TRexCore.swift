@@ -424,6 +424,11 @@ public class TRex: NSObject {
             logger.info("✅ Post-processing complete")
         }
 
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            logger.warning("⚠️ Post-processing produced no text")
+            return false
+        }
+
         processDetectedText(text, ocrResult: ocrResult)
         return true
     }
@@ -470,6 +475,11 @@ public class TRex: NSObject {
             let metadata = "Multi-region capture (\(allTexts.count) regions)"
             combined = await postProcessor.processSilently(combined, metadata: metadata)
             processingState.set(false)
+        }
+
+        guard !combined.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            logger.warning("⚠️ Post-processing produced no text")
+            return false
         }
 
         processDetectedText(combined)
@@ -706,19 +716,24 @@ public class TRex: NSObject {
     /// When no usable fallback exists, the original (possibly empty) result is carried
     /// forward so document/table recognition can still inspect the captured image;
     /// the pipeline's final empty-text handling decides whether to keep the clipboard.
-    private func recoverEmptyOCRResult(
+    func recoverEmptyOCRResult(
         _ result: OCRResult?,
         cgImage: CGImage,
         languages: [String],
         attemptedEngineID: String
     ) async -> OCRResult? {
-        if let result, !result.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        // nil means the recognition itself failed; engine fallback has already
+        // run inside that path, so retrying Tesseract here would repeat an
+        // attempt (and could contradict an already-posted failure notification).
+        guard let result else { return nil }
+        if !result.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return result
         }
 
         guard Self.shouldAttemptTesseractFallback(
             attemptedEngineID: attemptedEngineID,
-            tesseractEnabled: preferences.tesseractEnabled
+            tesseractEnabled: preferences.tesseractEnabled,
+            tesseractLanguagesConfigured: !preferences.tesseractLanguages.isEmpty
         ),
               let tesseractEngine = OCRManager.shared.engines.first(where: { $0.identifier == "tesseract" })
         else {
@@ -726,9 +741,9 @@ public class TRex: NSObject {
             return result
         }
 
-        let fallbackLanguages = languages.isEmpty
-            ? [LanguageCodeMapper.standardize(preferences.recognitionLanguageCode)]
-            : languages
+        // Tesseract needs the user's configured Tesseract languages; the Vision
+        // list is empty under automatic detection.
+        let fallbackLanguages = preferences.tesseractLanguages.map { LanguageCodeMapper.fromTesseract($0) }
         logger.warning("⚠️ \(attemptedEngineID, privacy: .public) returned no text; retrying with Tesseract")
         // Tesseract throws when it finds no text; runFallbackOCR maps that (and
         // any other engine failure) to nil without chaining into further engines
@@ -744,9 +759,10 @@ public class TRex: NSObject {
 
     nonisolated static func shouldAttemptTesseractFallback(
         attemptedEngineID: String,
-        tesseractEnabled: Bool
+        tesseractEnabled: Bool,
+        tesseractLanguagesConfigured: Bool
     ) -> Bool {
-        tesseractEnabled && attemptedEngineID != "tesseract"
+        tesseractEnabled && tesseractLanguagesConfigured && attemptedEngineID != "tesseract"
     }
 
     /// Pick the result to carry forward after a Tesseract retry of an empty OCR attempt.
@@ -847,11 +863,14 @@ public class TRex: NSObject {
         if preferences.ignoreLineBreaks {
             result = result.with(text: result.text.replacingOccurrences(of: "\n", with: " "))
         }
+        result = result.with(sourceImage: cgImage)
+        // An empty result is carried forward (not nil) so the empty-OCR recovery
+        // and document/table recognition can still inspect the captured image;
+        // nil from this method always means the recognition itself failed.
         guard !result.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             logger.info("Vision OCR found no text")
-            return nil
+            return result
         }
-        result = result.with(sourceImage: cgImage)
         if preferences.autoOpenCapturedURL {
             detectAndOpenURL(text: result.text)
         }
