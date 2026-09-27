@@ -111,6 +111,37 @@ final class VisionFailureRecoveryTests: XCTestCase {
         XCTAssertTrue(fast.text.contains("Hello"), "Fast level should recognize text, got: \(fast.text)")
     }
 
+    // MARK: - Repeated recognition (issue #92 failure mode)
+
+    /// Issue #92: on macOS 27 the legacy VNRecognizeTextRequest revision-3 path fails on
+    /// every request after the first in a process (E5RT error code 13) until restart.
+    /// The engine routes through the modern RecognizeTextRequest API on macOS 15+, which
+    /// is immune. Run several sequential recognitions to catch the
+    /// first-succeeds-then-fails regression directly.
+    func testRepeatedSequentialRecognitionsSucceed() async throws {
+        let engine = VisionOCREngine()
+
+        for attempt in 1...6 {
+            let image = createTestImage(text: "Attempt \(attempt)")
+            let result = try await engine.recognizeText(in: image, languages: ["en-US"], recognitionLevel: .accurate)
+            XCTAssertTrue(
+                result.text.contains("Attempt"),
+                "Recognition \(attempt) of 6 failed or returned wrong text: \(result.text)"
+            )
+        }
+    }
+
+    /// Issue #92 reporter needs Cyrillic, which VNRecognizeTextRequestRevision2 (the only
+    /// working legacy revision on macOS 27) does not support. The modern API must handle it.
+    func testRecognizesCyrillicText() async throws {
+        let engine = VisionOCREngine()
+        let image = createTestImage(text: "Привет мир")
+
+        let result = try await engine.recognizeText(in: image, languages: ["ru-RU"], recognitionLevel: .accurate)
+
+        XCTAssertTrue(result.text.contains("Привет"), "Cyrillic text should be recognized, got: \(result.text)")
+    }
+
     // MARK: - Capture state recovery
 
     /// A failed capture must never leave the in-progress flag set, otherwise every

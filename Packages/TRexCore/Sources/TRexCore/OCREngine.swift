@@ -232,6 +232,21 @@ public final class VisionOCREngine: OCREngine {
         Self.logger.info("  → Recognition level: \(levelString, privacy: .public)")
         Self.logger.info("  → Image size: \(image.width, privacy: .public)x\(image.height, privacy: .public)")
 
+        // Prefer the modern Swift Vision API wherever it exists. The legacy
+        // VNRecognizeTextRequest revision-3 path is broken OS-side on some
+        // releases (macOS 27 E5RT regression, issue #92: the first request in
+        // a process succeeds, then every subsequent one fails with e5rtError
+        // code 13 until restart). RecognizeTextRequest is unaffected.
+        if #available(macOS 15.0, *) {
+            return try await Self.recognizeWithModernAPI(
+                on: image,
+                languages: languages,
+                recognitionLevel: recognitionLevel,
+                customWords: customWords,
+                automaticallyDetectsLanguage: automaticallyDetectsLanguage
+            )
+        }
+
         return try await withCheckedThrowingContinuation { continuation in
             // VNImageRequestHandler.perform is synchronous and can take several
             // seconds. Keep it off the caller's executor (normally MainActor).
@@ -274,6 +289,97 @@ public final class VisionOCREngine: OCREngine {
                 }
             }
         }
+    }
+
+    /// Run recognition through the modern Swift Vision API, retrying once at the
+    /// fast level on failure — the same recovery semantics as the legacy path.
+    @available(macOS 15.0, *)
+    private static func recognizeWithModernAPI(
+        on image: CGImage,
+        languages: [String],
+        recognitionLevel: VNRequestTextRecognitionLevel,
+        customWords: [String],
+        automaticallyDetectsLanguage: Bool
+    ) async throws -> OCRResult {
+        let enhancedImage = enhanceImageContrast(image)
+        Self.logger.debug("🎨 Image contrast enhanced")
+
+        do {
+            return try await performModernRecognition(
+                on: enhancedImage,
+                languages: languages,
+                recognitionLevel: recognitionLevel,
+                customWords: customWords,
+                automaticallyDetectsLanguage: automaticallyDetectsLanguage
+            )
+        } catch where recognitionLevel == .accurate {
+            // The accurate model can still fail inside the Neural Engine
+            // compiler; the fast path uses a different model, so retry once.
+            Self.logger.error("❌ Vision perform failed: \(error.localizedDescription, privacy: .public)")
+            Self.logger.warning("🔁 Retrying Vision OCR at fast recognition level")
+            do {
+                return try await performModernRecognition(
+                    on: enhancedImage,
+                    languages: languages,
+                    recognitionLevel: .fast,
+                    customWords: customWords,
+                    automaticallyDetectsLanguage: automaticallyDetectsLanguage
+                )
+            } catch {
+                Self.logger.error("❌ Vision fast-level retry failed: \(error.localizedDescription, privacy: .public)")
+                throw error
+            }
+        } catch {
+            Self.logger.error("❌ Vision perform failed: \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
+    }
+
+    /// Build a fresh RecognizeTextRequest and perform text recognition, mapping
+    /// the legacy request configuration onto the modern API.
+    @available(macOS 15.0, *)
+    private static func performModernRecognition(
+        on image: CGImage,
+        languages: [String],
+        recognitionLevel: VNRequestTextRecognitionLevel,
+        customWords: [String],
+        automaticallyDetectsLanguage: Bool
+    ) async throws -> OCRResult {
+        var request = RecognizeTextRequest()
+        request.automaticallyDetectsLanguage = automaticallyDetectsLanguage
+        if !automaticallyDetectsLanguage {
+            request.recognitionLanguages = languages.map { Locale.Language(identifier: $0) }
+        }
+        request.recognitionLevel = recognitionLevel == .accurate ? .accurate : .fast
+        request.usesLanguageCorrection = true
+        request.minimumTextHeightFraction = 0.0
+        request.customWords = customWords
+
+        let observations = try await request.perform(on: image, orientation: .up)
+        Self.logger.info("📊 Vision returned \(observations.count, privacy: .public) text observations")
+
+        var text = ""
+        var totalConfidence: Float = 0
+        var count = 0
+
+        for observation in observations {
+            guard let topCandidate = observation.topCandidates(1).first else { continue }
+            if !text.isEmpty {
+                text.append("\n")
+            }
+            text.append(topCandidate.string)
+            totalConfidence += topCandidate.confidence
+            count += 1
+        }
+
+        let averageConfidence = count > 0 ? totalConfidence / Float(count) : 0
+        return OCRResult(
+            text: text,
+            confidence: averageConfidence,
+            recognizedLanguages: languages,
+            engineName: "Apple Vision",
+            recognitionLevel: recognitionLevel == .accurate ? "accurate" : "fast"
+        )
     }
 
     /// Build a fresh request/handler pair and perform text recognition synchronously.
