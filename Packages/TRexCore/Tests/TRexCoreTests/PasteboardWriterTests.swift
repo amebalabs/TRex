@@ -3,8 +3,21 @@ import XCTest
 
 @MainActor
 final class PasteboardWriterTests: XCTestCase {
+    private var pasteboards: [NSPasteboard] = []
+
     private func makePasteboard() -> NSPasteboard {
-        NSPasteboard(name: .init("TRexCoreTests.\(UUID().uuidString)"))
+        let pasteboard = NSPasteboard(name: .init("TRexCoreTests.\(UUID().uuidString)"))
+        pasteboards.append(pasteboard)
+        return pasteboard
+    }
+
+    override func tearDown() {
+        // Named pasteboards persist until logout unless released.
+        for pasteboard in pasteboards {
+            pasteboard.releaseGlobally()
+        }
+        pasteboards.removeAll()
+        super.tearDown()
     }
 
     func testReplacesTextOnAnIsolatedPasteboard() {
