@@ -56,20 +56,21 @@ The codebase follows a modular architecture:
 
 When modifying TRex:
 
-1. **Swift Version**: Use Swift 5.x syntax (project uses swift-tools-version 5.9, aim for Swift Concurrency best practices)
+1. **Swift Version**: Use Swift 5.x syntax (packages use swift-tools-version 6.1; the app targets build in Swift 5 language mode; aim for Swift Concurrency best practices)
 2. **UI Framework**: All UI should be built with SwiftUI
 3. **Minimum OS**: Ensure compatibility with macOS 14.0+ (Sonoma). Apple Intelligence features require macOS 15.1+
-4. **Dependencies**: Managed via Swift Package Manager (KeyboardShortcuts, LaunchAtLogin, AnyLanguageModel, TesseractSwift)
+4. **Dependencies**: Managed via Swift Package Manager — KeyboardShortcuts, Sparkle, swift-argument-parser (app/CLI), AnyLanguageModel (TRexLLM), TesseractSwift (TRexCore). LaunchAtLogin is vendored source (`TRex/LaunchAtLogin.swift`), not a package
 5. **Text Recognition**: Vision framework calls should handle multiple recognition levels
 6. **Error Handling**: OCR operations should gracefully handle failures and provide user feedback via notifications
 7. **Concurrency**: All code must be Swift 6 concurrency-safe (Sendable protocol, actor isolation)
 
 ## Testing
 
-TRexCore has an XCTest suite in `Packages/TRexCore/Tests/TRexCoreTests/` covering OCR routing, table detection, capture history, automation, timeouts, and bug regressions. Run it with:
+Both packages have XCTest suites: `Packages/TRexCore/Tests/TRexCoreTests/` covers OCR routing, table detection, capture history, automation, timeouts, and bug regressions; `Packages/TRexLLM/Tests/TRexLLMTests/` covers providers, configuration, errors, and image preprocessing (some integration tests make real network calls). Run them with:
 
 ```bash
 swift test --package-path Packages/TRexCore
+swift test --package-path Packages/TRexLLM
 ```
 
 Follow the existing test patterns when adding coverage. Note: `swift test` may rewrite `Package.resolved` as a side effect — revert that churn rather than committing it. The app targets (`TRex/`, `TRex CMD/`) have no test targets.
