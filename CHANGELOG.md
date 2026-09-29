@@ -1,3 +1,13 @@
+# v2.0.1-beta.3 (2026-09-29)
+
+# TRex v2.0.1 Beta 3 Release Notes
+
+This beta fixes recording keyboard shortcuts on macOS 26 and macOS 27.
+
+## Fixes
+
+- Fixed the shortcut recorder in Settings → Shortcuts not capturing or saving shortcuts on macOS 26 and 27, where the control could also get stuck in the recording state. The KeyboardShortcuts library is updated to 3.1, which contains the upstream fix. Existing saved shortcuts are unaffected and load unchanged.
+
 # v2.0.1-beta.2 (2026-09-27)
 
 # TRex v2.0.1 Beta 2 Release Notes
