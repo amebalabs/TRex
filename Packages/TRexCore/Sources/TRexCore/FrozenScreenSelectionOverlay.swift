@@ -156,10 +156,10 @@ private extension NSScreen {
 
 @MainActor
 private final class SelectionWindow: NSPanel {
-    private let selectionView: SelectionView
+    private let selectionView: FrozenSelectionView
 
     init(screen: NSScreen, screenshot: CGImage, coordinator: SelectionCoordinator) {
-        self.selectionView = SelectionView(screenshot: screenshot, coordinator: coordinator)
+        self.selectionView = FrozenSelectionView(screenshot: screenshot, coordinator: coordinator)
 
         super.init(
             contentRect: screen.frame,
@@ -193,18 +193,22 @@ private final class SelectionWindow: NSPanel {
 // MARK: - Selection view
 
 @MainActor
-private final class SelectionView: NSView {
+final class FrozenSelectionView: NSView {
     private let screenshot: CGImage
     private weak var coordinator: SelectionCoordinator?
     private var dragStart: NSPoint?
     private var dragCurrent: NSPoint?
     private var trackingArea: NSTrackingArea?
 
-    init(screenshot: CGImage, coordinator: SelectionCoordinator) {
+    init(screenshot: CGImage) {
         self.screenshot = screenshot
-        self.coordinator = coordinator
         super.init(frame: .zero)
         self.wantsLayer = true
+    }
+
+    fileprivate convenience init(screenshot: CGImage, coordinator: SelectionCoordinator) {
+        self.init(screenshot: screenshot)
+        self.coordinator = coordinator
     }
 
     @available(*, unavailable)
@@ -220,7 +224,7 @@ private final class SelectionView: NSView {
         }
         let area = NSTrackingArea(
             rect: bounds,
-            options: [.activeAlways, .mouseEnteredAndExited, .cursorUpdate, .inVisibleRect],
+            options: [.activeAlways, .mouseEnteredAndExited, .mouseMoved, .cursorUpdate, .inVisibleRect],
             owner: self,
             userInfo: nil
         )
@@ -229,6 +233,16 @@ private final class SelectionView: NSView {
     }
 
     override func cursorUpdate(with event: NSEvent) {
+        NSCursor.crosshair.set()
+    }
+
+    // Cursor rectangles alone do not reliably keep the cursor in a non-key overlay
+    // on another display. Reapply it on entry and movement without stealing focus.
+    override func mouseEntered(with event: NSEvent) {
+        NSCursor.crosshair.set()
+    }
+
+    override func mouseMoved(with event: NSEvent) {
         NSCursor.crosshair.set()
     }
 
