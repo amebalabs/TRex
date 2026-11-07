@@ -357,6 +357,13 @@ public final class VisionOCREngine: OCREngine {
         request.minimumTextHeightFraction = 0.0
         request.customWords = customWords
 
+        if recognitionLevel == .fast {
+            try Self.validateFastRecognitionLanguages(
+                languages, automaticallyDetectsLanguage: automaticallyDetectsLanguage,
+                supportedLanguages: request.supportedRecognitionLanguages.map(\.minimalIdentifier)
+            )
+        }
+
         let observations = try await request.perform(on: image, orientation: .up)
         Self.logger.info("📊 Vision returned \(observations.count, privacy: .public) text observations")
 
@@ -402,6 +409,13 @@ public final class VisionOCREngine: OCREngine {
         request.minimumTextHeight = 0.0
         request.customWords = customWords
 
+        if recognitionLevel == .fast {
+            try Self.validateFastRecognitionLanguages(
+                languages, automaticallyDetectsLanguage: automaticallyDetectsLanguage,
+                supportedLanguages: try request.supportedRecognitionLanguages()
+            )
+        }
+
         let handler = VNImageRequestHandler(cgImage: image, orientation: .up)
 
         try handler.perform([request])
@@ -432,6 +446,27 @@ public final class VisionOCREngine: OCREngine {
         )
     }
     
+    /// The fast model supports fewer scripts and can silently transliterate unsupported
+    /// text into Latin garbage. Only use it when every requested language is supported.
+    /// Automatic detection has no known input language, so it must use the accurate
+    /// model or a configured alternate engine rather than narrowing script support.
+    static func validateFastRecognitionLanguages(
+        _ languages: [String],
+        automaticallyDetectsLanguage: Bool,
+        supportedLanguages: [String]
+    ) throws {
+        guard !automaticallyDetectsLanguage, !languages.isEmpty else {
+            throw OCRError.recognitionFailed("Fast recognition cannot safely detect the input language. Try selecting a recognition language or configuring Tesseract.")
+        }
+        let supported = Set(supportedLanguages.compactMap { Locale.Language(identifier: $0).languageCode })
+        guard languages.allSatisfy({ language in
+            guard let code = Locale.Language(identifier: language).languageCode else { return false }
+            return supported.contains(code)
+        }) else {
+            throw OCRError.recognitionFailed("The fast recognition model does not support the selected language. Try configuring Tesseract for this language.")
+        }
+    }
+
     public func recognizeText(in image: CGImage, recognitionLevel: VNRequestTextRecognitionLevel) async throws -> OCRResult {
         return try await recognizeText(in: image, languages: ["en-US"], recognitionLevel: recognitionLevel)
     }
