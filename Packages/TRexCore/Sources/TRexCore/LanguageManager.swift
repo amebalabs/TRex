@@ -182,8 +182,8 @@ public class LanguageManager {
         // Complete overrides for all Vision-supported languages
         let overrides: [String: String] = [
             // English
-            "en-US": "English",
-            "en": "English",
+            "en-US": "English (American)",
+            "en": "English (American)",
             
             // European Languages
             "fr-FR": "French",
