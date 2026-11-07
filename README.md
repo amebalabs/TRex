@@ -53,7 +53,7 @@ Install from Homebrew
 brew install --cask trex
 ```
 
-Runs on macOS Big Sur (11.0) and up.
+Requires macOS Sonoma (14.0) or later.
 
 ## Features
 
