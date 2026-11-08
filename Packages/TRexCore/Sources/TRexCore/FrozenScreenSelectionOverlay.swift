@@ -23,12 +23,9 @@ private final class SelectionCoordinator {
     private var continuation: CheckedContinuation<NSImage?, Never>?
     private var keyMonitor: Any?
     private var didResume = false
-    private var previouslyActiveApp: NSRunningApplication?
-    private var savedActivationPolicy: NSApplication.ActivationPolicy = .accessory
 
     func run() async -> NSImage? {
         FrozenLogger.shared.info("🧊 FrozenScreenSelectionOverlay.run() invoked")
-        previouslyActiveApp = NSWorkspace.shared.frontmostApplication
 
         // Capture every display BEFORE we put up any UI — if we did it after, our overlays
         // would appear in the screenshot.
@@ -58,14 +55,10 @@ private final class SelectionCoordinator {
             return
         }
 
-        // LSUIElement apps need accessory policy bumped to .regular momentarily so windows
-        // can become key and receive keyboard events; we restore on finish().
-        savedActivationPolicy = NSApp.activationPolicy()
-        if savedActivationPolicy != .regular {
-            NSApp.setActivationPolicy(.regular)
-        }
-        NSApp.activate(ignoringOtherApps: true)
-        FrozenLogger.shared.info("🧊 Activated app, ordering \(self.windows.count, privacy: .public) window(s)")
+        // The windows are non-activating panels, so they can become key and receive keyboard
+        // events without activating TRex. Activating the app (and bumping the LSUIElement app to
+        // .regular) made macOS switch Spaces to TRex, sliding every window off-screen and back.
+        FrozenLogger.shared.info("🧊 Ordering \(self.windows.count, privacy: .public) window(s)")
 
         // Pick the window under the mouse to become key so its first responder gets keyDown.
         let mouseLoc = NSEvent.mouseLocation
@@ -100,14 +93,6 @@ private final class SelectionCoordinator {
             window.close()
         }
         windows.removeAll()
-
-        // Restore activation policy (accessory for menu-bar app) and focus.
-        if NSApp.activationPolicy() != savedActivationPolicy {
-            NSApp.setActivationPolicy(savedActivationPolicy)
-        }
-        if let previouslyActiveApp {
-            previouslyActiveApp.activate()
-        }
 
         continuation?.resume(returning: image)
         continuation = nil
@@ -170,7 +155,7 @@ private extension NSScreen {
 // MARK: - Window
 
 @MainActor
-private final class SelectionWindow: NSWindow {
+private final class SelectionWindow: NSPanel {
     private let selectionView: SelectionView
 
     init(screen: NSScreen, screenshot: CGImage, coordinator: SelectionCoordinator) {
@@ -178,7 +163,7 @@ private final class SelectionWindow: NSWindow {
 
         super.init(
             contentRect: screen.frame,
-            styleMask: .borderless,
+            styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
@@ -187,9 +172,14 @@ private final class SelectionWindow: NSWindow {
         self.isOpaque = true
         self.backgroundColor = .black
         self.hasShadow = false
+        // On macOS 27 this window zooms in when ordered front and zooms out when ordered out.
+        // Because this window shows a screenshot of the desktop, the zoom makes every on-screen
+        // window appear to slide or shift when the selection starts and ends.
+        self.animationBehavior = .none
         self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle, .stationary]
         self.ignoresMouseEvents = false
         self.isReleasedWhenClosed = false
+        self.hidesOnDeactivate = false
         self.acceptsMouseMovedEvents = true
         self.setFrame(screen.frame, display: true)
         self.contentView = selectionView
