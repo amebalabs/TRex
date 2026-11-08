@@ -1,3 +1,28 @@
+# v2.0.1-beta.4 (2026-11-08)
+
+# TRex v2.0.1 Beta 4 Release Notes
+
+This beta improves screen selection on macOS 27 and prevents unsupported fast OCR from copying incorrect text.
+
+## Fixes
+
+- Fixed frozen-screen selection causing other windows to animate or flicker on macOS 27. (#107)
+- Restored the crosshair when entering or moving within frozen selection windows, including windows on other displays. Confirmation on a physical multi-monitor setup is still pending. (#112, #110)
+- Prevented fast OCR fallback from returning Latin garbage for Arabic and other unsupported languages. When the accurate model fails, TRex now reports failure or uses a configured alternative instead of accepting incorrect fast-model output. (#111)
+- Clarified the English language entry as American English. (#108)
+- Fixed missing release notes in the Sparkle update window.
+
+## Improvements
+
+- Updated supported-language discovery to Apple's modern Vision API on macOS 15 and later, while preserving existing language choices and macOS 14 compatibility. (#113)
+
+## Known Issues
+
+- Apple's accurate OCR model can still stall intermittently. The Vision API update is not a fix for this issue. For Arabic, enable Tesseract in Settings and select/download Arabic; the reported sample was recognized correctly with that engine. (#106)
+- The multi-monitor crosshair fix has automated regression coverage and single-display interaction testing, but still needs confirmation on a physical multi-monitor setup. (#110)
+
+Requires macOS 14 or later. Includes support for Apple Silicon and Intel Macs.
+
 # v2.0.1-beta.3 (2026-09-29)
 
 # TRex v2.0.1 Beta 3 Release Notes
