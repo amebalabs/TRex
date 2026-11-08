@@ -154,16 +154,13 @@ public final class VisionOCREngine: OCREngine {
 
     // Dynamically fetch supported languages from Vision framework
     private static func fetchSupportedLanguages() -> Set<String> {
-        // Fallback for older macOS versions that don't support the API
-        guard #available(macOS 10.15, *) else {
-            // Return hardcoded set for older OS versions
-            return Set([
-                "en-US", "fr-FR", "de-DE", "es-ES", "it-IT",
-                "pt-BR", "zh-Hans", "zh-Hant", "ja-JP", "ko-KR",
-                "ru-RU", "uk-UA", "th-TH", "vi-VN", "tr-TR"
-            ])
+        if #available(macOS 15.0, *) {
+            var request = RecognizeTextRequest()
+            request.recognitionLevel = .accurate
+            return Set(request.supportedRecognitionLanguages.map { visionLanguageIdentifier($0) })
         }
 
+        // Match the legacy recognition path retained for macOS 14.
         do {
             let request = VNRecognizeTextRequest()
             let languages = try request.supportedRecognitionLanguages()
@@ -187,6 +184,24 @@ public final class VisionOCREngine: OCREngine {
                 "ru-RU", "uk-UA", "th-TH", "vi-VN", "tr-TR"
             ])
         }
+    }
+
+    /// Preserve the regional identifiers and script variants used by settings and
+    /// Tesseract routing; minimalIdentifier alone drops regions such as en-US.
+    static func visionLanguageIdentifier(_ language: Locale.Language) -> String {
+        var components = Locale.Language.Components(identifier: language.minimalIdentifier)
+        components.region = language.region
+        // Foundation minimizes these script variants into region-based identifiers
+        // (e.g. zh-Hant becomes zh-TW), but TRex distinguishes them by script.
+        if components.languageCode?.identifier == "zh" || components.languageCode?.identifier == "yue" {
+            components.script = language.script
+        }
+        let identifier = [
+            components.languageCode?.identifier,
+            components.script?.identifier,
+            components.region?.identifier
+        ].compactMap { $0 }.joined(separator: "-")
+        return mapVisionLanguageCode(identifier)
     }
     
     // Map Vision language codes to our standard format
