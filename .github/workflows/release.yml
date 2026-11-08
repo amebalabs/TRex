@@ -606,27 +606,6 @@ jobs:
           echo "ZIP_SHA=$SHA" >> $GITHUB_ENV
           echo "Debug: Calculated ZIP_SHA=$SHA"
 
-      - name: Read Release Notes
-        id: release_notes
-        run: |
-          NOTES_PATH="docs/release-notes/${{ env.TAG }}.md"
-          if [ ! -f "$NOTES_PATH" ]; then
-            echo "Error: Release notes not found at $NOTES_PATH"
-            exit 1
-          fi
-          # Prepare escaped version for XML
-          CONTENT=$(cat "$NOTES_PATH" | perl -p -e 's/%/%25/g' | perl -p -e 's/\n/%0A/g' | perl -p -e 's/\r/%0D/g')
-          echo "CONTENT=$CONTENT" >> $GITHUB_OUTPUT
-          # Also store raw notes for release body and changelog
-          RELEASE_NOTES=$(cat "$NOTES_PATH" | awk '{printf "%s\\n", $0}')
-          echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
-
-          # Verify the content was set
-          if [ -z "$RELEASE_NOTES" ]; then
-            echo "Error: RELEASE_NOTES is empty"
-            exit 1
-          fi
-
       - name: Generate Sparkle Signature
         id: generate_signature
         uses: ./.github/actions/sparkle-sign
@@ -635,7 +614,23 @@ jobs:
           file-path: ${{ env.APP_NAME }}-${{ env.VERSION }}.zip
 
       - name: Update Appcast
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          NOTES_PATH="docs/release-notes/${TAG}.md"
+          if [ ! -s "$NOTES_PATH" ]; then
+            echo "Error: Release notes missing or empty at $NOTES_PATH"
+            exit 1
+          fi
+          # Render Markdown in this step so the feed receives HTML, not a shell
+          # variable from an earlier step or percent-escaped workflow output.
+          CONTENT=$(gh api markdown --field mode=gfm --field context="$GITHUB_REPOSITORY" --field "text=@${NOTES_PATH}")
+          if [ -z "$CONTENT" ]; then
+            echo "Error: Rendered release notes are empty"
+            exit 1
+          fi
+          CONTENT=$(printf '%s' "$CONTENT" | perl -0pe 's/\]\]>/\]\]\]\]><!\[CDATA\[>/g')
+
           write_appcast() {
             local appcast_file="$1"
             local feed_url="$2"
