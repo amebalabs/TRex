@@ -3,29 +3,20 @@ import CoreGraphics
 import OSLog
 import ScreenCaptureKit
 
-/// Shows a "frozen" snapshot of every connected display as a full-screen overlay and lets the
-/// user drag-select a region from the still image. Useful when the underlying content is moving
-/// (video, animation, hover galleries) and the standard interactive selection would chase the
-/// content as it changes.
+/// Shows a "frozen" snapshot of every connected display as a full-screen backdrop while the
+/// user selects a region. Useful when the underlying content is moving (video, animation,
+/// hover galleries) and the standard interactive selection would chase the content as it
+/// changes.
+///
+/// The backdrop is passive: the selection UI itself (crosshair, drag rectangle, Escape to
+/// cancel) belongs to the caller-supplied `selection`, normally the native `screencapture -i`,
+/// which draws above the backdrop and captures the frozen pixels beneath its selection.
 @MainActor
 public enum FrozenScreenSelectionOverlay {
-    /// Returns the cropped pixel image of the user's selection, or nil if cancelled / failed.
-    public static func selectRegion() async -> NSImage? {
-        await SelectionCoordinator().run()
-    }
-}
-
-// MARK: - Coordinator
-
-@MainActor
-private final class SelectionCoordinator {
-    private var windows: [SelectionWindow] = []
-    private var continuation: CheckedContinuation<NSImage?, Never>?
-    private var keyMonitor: Any?
-    private var didResume = false
-
-    func run() async -> NSImage? {
-        FrozenLogger.shared.info("🧊 FrozenScreenSelectionOverlay.run() invoked")
+    /// Freezes every display, runs `selection` on top of the frozen stills, and returns its
+    /// result. Returns nil without running `selection` if no display could be captured.
+    public static func selectRegion(using selection: @MainActor () async -> NSImage?) async -> NSImage? {
+        FrozenLogger.shared.info("🧊 FrozenScreenSelectionOverlay.selectRegion() invoked")
 
         // Capture every display BEFORE we put up any UI — if we did it after, our overlays
         // would appear in the screenshot.
@@ -36,71 +27,30 @@ private final class SelectionCoordinator {
             return nil
         }
 
-        return await withCheckedContinuation { (cont: CheckedContinuation<NSImage?, Never>) in
-            self.continuation = cont
-            self.start(with: captures)
-        }
-    }
-
-    private func start(with captures: [(NSScreen, CGImage)]) {
-        for (screen, cgImage) in captures {
+        // The windows are passive and never become key, so TRex is not activated. Activating
+        // the app (and bumping the LSUIElement app to .regular) made macOS switch Spaces to
+        // TRex, sliding every window off-screen and back.
+        let windows = captures.map { screen, cgImage in
             FrozenLogger.shared.info("🧊 Building window for screen \(screen.frame.debugDescription, privacy: .public) image=\(cgImage.width, privacy: .public)x\(cgImage.height, privacy: .public)")
-            let window = SelectionWindow(screen: screen, screenshot: cgImage, coordinator: self)
-            windows.append(window)
+            return FrozenScreenWindow(frame: screen.frame, screenshot: cgImage)
         }
-
-        if windows.isEmpty {
-            FrozenLogger.shared.error("🧊 No windows built")
-            finish(with: nil)
-            return
-        }
-
-        // The windows are non-activating panels, so they can become key and receive keyboard
-        // events without activating TRex. Activating the app (and bumping the LSUIElement app to
-        // .regular) made macOS switch Spaces to TRex, sliding every window off-screen and back.
-        FrozenLogger.shared.info("🧊 Ordering \(self.windows.count, privacy: .public) window(s)")
-
-        // Pick the window under the mouse to become key so its first responder gets keyDown.
-        let mouseLoc = NSEvent.mouseLocation
-        let preferred = windows.first(where: { $0.screen?.frame.contains(mouseLoc) == true }) ?? windows.first
+        FrozenLogger.shared.info("🧊 Ordering \(windows.count, privacy: .public) window(s)")
         for window in windows {
             window.orderFrontRegardless()
-            window.makeKeyAndOrderFront(nil)
         }
-        preferred?.makeKeyAndOrderFront(nil)
-
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self else { return event }
-            if event.keyCode == 53 { // ESC
-                self.finish(with: nil)
-                return nil
+        defer {
+            for window in windows {
+                window.orderOut(nil)
+                window.close()
             }
-            return event
-        }
-    }
-
-    func finish(with image: NSImage?) {
-        guard !didResume else { return }
-        didResume = true
-
-        if let monitor = keyMonitor {
-            NSEvent.removeMonitor(monitor)
-            keyMonitor = nil
         }
 
-        for window in windows {
-            window.orderOut(nil)
-            window.close()
-        }
-        windows.removeAll()
-
-        continuation?.resume(returning: image)
-        continuation = nil
+        return await selection()
     }
 
     /// Use ScreenCaptureKit's one-shot screenshot API (macOS 14.0+) to grab a still of each
     /// connected display and pair it with its matching NSScreen.
-    private func captureAllDisplays() async -> [(NSScreen, CGImage)] {
+    private static func captureAllDisplays() async -> [(NSScreen, CGImage)] {
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(
                 false,
@@ -154,15 +104,13 @@ private extension NSScreen {
 
 // MARK: - Window
 
+/// Full-screen still of one display. Passive by design: it ignores mouse events and never
+/// becomes key, so the selection UI running above it receives all input.
 @MainActor
-private final class SelectionWindow: NSPanel {
-    private let selectionView: FrozenSelectionView
-
-    init(screen: NSScreen, screenshot: CGImage, coordinator: SelectionCoordinator) {
-        self.selectionView = FrozenSelectionView(screenshot: screenshot, coordinator: coordinator)
-
+final class FrozenScreenWindow: NSPanel {
+    init(frame: NSRect, screenshot: CGImage) {
         super.init(
-            contentRect: screen.frame,
+            contentRect: frame,
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -177,28 +125,22 @@ private final class SelectionWindow: NSPanel {
         // window appear to slide or shift when the selection starts and ends.
         self.animationBehavior = .none
         self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle, .stationary]
-        self.ignoresMouseEvents = false
+        self.ignoresMouseEvents = true
         self.isReleasedWhenClosed = false
         self.hidesOnDeactivate = false
-        self.acceptsMouseMovedEvents = true
-        self.setFrame(screen.frame, display: true)
-        self.contentView = selectionView
-        self.initialFirstResponder = selectionView
+        self.setFrame(frame, display: true)
+        self.contentView = FrozenScreenView(screenshot: screenshot)
     }
 
-    override var canBecomeKey: Bool { true }
-    override var canBecomeMain: Bool { true }
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
 }
 
-// MARK: - Selection view
+// MARK: - Still view
 
 @MainActor
-final class FrozenSelectionView: NSView {
+final class FrozenScreenView: NSView {
     private let screenshot: CGImage
-    private weak var coordinator: SelectionCoordinator?
-    private var dragStart: NSPoint?
-    private var dragCurrent: NSPoint?
-    private var trackingArea: NSTrackingArea?
 
     init(screenshot: CGImage) {
         self.screenshot = screenshot
@@ -206,50 +148,8 @@ final class FrozenSelectionView: NSView {
         self.wantsLayer = true
     }
 
-    fileprivate convenience init(screenshot: CGImage, coordinator: SelectionCoordinator) {
-        self.init(screenshot: screenshot)
-        self.coordinator = coordinator
-    }
-
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) not supported") }
-
-    override var acceptsFirstResponder: Bool { true }
-    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
-
-    override func updateTrackingAreas() {
-        super.updateTrackingAreas()
-        if let trackingArea {
-            removeTrackingArea(trackingArea)
-        }
-        let area = NSTrackingArea(
-            rect: bounds,
-            options: [.activeAlways, .mouseEnteredAndExited, .mouseMoved, .cursorUpdate, .inVisibleRect],
-            owner: self,
-            userInfo: nil
-        )
-        addTrackingArea(area)
-        trackingArea = area
-    }
-
-    override func cursorUpdate(with event: NSEvent) {
-        NSCursor.crosshair.set()
-    }
-
-    // Cursor rectangles alone do not reliably keep the cursor in a non-key overlay
-    // on another display. Reapply it on entry and movement without stealing focus.
-    override func mouseEntered(with event: NSEvent) {
-        NSCursor.crosshair.set()
-    }
-
-    override func mouseMoved(with event: NSEvent) {
-        NSCursor.crosshair.set()
-    }
-
-    override func resetCursorRects() {
-        super.resetCursorRects()
-        addCursorRect(bounds, cursor: .crosshair)
-    }
 
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
@@ -257,117 +157,5 @@ final class FrozenSelectionView: NSView {
         // Frozen screen content at full brightness — no dim, the freeze itself is the cue
         // that selection mode is active.
         ctx.draw(screenshot, in: bounds)
-
-        // Selection rectangle outline only.
-        if let rect = currentSelectionRect(), rect.width > 0, rect.height > 0 {
-            ctx.setStrokeColor(NSColor.systemBlue.cgColor)
-            ctx.setLineWidth(1.5)
-            ctx.stroke(rect)
-
-            // Dimension label
-            let label = "\(Int(rect.width)) × \(Int(rect.height))"
-            let attrs: [NSAttributedString.Key: Any] = [
-                .font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium),
-                .foregroundColor: NSColor.white,
-                .backgroundColor: NSColor.black.withAlphaComponent(0.55)
-            ]
-            let size = (label as NSString).size(withAttributes: attrs)
-            let labelOrigin = NSPoint(
-                x: min(rect.maxX - size.width - 6, bounds.maxX - size.width - 6),
-                y: max(rect.minY - size.height - 4, bounds.minY + 4)
-            )
-            (label as NSString).draw(at: labelOrigin, withAttributes: attrs)
-        }
-    }
-
-    private func currentSelectionRect() -> NSRect? {
-        guard let start = dragStart, let current = dragCurrent else { return nil }
-        return NSRect(
-            x: min(start.x, current.x),
-            y: min(start.y, current.y),
-            width: abs(current.x - start.x),
-            height: abs(current.y - start.y)
-        )
-    }
-
-    private func boundedPoint(from event: NSEvent) -> NSPoint {
-        let point = convert(event.locationInWindow, from: nil)
-        return NSPoint(
-            x: min(max(point.x, bounds.minX), bounds.maxX),
-            y: min(max(point.y, bounds.minY), bounds.maxY)
-        )
-    }
-
-    override func mouseDown(with event: NSEvent) {
-        let pt = boundedPoint(from: event)
-        dragStart = pt
-        dragCurrent = pt
-        needsDisplay = true
-    }
-
-    override func mouseDragged(with event: NSEvent) {
-        let pt = boundedPoint(from: event)
-        dragCurrent = pt
-        needsDisplay = true
-    }
-
-    override func mouseUp(with event: NSEvent) {
-        dragCurrent = boundedPoint(from: event)
-        needsDisplay = true
-        finishSelection()
-    }
-
-    private func finishSelection() {
-        guard let rect = currentSelectionRect(), rect.width > 2, rect.height > 2 else {
-            dragStart = nil
-            dragCurrent = nil
-            coordinator?.finish(with: nil)
-            return
-        }
-
-        // View coords (origin bottom-left, points) → image coords (origin top-left, pixels).
-        let viewWidth = bounds.width
-        let viewHeight = bounds.height
-        let imageWidth = CGFloat(screenshot.width)
-        let imageHeight = CGFloat(screenshot.height)
-        let scaleX = imageWidth / viewWidth
-        let scaleY = imageHeight / viewHeight
-
-        let imageBounds = CGRect(x: 0, y: 0, width: imageWidth, height: imageHeight)
-        let cropRect = CGRect(
-            x: rect.minX * scaleX,
-            y: (viewHeight - rect.maxY) * scaleY,
-            width: rect.width * scaleX,
-            height: rect.height * scaleY
-        )
-        .integral
-        .intersection(imageBounds)
-
-        dragStart = nil
-        dragCurrent = nil
-
-        guard !cropRect.isNull, cropRect.width > 0, cropRect.height > 0 else {
-            coordinator?.finish(with: nil)
-            return
-        }
-
-        guard let cropped = screenshot.cropping(to: cropRect) else {
-            coordinator?.finish(with: nil)
-            return
-        }
-
-        let nsImage = NSImage(
-            cgImage: cropped,
-            size: NSSize(width: cropped.width, height: cropped.height)
-        )
-        coordinator?.finish(with: nsImage)
-    }
-
-    override func keyDown(with event: NSEvent) {
-        if event.keyCode == 53 { // ESC
-            coordinator?.finish(with: nil)
-        } else {
-            super.keyDown(with: event)
-        }
     }
 }

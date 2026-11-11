@@ -516,9 +516,14 @@ public class TRex: NSObject {
     private func captureScreenInteractively() async -> NSImage? {
         logger.info("📸 captureScreenInteractively — freezeEnabled=\(self.preferences.freezeScreenDuringSelection, privacy: .public)")
         if preferences.freezeScreenDuringSelection {
-            return await FrozenScreenSelectionOverlay.selectRegion()
+            return await FrozenScreenSelectionOverlay.selectRegion { await self.runInteractiveScreenCapture() }
         }
 
+        return await runInteractiveScreenCapture()
+    }
+
+    /// Run `screencapture -i` and load the image it wrote, if any.
+    private func runInteractiveScreenCapture() async -> NSImage? {
         let filePath = makeScreenshotFilePath()
         let process = Process()
         process.executableURL = screenCaptureURL
