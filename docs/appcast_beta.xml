@@ -6,37 +6,34 @@
     <description>TRex Beta Updates</description>
     <language>en</language>
     <item>
-      <title>TRex 2.0.1-beta.4</title>
-      <sparkle:version>188</sparkle:version>
-      <sparkle:shortVersionString>2.0.1-beta.4</sparkle:shortVersionString>
-      <description><![CDATA[<h1 dir="auto">TRex v2.0.1 Beta 4 Release Notes</h1>
-<p dir="auto">This beta improves screen selection on macOS 27 and prevents unsupported fast OCR from copying incorrect text.</p>
+      <title>TRex 2.0.1-beta.5</title>
+      <sparkle:version>192</sparkle:version>
+      <sparkle:shortVersionString>2.0.1-beta.5</sparkle:shortVersionString>
+      <description><![CDATA[<h1 dir="auto">TRex v2.0.1 Beta 5 Release Notes</h1>
+<p dir="auto">This beta brings the native macOS selection crosshair to frozen-screen capture and tidies the onboarding setup page.</p>
 <h2 dir="auto">Fixes</h2>
 <ul dir="auto">
-<li>Fixed frozen-screen selection causing other windows to animate or flicker on macOS 27. (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="5990166850" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/107" data-hovercard-type="pull_request" data-hovercard-url="/amebalabs/TRex/pull/107/hovercard" href="https://github.com/amebalabs/TRex/pull/107">#107</a>)</li>
-<li>Restored the crosshair when entering or moving within frozen selection windows, including windows on other displays. Confirmation on a physical multi-monitor setup is still pending. (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="6265040696" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/112" data-hovercard-type="pull_request" data-hovercard-url="/amebalabs/TRex/pull/112/hovercard" href="https://github.com/amebalabs/TRex/pull/112">#112</a>, <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="6195965771" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/110" data-hovercard-type="issue" data-hovercard-url="/amebalabs/TRex/issues/110/hovercard" href="https://github.com/amebalabs/TRex/issues/110">#110</a>)</li>
-<li>Prevented fast OCR fallback from returning Latin garbage for Arabic and other unsupported languages. When the accurate model fails, TRex now reports failure or uses a configured alternative instead of accepting incorrect fast-model output. (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="6265000987" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/111" data-hovercard-type="pull_request" data-hovercard-url="/amebalabs/TRex/pull/111/hovercard" href="https://github.com/amebalabs/TRex/pull/111">#111</a>)</li>
-<li>Clarified the English language entry as American English. (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="6006236366" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/108" data-hovercard-type="pull_request" data-hovercard-url="/amebalabs/TRex/pull/108/hovercard" href="https://github.com/amebalabs/TRex/pull/108">#108</a>)</li>
-<li>Fixed missing release notes in the Sparkle update window.</li>
+<li>Frozen-screen selection now uses the native macOS selection UI on top of the frozen screen, so the crosshair appears as it does with freezing turned off. Previously the pointer could stay an arrow. (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="6318427166" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/116" data-hovercard-type="pull_request" data-hovercard-url="/amebalabs/TRex/pull/116/hovercard" href="https://github.com/amebalabs/TRex/pull/116">#116</a>, <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="6195965771" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/110" data-hovercard-type="issue" data-hovercard-url="/amebalabs/TRex/issues/110/hovercard" href="https://github.com/amebalabs/TRex/issues/110">#110</a>)</li>
+<li>Fixed the onboarding Quick Setup page cutting off the permissions step inside a small scroll area, aligned the section tabs, and corrected the button label to "Open System Settings". (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="6318452318" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/117" data-hovercard-type="pull_request" data-hovercard-url="/amebalabs/TRex/pull/117/hovercard" href="https://github.com/amebalabs/TRex/pull/117">#117</a>)</li>
 </ul>
-<h2 dir="auto">Improvements</h2>
+<h2 dir="auto">Changes</h2>
 <ul dir="auto">
-<li>Updated supported-language discovery to Apple's modern Vision API on macOS 15 and later, while preserving existing language choices and macOS 14 compatibility. (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="6266511944" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/113" data-hovercard-type="pull_request" data-hovercard-url="/amebalabs/TRex/pull/113/hovercard" href="https://github.com/amebalabs/TRex/pull/113">#113</a>)</li>
+<li>With frozen-screen selection, the capture sound now follows the capture sound setting, and pressing Space selects the whole frozen screen instead of a single window. (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="6318427166" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/116" data-hovercard-type="pull_request" data-hovercard-url="/amebalabs/TRex/pull/116/hovercard" href="https://github.com/amebalabs/TRex/pull/116">#116</a>)</li>
 </ul>
 <h2 dir="auto">Known Issues</h2>
 <ul dir="auto">
-<li>Apple's accurate OCR model can still stall intermittently. The Vision API update is not a fix for this issue. For Arabic, enable Tesseract in Settings and select/download Arabic; the reported sample was recognized correctly with that engine. (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="5949059399" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/106" data-hovercard-type="issue" data-hovercard-url="/amebalabs/TRex/issues/106/hovercard" href="https://github.com/amebalabs/TRex/issues/106">#106</a>)</li>
-<li>The multi-monitor crosshair fix has automated regression coverage and single-display interaction testing, but still needs confirmation on a physical multi-monitor setup. (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="6195965771" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/110" data-hovercard-type="issue" data-hovercard-url="/amebalabs/TRex/issues/110/hovercard" href="https://github.com/amebalabs/TRex/issues/110">#110</a>)</li>
+<li>Apple's accurate OCR model can still stall intermittently, which can delay results by several seconds. (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="6287627271" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/115" data-hovercard-type="issue" data-hovercard-url="/amebalabs/TRex/issues/115/hovercard" href="https://github.com/amebalabs/TRex/issues/115">#115</a>, <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="5949059399" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/106" data-hovercard-type="issue" data-hovercard-url="/amebalabs/TRex/issues/106/hovercard" href="https://github.com/amebalabs/TRex/issues/106">#106</a>)</li>
+<li>Frozen-screen selection with the native selection UI has been tested on a single display only and still needs confirmation on a physical multi-monitor setup. (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="6195965771" data-permission-text="Title is private" data-url="https://github.com/amebalabs/TRex/issues/110" data-hovercard-type="issue" data-hovercard-url="/amebalabs/TRex/issues/110/hovercard" href="https://github.com/amebalabs/TRex/issues/110">#110</a>)</li>
 </ul>
 <p dir="auto">Requires macOS 14 or later. Includes support for Apple Silicon and Intel Macs.</p>]]></description>
-      <pubDate>Sun, 08 Nov 2026 02:31:35 +0000</pubDate>
+      <pubDate>Wed, 11 Nov 2026 00:19:48 +0000</pubDate>
       <enclosure
-        url="https://github.com/amebalabs/TRex/releases/download/v2.0.1-beta.4/TRex-2.0.1-beta.4.zip"
-        sparkle:version="188"
-        sparkle:shortVersionString="2.0.1-beta.4"
+        url="https://github.com/amebalabs/TRex/releases/download/v2.0.1-beta.5/TRex-2.0.1-beta.5.zip"
+        sparkle:version="192"
+        sparkle:shortVersionString="2.0.1-beta.5"
         type="application/octet-stream"
-        sparkle:edSignature="9zsxoaLejnNC5vBu+P3AmGyG9BwCHNRXITEJaut31aw/VFDbdI3Hnoe43JCSWwo2VxpoL2REU1OvJPQ46VKpDQ==" length="9357149"
-        sparkle:sha256="863a153bde9c697ba6c3e84dea61084ef7b242208df4ded64fe2dda67b0306f6"
+        sparkle:edSignature="1ZGo/5BR+yLWgO9CkRhRSZhL37/MD2y7xISGWeboJyUri+c+464C/PaCz2UGvJGjfBT3qgH9U0ORpjeVnAdiDQ==" length="9346575"
+        sparkle:sha256="674c746f46d22c7aa847c81264164facd6b3ac5ba1daf4164845e4c41d36b9be"
       />
     </item>
   </channel>
