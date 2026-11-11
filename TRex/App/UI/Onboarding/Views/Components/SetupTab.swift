@@ -8,6 +8,7 @@ struct SetupTab: View {
         VStack(spacing: 10) {
             Image(systemName: section.icon)
                 .font(.system(size: 32))
+                .frame(height: 40)
                 .foregroundColor(isActive ? Color.brandBlue : .secondary)
             
             Text(section.title)
