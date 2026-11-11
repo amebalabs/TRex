@@ -27,7 +27,7 @@ struct SetupView: View {
             
             // Content area
             ScrollView {
-                ZStack {
+                ZStack(alignment: .top) {
                     switch vm.activeSection {
                     case .permissions:
                         PermissionsSection(vm: vm)
@@ -40,12 +40,12 @@ struct SetupView: View {
                             .transition(AnyTransition.slideFade)
                     }
                 }
+                .frame(maxWidth: .infinity)
             }
-            .frame(height: 350)
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(maxHeight: .infinity)
             .opacity(animateContent ? 1.0 : 0.0)
             .animation(Animation.brandEaseOut(delay: 0.2), value: animateContent)
-            
-            Spacer()
         }
         .padding(OnboardingDimensions.contentPadding)
         .onAppear {
